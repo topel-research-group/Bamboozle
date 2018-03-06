@@ -15,6 +15,10 @@ parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats', ac
 #parser.add_argument('-e', help='Contigs to ignore during analysis', nargs='*', type=str)
 parser.add_argument('Input', type=str, nargs=1, help='Bam file to take stats from')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
+parser.add_argument("-r", "--refference", help="Reference sequence file")
+parser.add_argument("-b", "--bam", help="Bam file")
+parser.add_argument("--range", help="somethingsomsing")
+parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 
 args = parser.parse_args()
