@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description='Obtain statistics regarding percen
                                               default, will give a whole-assembly coverage stat with a \
                                               threshold of 20')
 parser.add_argument('-c', help='Gives per-contig coverage stats', action="store_true")
-parser.add_argument('-t', metavar='Threshold', help='Threshold for calculating coverage percentage; default 20', type=int, nargs=1, default='20')
+parser.add_argument('-t', metavar='Threshold', help='Threshold for calculating coverage percentage; default 20', type=int, nargs='?', const=1, default='20')
 #parser.add_argument('-e', help='Contigs to ignore during analysis', nargs='*', type=str)
 parser.add_argument('Input', type=str, nargs=1, help='Bam file to take stats from')
 
@@ -25,7 +25,7 @@ start_time = time.time()
 
 samtools = str('/usr/local/packages/samtools-1.3.1/samtools')
 input_bam = args.Input[0]
-threshold = args.t[0]
+threshold = args.t
 
 
 #if args.e[0] == True:

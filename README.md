@@ -37,3 +37,9 @@ otherwise specified), to facilitate inclusion of a 'contigs to be ignored' flag
   distort results with super-high coverage)
 * Add try/except statements
 * Alter samtools variable so that it points to the samtools installation regardless of where it is
+
+
+
+## File to point tests at
+
+/proj/data17/Skeletonema_marinoi_adaptation_to_warming_project/01_mapping/P8352_101/P8352_101_sorted.bam
