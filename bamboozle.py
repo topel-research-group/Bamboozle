@@ -100,10 +100,16 @@ def per_contig():
 		print str(value) + "% of contig " + key + " has >=" + str(threshold) + "x coverage."
 		print "---"
 
-if args.a == True:
-	whole_assembly()
-elif args.c == True:
-	per_contig()
-	
+def main():
+
+	if args.a == True:
+		whole_assembly()
+	elif args.c == True:
+		per_contig()
+
+
+if __name__ == "__main__":
+	main()
+
 # Devel. Add this to the "--dev" option
 print "Time taken = " + str(time.time() - start_time) + " seconds."
