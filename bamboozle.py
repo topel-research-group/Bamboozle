@@ -20,6 +20,7 @@ args = parser.parse_args()
 
 ###################################################################################
 
+# Devel. This part should be handled by the arg parser
 if args.a == True and args.c == True:
         print "Please select only one protocol!"
 	exit()
@@ -31,8 +32,10 @@ if args.a == False and args.c == False:
 
 ##########
 
+# Devel. Add to the "--dev" argument
 start_time = time.time()
 
+# Devel. Add try except in separate mdule
 samtools = str('/usr/local/packages/samtools-1.3.1/samtools')
 input_bam = args.Input[0]
 threshold = args.Threshold[0]
@@ -101,5 +104,6 @@ if args.a == True:
 	whole_assembly()
 elif args.c == True:
 	per_contig()
-
+	
+# Devel. Add this to the "--dev" option
 print "Time taken = " + str(time.time() - start_time) + " seconds."
