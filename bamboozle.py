@@ -17,7 +17,7 @@ parser.add_argument('-b', '--bam', type=str, nargs=1, help='Bam file to take sta
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', \
                     help='Threshold for calculating cov. percentage; default 20')
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
-#Add verbose
+parser.add_argument('-v', '--verbose', help='Gives verbose output')
 
 args = parser.parse_args()
 
@@ -46,10 +46,11 @@ process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 # Later, this should be scaled for multiple contigs, with a dictionary for each
 
 def coverage_stats():
-	if args.contig is not None:
-		print("Obtaining stats for " + args.contig[0] + " in " + input_bam + "; coverage >+" + str(args.threshold) + "%.")
-	else:
-		print("Obtaining whole-genome stats for " + input_bam + "; coverage >+" + str(args.threshold) + "%.")
+	if args.verbose == True:
+		if args.contig is not None:
+			print("Obtaining stats for " + args.contig[0] + " in " + input_bam + "; coverage >+" + str(args.threshold) + "%.")
+		else:
+			print("Obtaining whole-genome stats for " + input_bam + "; coverage >+" + str(args.threshold) + "%.")
 	cov_stats = {}
 	num_lines = 0
 	with process.stdout as result:

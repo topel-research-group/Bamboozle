@@ -45,3 +45,6 @@ otherwise specified), to facilitate inclusion of a 'contigs to be ignored' flag
 /proj/data17/Skeletonema_marinoi_adaptation_to_warming_project/01_mapping/P8352_101/P8352_101_sorted.bam
 
 Expected results (20x) - 97393434, 60.78250203191316%
+
+Contigs to try: 000343F, 000111F-001-01
+(Stats for 000343F (20x): 8932, 87.3152709359606%)
