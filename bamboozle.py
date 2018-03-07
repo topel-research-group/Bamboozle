@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(description='Obtain statistics regarding percen
                                               The script gives percentage of positions in an assembly/contig \
                                               with coverage greater than or equal to a given threshold')
 parser.add_argument('-w', '--whole', help='Gives whole-assembly coverage stats', action="store_true")
-parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats', action="store_true")
+parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
 #parser.add_argument('-c', '--contig', type=str, nargs='+', help='Gives cov. stats for the specified contigs')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
 parser.add_argument("-r", "--refference", help="Reference sequence file")
@@ -76,9 +76,9 @@ def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
 	# from a part of the reference sequence specified by args.range
 	command = ("samtools mpileup -uf %s %s -r %s:%s | bcftools view -cg -") \
-	% (args.refference, args.bam, args.chromosome, args.range)
+	% (args.refference, args.bam, args.contig, args.range)
 	bam = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-	header = ">" + args.chromosome + ":" + args.range
+	header = ">" + args.contig + ":" + args.range
 	seq = ""
 
 	for line in bam.stdout:
@@ -94,7 +94,10 @@ def extract_sequence():
 		print(seq)
 
 def main():
-	coverage_stats()
+	if args.range:
+		extract_sequence()
+	else:
+		coverage_stats()
 
 
 if __name__ == "__main__":
