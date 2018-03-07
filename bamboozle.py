@@ -8,7 +8,6 @@ import time
 parser = argparse.ArgumentParser(description='Obtain statistics regarding percentage coverage from bam files. \
                                               The script gives percentage of positions in an assembly/contig \
                                               with coverage greater than or equal to a given threshold')
-parser.add_argument('-w', '--whole', help='Gives whole-assembly coverage stats', action="store_true")
 parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
 #parser.add_argument('-c', '--contig', type=str, nargs='+', help='Gives cov. stats for the specified contigs')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
