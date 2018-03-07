@@ -13,7 +13,7 @@ Retrieving a statistic for what percentage of bases in an assembly have >= Nx co
 ```
 * `-c` flag is optional; if not specified, analysis will be run on the whole assembly
 * `-t` flag is optional; if not specified, coverage of >= 20x will be reported
-
+* Note: Requires a version of samtools which allows the `depth -aa` option
 
 Extracting consensus sequence of aligned reads from a specific region of the referense sequence.
 
