@@ -37,3 +37,4 @@ Contigs to try: 000343F, 000111F-001-01
 ## Features to add
 
 * Allow -c flag to accept multiple contigs (one dictionary per contig?)
+* Move print statement out of coverage_stats function

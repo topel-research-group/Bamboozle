@@ -24,10 +24,8 @@ if args.dev == True:
 
 
 def coverage_stats():
-	# cov_stats accumulates the number of reads at each coverage level >= threshold
-	# Then sums all values in the dictionary and calculates a percentage statistic
-
-	# Devel. Ensure that samtools version is >=1.3.1; versions older than this lack the `depth -aa` option
+	# This function calculates the percentage of positions in an assembly/contig
+	# with read coverage >= a given threshold (default: 20x)
 
 	try:
 		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
@@ -67,7 +65,7 @@ def coverage_stats():
 
 	print("Length of assembly/contig: " + str(num_lines))
 	value = 100.0 / num_lines * sum(cov_stats.values())
-	print(str(value) + "% of the assembly has >=" + str(args.threshold) + "x coverage.")
+	print(str(value) + "% of the assembly/contig has >=" + str(args.threshold) + "x coverage.")
 
 
 
