@@ -24,13 +24,8 @@ if args.dev == True:
 
 
 def coverage_stats():
-	# cov_stats should have a key for each coverage value of threshold and above
-	# For each line, if coverage is >= threshold, add 1 to the value of that coverage's key
-	# Then sum all values in the dictionary and print something informative
-	# Later, this should be scaled for multiple contigs, with a dictionary for each
-
-	# Generate a per-base coverage for each contig
-	# Output = Contig-Position-Coverage, tab-separated; save output to new dictionary cov_stats
+	# cov_stats accumulates the number of reads at each coverage level >= threshold
+	# Then sums all values in the dictionary and calculates a percentage statistic
 
 	# Devel. Ensure that samtools version is >=1.3.1; versions older than this lack the `depth -aa` option
 

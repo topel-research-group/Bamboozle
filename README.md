@@ -2,23 +2,8 @@
 
 Script for retrieving statistics or other types of sequence information from .bam files. 
 
+
 Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage
-
-```bash
-bamboozle.py -r <REFERENCE> -b <BAMFILE>
-```
-
-Extracting consensus sequence of aligned reads from a specific region of the referense sequence.
-
-
-```bash
-./bamboozle.py -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG> -a <RANGE>
-```
-```bash
-./bamboozle.py -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
-```
-
-Obtaining a statistic for the percentage of bases in an assembly or contig above a certain coverage threshold
 
 ```bash
 ./bamboozle.py -b <BAMFILE> -c <CHROMOSOME/CONTIG> -t <THRESHOLD>
@@ -28,6 +13,16 @@ Obtaining a statistic for the percentage of bases in an assembly or contig above
 ```
 * `-c` flag is optional; if not specified, analysis will be run on the whole assembly
 * `-t` flag is optional; if not specified, coverage of >= 20x will be reported
+
+
+Extracting consensus sequence of aligned reads from a specific region of the referense sequence.
+
+```bash
+./bamboozle.py -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG> -a <RANGE>
+```
+```bash
+./bamboozle.py -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
+```
 
 
 ## File to point tests at
@@ -41,5 +36,5 @@ Contigs to try: 000343F, 000111F-001-01
 
 ## Features to add
 
-* Allow -c flag to accept multiple contigs
+* Allow -c flag to accept multiple contigs (one dictionary per contig?)
 * Add try/except statement for samtools to ensure v1.3.1 or later is installed
