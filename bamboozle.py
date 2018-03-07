@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description='Obtain statistics regarding percen
 parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
 #parser.add_argument('-c', '--contig', type=str, nargs='+', help='Gives cov. stats for the specified contigs')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
-parser.add_argument("-r", "--refference", help="Reference sequence file")
+parser.add_argument("-r", "--reference", help="Reference sequence file")
 parser.add_argument("-b", "--bam", help="Bam file")
 parser.add_argument("--range", help="somethingsomsing")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
@@ -22,9 +22,6 @@ args = parser.parse_args()
 if args.dev == True:
 	start_time = time.time()
 
-# Devel. Add try except in separate module
-samtools = str('/usr/local/packages/samtools-1.3.1/samtools')
-
 
 def coverage_stats():
 	# cov_stats should have a key for each coverage value of threshold and above
@@ -34,23 +31,25 @@ def coverage_stats():
 
 	# Generate a per-base coverage for each contig
 	# Output = Contig-Position-Coverage, tab-separated; save output to new dictionary cov_stats
-	cmd = [samtools, 'depth', '-aa', input_bam]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-	input_bam = args.bam[0]
+
+	# Devel. Ensure that samtools version is >=1.3.1; versions older than this lack the `depth -aa` option
+
+	cmd = ["samtools depth -aa %s" % args.bam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	if args.verbose == True:
-		if args.contig is not None:
-			print("Obtaining stats for " + args.contig[0] + " in " + input_bam + "; coverage >+" + str(args.threshold) + "%.")
+		if args.contig:
+			print("Obtaining stats for " + args.contig + " in " + args.bam + "; coverage >+" + str(args.threshold) + "%.")
 		else:
-			print("Obtaining whole-genome stats for " + input_bam + "; coverage >+" + str(args.threshold) + "%.")
+			print("Obtaining whole-genome stats for " + args.bam + "; coverage >+" + str(args.threshold) + "%.")
 	cov_stats = {}
 	num_lines = 0
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
 			coverage = int(row[2])
-			if args.contig is not None:
-				if str(row[0]) == args.contig[0]:
+			if args.contig:
+				if str(row[0]) == args.contig:
 					num_lines += 1
 					if coverage >= args.threshold:
 						if coverage in cov_stats:
@@ -75,7 +74,7 @@ def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
 	# from a part of the reference sequence specified by args.range
 	command = ("samtools mpileup -uf %s %s -r %s:%s | bcftools view -cg -") \
-	% (args.refference, args.bam, args.contig, args.range)
+	% (args.reference, args.bam, args.contig, args.range)
 	bam = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 	header = ">" + args.contig + ":" + args.range
 	seq = ""

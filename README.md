@@ -12,16 +12,27 @@ Extracting consensus sequence of aligned reads from a specific region of the ref
 
 
 ```bash
-./bamboozled.py -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG> -a <RANGE>
+./bamboozle.py -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG> -a <RANGE>
 ```
 ```bash
-./bamboozled.py -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
+./bamboozle.py -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
 ```
+
+Obtaining a statistic for the percentage of bases in an assembly or contig above a certain coverage threshold
+
+```bash
+./bamboozle.py -b <BAMFILE> -c <CHROMOSOME/CONTIG> -t <THRESHOLD>
+```
+```bash
+./bamboozle.py -b P8352_101_sorted.bam -c 000343F -t 25
+```
+* `-c` flag is optional; if not specified, analysis will be run on the whole assembly
+* `-t` flag is optional; if not specified, coverage of >= 20x will be reported
 
 
 ## File to point tests at
 
-/proj/data17/Skeletonema_marinoi_adaptation_to_warming_project/01_mapping/P8352_101/P8352_101_sorted.bam
+example/P8352_101_sorted.bam
 
 Expected results (20x) - 97393434, 60.78250203191316%
 
@@ -31,6 +42,4 @@ Contigs to try: 000343F, 000111F-001-01
 ## Features to add
 
 * Allow -c flag to accept multiple contigs
-* Add try/except statement for samtools
-
-
+* Add try/except statement for samtools to ensure v1.3.1 or later is installed
