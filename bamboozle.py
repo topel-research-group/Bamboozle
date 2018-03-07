@@ -29,6 +29,12 @@ def coverage_stats():
 
 	# Devel. Ensure that samtools version is >=1.3.1; versions older than this lack the `depth -aa` option
 
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
 	cmd = ["samtools depth -aa %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
