@@ -74,7 +74,22 @@ def zero_regions():
 	# This function identifies regions of 0x coverage, then prints the reference sequence
 	# and GC content at these coordinates
 
-	print("Blah")
+	# Devel. Add try except statement for bedtools here
+        # Also ensure that bam is sorted?
+
+	cmd = ["bedtools genomecov -bga -ibam %s" % args.bam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	zeroes = {}
+
+	with process.stdout as result:
+		rows = (line.decode().split('\t') for line in result)
+		for row in rows:
+			if str(row[0]) == args.contig:
+				coverage = int(row[3])
+				if coverage == 0:
+					zeroes[int(row[1])+1] = int(row[2])
+		print(zeroes)
+
 
 
 
