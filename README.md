@@ -38,3 +38,6 @@ Contigs to try: 000343F, 000111F-001-01
 
 * Allow -c flag to accept multiple contigs (one dictionary per contig?)
 * Move print statement out of coverage_stats function
+* Possible new feature - find stretches of 0 coverage?
+  * May require the use of bedtools...
+  * Output the reference sequence here to see, e.g. if it's a G+C rich region

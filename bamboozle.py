@@ -11,9 +11,10 @@ parser = argparse.ArgumentParser(description='Obtain statistics regarding percen
 parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
 #parser.add_argument('-c', '--contig', type=str, nargs='+', help='Gives cov. stats for the specified contigs')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
-parser.add_argument("-r", "--reference", help="Reference sequence file")
+parser.add_argument("-r", "--refference", help="Reference sequence file")
 parser.add_argument("-b", "--bam", help="Bam file")
 parser.add_argument("--range", help="somethingsomsing")
+parser.add_argument("-z", "--zero", action="store_true", help="Find regions of 0x coverage")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -69,11 +70,19 @@ def coverage_stats():
 
 
 
+def zero_regions():
+	# This function identifies regions of 0x coverage, then prints the reference sequence
+	# and GC content at these coordinates
+
+	print("Blah")
+
+
+
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
 	# from a part of the reference sequence specified by args.range
 	command = ("samtools mpileup -uf %s %s -r %s:%s | bcftools view -cg -") \
-	% (args.reference, args.bam, args.contig, args.range)
+	% (args.refference, args.bam, args.contig, args.range)
 	bam = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 	header = ">" + args.contig + ":" + args.range
 	seq = ""
@@ -91,7 +100,9 @@ def extract_sequence():
 		print(seq)
 
 def main():
-	if args.range:
+	if args.zero:
+		zero_regions()
+	elif args.range:
 		extract_sequence()
 	else:
 		coverage_stats()
