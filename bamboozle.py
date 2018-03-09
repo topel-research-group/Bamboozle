@@ -77,6 +77,14 @@ def zero_regions():
 	# Devel. Add try except statement for bedtools here
         # Also ensure that bam is sorted?
 
+	if not args.contig:
+		print("Please specify contig with the -c flag")
+		exit()
+
+	if not args.refference:
+		print("Please specify reference with the -r flag")
+		exit()
+
 	cmd = ["bedtools genomecov -bga -ibam %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	zeroes = {}
@@ -88,6 +96,7 @@ def zero_regions():
 				coverage = int(row[3])
 				if coverage == 0:
 					zeroes[int(row[1])+1] = int(row[2])
+#					zeroes[int(row[1]) = int(row[2])	# Use if contig starts at 0
 		print(zeroes)
 
 

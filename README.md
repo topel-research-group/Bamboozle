@@ -41,3 +41,5 @@ Contigs to try: 000343F, 000111F-001-01
 * Possible new feature - find stretches of 0 coverage?
   * May require the use of bedtools...
   * Output the reference sequence here to see, e.g. if it's a G+C rich region
+
+./bamboozle.py -z -b example/P8352_101_sorted.bam
