@@ -71,11 +71,25 @@ def coverage_stats():
 
 
 def zero_regions():
-	# This function identifies regions of 0x coverage, then prints the reference sequence
-	# and GC content at these coordinates
+	# This function identifies regions of 0x coverage in a given contig, then prints
+	# the reference sequence and GC content at these coordinates
 
 	# Devel. Add try except statement for bedtools here
         # Also ensure that bam is sorted?
+
+	# Fasta parsing from Biopython, fp.py and
+	# http://stackoverflow.com/questions/7654971/parsing-a-fasta-file-using-a-generator-python
+
+	def read_fasta(fasta):
+		name, seq = None, []
+		for line in fasta:
+			line = line.rstrip()
+			if line.startswith(">"):
+				if name: yield (name, ''.join(seq))
+				name, seq = line, []
+			else:
+				seq.append(line)
+		if name: yield (name, ''.join(seq))
 
 	if not args.contig:
 		print("Please specify contig with the -c flag")
@@ -95,12 +109,17 @@ def zero_regions():
 			if str(row[0]) == args.contig:
 				coverage = int(row[3])
 				if coverage == 0:
-					zeroes[int(row[1])+1] = int(row[2])
-#					zeroes[int(row[1]) = int(row[2])	# Use if contig starts at 0
+#					zeroes[int(row[1])+1] = int(row[2])
+					zeroes[int(row[1])] = int(row[2])
 		print(zeroes)
 
-
-
+	with open(args.refference) as fasta:
+		print("Contig\tPositions\tSequence")
+		for name, seq in read_fasta(fasta):
+			if name[1:] == args.contig:
+				for key in zeroes:
+					print(str(args.contig) + "\t" + str(key + 1) + "-" + str(zeroes[key])\
+					 + "\t" + str(seq[key:zeroes[key]]))
 
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
