@@ -91,6 +91,14 @@ def zero_regions():
 				seq.append(line)
 		if name: yield (name, ''.join(seq))
 
+	def get_gc(input):
+		count = 0
+		gc_list = ['G', 'C', 'g', 'c']
+		for base in input:
+			if base in gc_list:
+				count += 1
+		print(100.0 / len(input) * count)
+
 	if not args.contig:
 		print("Please specify contig with the -c flag")
 		exit()
@@ -109,17 +117,21 @@ def zero_regions():
 			if str(row[0]) == args.contig:
 				coverage = int(row[3])
 				if coverage == 0:
-#					zeroes[int(row[1])+1] = int(row[2])
 					zeroes[int(row[1])] = int(row[2])
-		print(zeroes)
 
 	with open(args.refference) as fasta:
-		print("Contig\tPositions\tSequence")
+		print("Contig\tPositions\tGC%\tSequence")
 		for name, seq in read_fasta(fasta):
 			if name[1:] == args.contig:
 				for key in zeroes:
-					print(str(args.contig) + "\t" + str(key + 1) + "-" + str(zeroes[key])\
-					 + "\t" + str(seq[key:zeroes[key]]))
+					print(str(seq[key:zeroes[key]]))
+#					if key + 1 == (zeroes[key]):
+#						print(args.contig + "\t" + str(zeroes[key]) + "\t-\t" + \
+#						str(seq[key:zeroes[key]]))
+#					else:
+#						print(args.contig + "\t" + str(key + 1) + "-" + \
+#						str(zeroes[key]) + "\t" + get_gc(str(seq[key:zeroes[key]])) + \
+#						"\t" + str(seq[key:zeroes[key]]))
 
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
