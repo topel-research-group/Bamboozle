@@ -24,6 +24,16 @@ Extracting consensus sequence of aligned reads from a specific region of the ref
 ./bamboozle.py -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
 ```
 
+Finding areas of zero coverage and printing the reference sequence, along with a GC percentage
+
+```bash
+./bamboozle.py -z -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG>
+```
+```bash
+./bamboozle.py -z -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_101_sorted.bam -c 000343F
+```
+
+
 
 ## File to point tests at
 
@@ -37,7 +47,6 @@ Contigs to try: 000343F, 000111F-001-01
 ## Features to add
 
 * Allow -c flag to accept multiple contigs (one dictionary per contig?)
+  * Would therefore need to add additional arguments into both coverage-related functions...
 * Move print statement out of coverage_stats function
-* Debug G+C content calculation of zero_regions
-
-./bamboozle.py -z -b example/P8352_101_sorted.bam
+* Limit number of decimal places in GC% output to make the results tidier

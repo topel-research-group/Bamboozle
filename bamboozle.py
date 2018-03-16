@@ -97,7 +97,8 @@ def zero_regions():
 		for base in input:
 			if base in gc_list:
 				count += 1
-		print(100.0 / len(input) * count)
+		gc_content = 100.0 / len(input) * count
+		return gc_content
 
 	if not args.contig:
 		print("Please specify contig with the -c flag")
@@ -106,6 +107,9 @@ def zero_regions():
 	if not args.refference:
 		print("Please specify reference with the -r flag")
 		exit()
+
+	if args.verbose == True:
+		print("Finding zero coverage areas in contig " + args.contig)
 
 	cmd = ["bedtools genomecov -bga -ibam %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -120,18 +124,18 @@ def zero_regions():
 					zeroes[int(row[1])] = int(row[2])
 
 	with open(args.refference) as fasta:
-		print("Contig\tPositions\tGC%\tSequence")
 		for name, seq in read_fasta(fasta):
 			if name[1:] == args.contig:
+				print("GC% for contig: " + str(get_gc(seq)))
+				print("Contig\tPositions\tGC%\tSequence")
 				for key in zeroes:
-					print(str(seq[key:zeroes[key]]))
-#					if key + 1 == (zeroes[key]):
-#						print(args.contig + "\t" + str(zeroes[key]) + "\t-\t" + \
-#						str(seq[key:zeroes[key]]))
-#					else:
-#						print(args.contig + "\t" + str(key + 1) + "-" + \
-#						str(zeroes[key]) + "\t" + get_gc(str(seq[key:zeroes[key]])) + \
-#						"\t" + str(seq[key:zeroes[key]]))
+					if key + 1 == (zeroes[key]):
+						print(args.contig + "\t" + str(zeroes[key]) + "\t-\t" + \
+						str(seq[key:zeroes[key]]))
+					else:
+						print(args.contig + "\t" + str(key + 1) + "-" + \
+						str(zeroes[key]) + "\t" + str(get_gc(seq[key:zeroes[key]])) + \
+						"\t" + str(seq[key:zeroes[key]]))
 
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
