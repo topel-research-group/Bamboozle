@@ -66,7 +66,7 @@ def coverage_stats():
 
 	print("Length of assembly/contig: " + str(num_lines))
 	value = 100.0 / num_lines * sum(cov_stats.values())
-	print(str(value) + "% of the assembly/contig has >=" + str(args.threshold) + "x coverage.")
+	print(str(round(value, 3)) + "% of the assembly/contig has >=" + str(args.threshold) + "x coverage.")
 
 
 
@@ -126,7 +126,7 @@ def zero_regions():
 	with open(args.refference) as fasta:
 		for name, seq in read_fasta(fasta):
 			if name[1:] == args.contig:
-				print("GC% for contig: " + str(get_gc(seq)))
+				print("GC% for contig: " + str(round(get_gc(seq), 3)))
 				print("Contig\tPositions\tGC%\tSequence")
 				for key in zeroes:
 					if key + 1 == (zeroes[key]):
@@ -134,8 +134,9 @@ def zero_regions():
 						str(seq[key:zeroes[key]]))
 					else:
 						print(args.contig + "\t" + str(key + 1) + "-" + \
-						str(zeroes[key]) + "\t" + str(get_gc(seq[key:zeroes[key]])) + \
-						"\t" + str(seq[key:zeroes[key]]))
+						str(zeroes[key]) + "\t" + \
+						str(round(get_gc(seq[key:zeroes[key]]), 3)) + "\t" + \
+						str(seq[key:zeroes[key]]))
 
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
