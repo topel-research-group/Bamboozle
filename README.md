@@ -50,3 +50,7 @@ Contigs to try: 000343F, 000111F-001-01
 * Allow -c flag to accept multiple contigs (one dictionary per contig?)
   * Would therefore need to add additional arguments into both coverage-related functions...
 * Move print statement out of coverage_stats function
+
+* Add variant of zero_regions which looks for regions of a certain size, between certain levels of coverage
+  * e.g. If 15 > cov_column > 0, save row
+    * How to deal with places where, e.g. the coverage isn't constant - ....3.4.3.4.5.3.....
