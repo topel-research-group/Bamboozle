@@ -15,6 +15,7 @@ parser.add_argument("-r", "--refference", help="Reference sequence file")
 parser.add_argument("-b", "--bam", help="Bam file")
 parser.add_argument("--range", help="somethingsomsing")
 parser.add_argument("-z", "--zero", action="store_true", help="Find regions of 0x coverage")
+parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions; EXPERIMENTAL")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -138,6 +139,45 @@ def zero_regions():
 						str(round(get_gc(seq[key:zeroes[key]]), 3)) + "\t" + \
 						str(seq[key:zeroes[key]]))
 
+
+
+def deletion():
+	# This function scans for potential heterozygous/deletion sites; it is still in development so the
+	# current output is still messy
+
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
+	print("Note: This function is still in development, so the output will be ugly as sin. Apologies in advance.")
+
+	cmd = ["samtools depth -aa %s" % args.bam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+	with process.stdout as result:
+		rows = (line.decode().split('\t') for line in result)
+		contig = ""
+		for row in rows:
+			position = str(row[1])
+			coverage = int(row[2])
+			if contig != str(row[0]):
+				contig = str(row[0])
+				window = []
+			if len(window) == 12:
+				del window[0]
+				window.append(coverage)
+				if ((window[0]*0.8) <= window[11] <= (window[0]*1.25)) and (window[0] > 0) and (int(row[2]) >= args.threshold):
+					for x in window[1:-1]:
+						if x < (window[0]*0.6):
+							print(contig + "\t" + position)
+							break
+			else:
+				window.append(coverage)
+
+
+
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
 	# from a part of the reference sequence specified by args.range
@@ -160,7 +200,9 @@ def extract_sequence():
 		print(seq)
 
 def main():
-	if args.zero:
+	if args.deletion:
+		deletion()
+	elif args.zero:
 		zero_regions()
 	elif args.range:
 		extract_sequence()
