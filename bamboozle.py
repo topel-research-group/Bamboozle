@@ -16,6 +16,7 @@ parser.add_argument("-b", "--bam", help="Bam file")
 parser.add_argument("--range", help="somethingsomsing")
 parser.add_argument("-z", "--zero", action="store_true", help="Find regions of 0x coverage")
 parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions; EXPERIMENTAL")
+parser.add_argument("-e", "--events", action="store_true", help="Report number of deletion events, rather than individual positions")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -155,6 +156,8 @@ def deletion():
 
 	cmd = ["samtools depth -aa %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	
+	old_position = 0
 
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
@@ -176,9 +179,18 @@ def deletion():
 					for x, y in window.items():
 						if y < (window[position - 11]*0.6) and x not in reported:
 							reported.append(x)
-							print(contig + "\t" + str(x))
+							if args.events:
+								if new_mutation(x, old_position):
+									print(contig + "\t" + str(x))
+							else:
+								print(contig + "\t" + str(x))
+							old_position = x
 			else:
 				window[position] = coverage
+
+def new_mutation(new_position, old_position):
+	if (int(new_position) - int(old_position)) != 1:
+		return True
 
 
 
