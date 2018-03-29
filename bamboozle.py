@@ -152,12 +152,14 @@ def deletion():
 		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
 		exit()
 
-	print("Note: This function is still in development, so the output will be ugly as sin. Apologies in advance.")
+#	print("Note: This function is still in development, so the output will be ugly as sin. Apologies in advance.")
 
 	cmd = ["samtools depth -aa %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	
 	old_position = 0
+	deletion = []
+	del_size = 1
 
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
@@ -181,7 +183,20 @@ def deletion():
 							reported.append(x)
 							if args.events:
 								if new_mutation(x, old_position):
-									print(contig + "\t" + str(x))
+									if len(deletion) != 0:
+										deletion.append(del_size)
+										if del_size % 3 != 0:
+											print(deletion)
+										deletion = []
+# Merge the two lines below using deletion.extend
+									deletion.append(contig)
+									deletion.append(x)
+									del_size = 1
+#					if (del_size % 3) == 0:
+#									print(contig + "\t" + str(x) + "\t", end='')
+#									del_size = 1
+								else:
+									del_size +=1
 							else:
 								print(contig + "\t" + str(x))
 							old_position = x
