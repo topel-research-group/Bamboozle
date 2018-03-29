@@ -160,21 +160,25 @@ def deletion():
 		rows = (line.decode().split('\t') for line in result)
 		contig = ""
 		for row in rows:
-			position = str(row[1])
+			position = int(row[1])
 			coverage = int(row[2])
 			if contig != str(row[0]):
 				contig = str(row[0])
-				window = []
+				window = {}
+				reported = []
+
+	# Currently skips the first position...
+
 			if len(window) == 12:
-				del window[0]
-				window.append(coverage)
-				if ((window[0]*0.8) <= window[11] <= (window[0]*1.25)) and (window[0] > 0) and (int(row[2]) >= args.threshold):
-					for x in window[1:-1]:
-						if x < (window[0]*0.6):
-							print(contig + "\t" + position)
-							break
+				del window[position - 12]
+				window[position] = coverage
+				if ((window[position - 11]*0.8) <= window[position] <= (window[position - 11]*1.25)) and (window[position - 11] > 0) and (window[position] >= args.threshold):
+					for x, y in window.items():
+						if y < (window[position - 11]*0.6) and x not in reported:
+							reported.append(x)
+							print(contig + "\t" + str(x))
 			else:
-				window.append(coverage)
+				window[position] = coverage
 
 
 
