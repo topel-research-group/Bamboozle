@@ -35,6 +35,9 @@ Finding areas of zero coverage and printing the reference sequence, along with a
 ```
 * Note: percentage values are rounded to 3 decimal places
 
+Finding deletions; can print each deletion position, groups of adjacent deletion positions into events, or only
+those events resulting in a frameshift
+
 
 ## File to point tests at
 
