@@ -242,8 +242,10 @@ def exon_mutations():
 			ex = ex.split("\t")
 			if (mut[1] == ex[0]) and (int(ex[1]) <= int(mut[2]) <= int(ex[2])):
 				frameshifts += 1
-				print(mut[3].strip("\n") + "bp mutation at " + mut[1] + " " + mut[2] + \
-				      " hits exon " + ex[3] + ".")
+				if args.verbose:
+					print(mut[3].strip("\n") + "bp mutation at " + mut[1] + " " + mut[2] + " hits exon " + ex[3] + ".")
+				else:
+					print(mut[1] + "\t" + mut[2] + "\t" + mut[3].strip("\n") + "bp" + "\t" + ex[3])
 				break
 
 	print("Total number of frameshifts: " + str(frameshifts))
