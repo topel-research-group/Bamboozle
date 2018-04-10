@@ -15,9 +15,9 @@ parser.add_argument("-r", "--refference", help="Reference sequence file")
 parser.add_argument("-b", "--bam", help="Bam file")
 parser.add_argument("--range", help="somethingsomsing")
 parser.add_argument("-z", "--zero", action="store_true", help="Find regions of 0x coverage")
-parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions; EXPERIMENTAL")
+parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions")
 parser.add_argument("-e", "--events", action="store_true", help="Report number of deletion events, rather than individual positions")
-parser.add_argument("-f", "--frameshift", action="store_true", help="Used with -d and -e; only report mutations causing a frameshift")
+parser.add_argument("-f", "--frameshift", action="store_true", help="Used with -d (equivalent to -e -f); only report mutations causing a frameshift")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -25,6 +25,9 @@ args = parser.parse_args()
 
 if args.dev == True:
 	start_time = time.time()
+
+if args.frameshift == True and args.events == False:
+	args.events = True
 
 def coverage_stats():
 	# This function calculates the percentage of positions in an assembly/contig
@@ -151,8 +154,6 @@ def deletion():
 	except subprocess.CalledProcessError:
 		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
 		exit()
-
-#	print("Note: This function is still in development, so the output will be ugly as sin. Apologies in advance.")
 
 	cmd = ["samtools depth -aa %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)

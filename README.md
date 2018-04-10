@@ -38,6 +38,8 @@ Finding areas of zero coverage and printing the reference sequence, along with a
 Finding deletions; can print each deletion position, groups of adjacent deletion positions into events, or only
 those events resulting in a frameshift
 * Note: this can now also be done for a specific contig
+* Note: this uses the default threshold of 20 for assessing the surrounding coverage; `-t` can therefore be used
+  to try and find deletions in lower-coverage areas, however this hasn't been extensively tested
 
 * Default usage - prints every deletion position
 ```bash
@@ -47,6 +49,11 @@ those events resulting in a frameshift
 * With `-e` flag - combine adjacent deletion positions into discrete events
 ```bash
 ./bamboozle.py -d -e -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+```
+
+* With `-f` flag (or `-e -f`) - only report events which represent a frameshift (i.e. not divisible by 3)
+```bash
+./bamboozle.py -d [-e] -f -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
 
 
 
