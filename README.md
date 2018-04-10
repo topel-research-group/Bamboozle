@@ -37,6 +37,15 @@ Finding areas of zero coverage and printing the reference sequence, along with a
 
 Finding deletions; can print each deletion position, groups of adjacent deletion positions into events, or only
 those events resulting in a frameshift
+* Note: this can now also be done for a specific contig
+
+* Default usage - prints every deletion position
+```bash
+./bamboozle.py -d -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+```
+
+* 
+
 
 
 ## File to point tests at

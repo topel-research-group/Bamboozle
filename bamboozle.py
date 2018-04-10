@@ -164,45 +164,46 @@ def deletion():
 
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
-		contig = ""
+		ctg = ""
 		for row in rows:
 			position = int(row[1])
 			coverage = int(row[2])
-			if contig != str(row[0]):
-				contig = str(row[0])
+			if ctg != str(row[0]):
+				ctg = str(row[0])
 				window = {}
 				reported = []
 
 	# Currently skips the first position...
 
-			if len(window) == 12:
-				del window[position - 12]
-				window[position] = coverage
-				if ((window[position - 11]*0.8) <= window[position] <= (window[position - 11]*1.25)) and (window[position - 11] > 0) and (window[position] >= args.threshold):
-					for x, y in window.items():
-						if y < (window[position - 11]*0.6) and x not in reported:
-							reported.append(x)
-							if args.events:
-								if new_mutation(x, old_position):
-									if len(deletion) != 0:
-										deletion.append(del_size)
-										if del_size % 3 != 0:
-											print(deletion)
-										deletion = []
+			if (args.contig == None) or (args.contig and args.contig == str(row[0])):
+				if len(window) == 12:
+					del window[position - 12]
+					window[position] = coverage
+					if ((window[position - 11]*0.8) <= window[position] <= (window[position - 11]*1.25)) and (window[position - 11] > 0) and (window[position] >= args.threshold):
+						for x, y in window.items():
+							if y < (window[position - 11]*0.6) and x not in reported:
+								reported.append(x)
+								if args.events:
+									if new_mutation(x, old_position):
+										if len(deletion) != 0:
+											deletion.append(del_size)
+											if del_size % 3 != 0:
+												print(deletion)
+											deletion = []
 # Merge the two lines below using deletion.extend
-									deletion.append(contig)
-									deletion.append(x)
-									del_size = 1
-#					if (del_size % 3) == 0:
-#									print(contig + "\t" + str(x) + "\t", end='')
-#									del_size = 1
+										deletion.append(ctg)
+										deletion.append(x)
+										del_size = 1
+#						if (del_size % 3) == 0:
+#										print(ctg + "\t" + str(x) + "\t", end='')
+#										del_size = 1
+									else:
+										del_size +=1
 								else:
-									del_size +=1
-							else:
-								print(contig + "\t" + str(x))
-							old_position = x
-			else:
-				window[position] = coverage
+									print(ctg + "\t" + str(x))
+								old_position = x
+				else:
+					window[position] = coverage
 
 def new_mutation(new_position, old_position):
 	if (int(new_position) - int(old_position)) != 1:
