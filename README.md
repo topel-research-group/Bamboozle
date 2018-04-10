@@ -44,7 +44,9 @@ those events resulting in a frameshift
 ./bamboozle.py -d -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
 ```
 
-* 
+* With `-e` flag - combine adjacent deletion positions into discrete events
+```bash
+./bamboozle.py -d -e -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
 
 
 
@@ -65,6 +67,9 @@ Contigs to try: 000343F, 000111F-001-01
 * Refine deletion function to print exact bases
   * Also allow it to output differences between datasets, e.g. where deletions occur in one subset
     of the data but not another (e.g Warm vs. Cold results)
+* Refine handling of borderline deletion cases, i.e. a three bp heterozygous event where the first
+  base is just outside the boundary of being reported (see P8352_101 - 000202F:6,205-6,207)
+
 
 ## Existing codes to incorporate
 

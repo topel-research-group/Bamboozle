@@ -26,7 +26,6 @@ args = parser.parse_args()
 if args.dev == True:
 	start_time = time.time()
 
-
 def coverage_stats():
 	# This function calculates the percentage of positions in an assembly/contig
 	# with read coverage >= a given threshold (default: 20x)
@@ -165,10 +164,12 @@ def deletion():
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
 		ctg = ""
+		previous_ctg = ""
 		for row in rows:
 			position = int(row[1])
 			coverage = int(row[2])
 			if ctg != str(row[0]):
+				previous_ctg = ctg
 				ctg = str(row[0])
 				window = {}
 				reported = []
@@ -187,16 +188,13 @@ def deletion():
 									if new_mutation(x, old_position):
 										if len(deletion) != 0:
 											deletion.append(del_size)
-											if del_size % 3 != 0:
-												print(deletion)
+											if (args.frameshift == False) or (args.frameshift and del_size % 3 != 0):
+												print(deletion[0] + "\t" + str(deletion[1]) + "\t" + str(deletion[2]))
 											deletion = []
 # Merge the two lines below using deletion.extend
 										deletion.append(ctg)
 										deletion.append(x)
 										del_size = 1
-#						if (del_size % 3) == 0:
-#										print(ctg + "\t" + str(x) + "\t", end='')
-#										del_size = 1
 									else:
 										del_size +=1
 								else:
@@ -204,6 +202,16 @@ def deletion():
 								old_position = x
 				else:
 					window[position] = coverage
+
+			if args.contig and args.contig == previous_ctg:
+				break
+
+# Ensure the final event is printed
+
+		if args.events:
+			deletion.append(del_size)
+			if (args.frameshift == False) or (args.frameshift and del_size % 3 != 0):
+				print(deletion[0] + "\t" + str(deletion[1]) + "\t" + str(deletion[2]))
 
 def new_mutation(new_position, old_position):
 	if (int(new_position) - int(old_position)) != 1:
