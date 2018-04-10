@@ -65,7 +65,14 @@ of the above `-d -e/-f` function)
 ./bamboozle.py -x <EXONS> -m <MUTATIONS>
 ```
 
+Helping to identify whether a deletion is homozygous or heterozygous, by comparing coverage between the deletion
+and the previous base
+* Note: This currently generates an (automatically-deleted) intermediate file
+* Note: This function will eventually be merged with the above `deletions` function
 
+```bash
+./bamboozle.py -o -b <BAMFILE> -m <MUTATIONS>
+```
 
 ## File to point tests at
 
@@ -87,18 +94,5 @@ Contigs to try: 000343F, 000111F-001-01
   base is just outside the boundary of being reported (see P8352_101 - 000202F:6,205-6,207)
 * In exon_mutations function, find a way to pass the results of deletion function directly into
   exon_mutations, rather than requiring an intermediate file
-
-## Existing codes to incorporate
-
-* HomoDel_or_Hetero.py
-  * Compares coverage at the first base of the deletion with the previous base; from the percentage difference
-    one can determine whether this is a homozygous or heterozygous deletion
-  * Input is the result of `samtools depth -aa -b [frameshift locations].bed [sample].bam > [CODE INPUT]`
-    * `samtools depth` accepts as input a list of bams instead, try this for working with multiple samples,
-       e.g. all Warm samples
-    * This file generates a tab-separated file in the format - contig, position, coverage depth
-      * Note: If two side-by-side mutations are noted in the initial bed file, entries in the new file won't
-        be duplicated, i.e. if there is a mutation at pos. 2 in some samples and at pos. 3 in others, instead
-        of showing coverage 1, 2, 2, 3, it will just show 1, 2, 3; this has been addressed in the code, however
-  * Output is a list of deletion positions and their percentage vs. the previous position
-  * `./HomoDel_or_Hetero.py -i [input].txt > [output]`
+* In HomoDel_or_Hetero function, find a way to pass the results of deletion function directly into
+  HomoDel_or_Hetero, rather than requiring two intermediate files

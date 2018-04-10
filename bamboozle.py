@@ -4,6 +4,7 @@ import sys
 import subprocess
 import argparse
 import time
+import os.path
 
 parser = argparse.ArgumentParser(description='Obtain statistics regarding percentage coverage from bam files. \
                                               The script gives percentage of positions in an assembly/contig \
@@ -19,7 +20,8 @@ parser.add_argument("-d", "--deletion", action="store_true", help="Scan for pote
 parser.add_argument("-e", "--events", action="store_true", help="Report number of deletion events, rather than individual positions")
 parser.add_argument("-f", "--frameshift", action="store_true", help="Used with -d (equivalent to -e -f); only report mutations causing a frameshift")
 parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
-parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -e or -f. -x also required.")
+parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f.")
+parser.add_argument("-o", "--homohetero", action="store_true", help="Determine whether a given deletion is homo- or heterozygous; WIP.")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -148,8 +150,8 @@ def zero_regions():
 
 
 def deletion():
-	# This function scans for potential heterozygous/deletion sites; it is still in development so the
-	# current output is still messy
+	# This function scans for potential heterozygous/deletion sites, either per-base or as discrete events.
+        # Non-frameshift deletions can also be filtered out
 
 	try:
 		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
@@ -216,12 +218,13 @@ def deletion():
 			if (args.frameshift == False) or (args.frameshift and del_size % 3 != 0):
 				print(deletion[0] + "\t" + str(deletion[1]) + "\t" + str(deletion[2]))
 
+
 def new_mutation(new_position, old_position):
 	if (int(new_position) - int(old_position)) != 1:
 		return True
 
-def exon_mutations():
 
+def exon_mutations():
 	# Need to find a way to pass results of deletion function directly into this function
 
 	frameshifts = 0
@@ -251,6 +254,64 @@ def exon_mutations():
 	print("Total number of frameshifts: " + str(frameshifts))
 
 
+def HomoDel_or_Hetero():
+	# This function calculates the percentage coverage difference between the first base in a mutation and the
+	# base before it; this allows the user to determine whether a given deletion is homozygous or heterozygous
+
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
+	# Read in each line of args.mutations, then print out an altered version to a temporary .bed file
+
+	temp_bed = "TEMP_" + os.path.basename(args.mutations)
+
+	if os.path.isfile(temp_bed) == True:
+		print("Temporary file can't be written; please ensure " + temp_bed + " is not a file.")
+		sys.exit()
+
+	rows = (line.split('\t') for line in open(args.mutations))
+	for row in rows:
+		with open(temp_bed, "a") as output_file:
+			output_file.write(row[0] + "\t" + str(int(row[1]) - 2) + "\t" + row[1] + "\n")
+	output_file.close()
+
+	# Compare the coverage 
+
+	cmd = ["samtools depth -aa -b %s %s" % (temp_bed, args.bam)]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+	coverage = []
+
+	with process.stdout as result:
+		rows = (line.decode().split('\t') for line in result)
+		for row in rows:
+			coverage.append(row)
+
+	while len(coverage) >= 2:
+		before = coverage[0]
+		after = coverage[1]
+		if len(coverage) >= 3:
+			next = coverage[2]
+		if int(after[1]) - int(before[1]) == 1:
+			if (int(before[2]) == 0 and int(after[2]) == 0) or (int(before[2]) == 0):
+				print(after[0] + "\t" + after[1] + "\tN/A")
+			else:
+				print(after[0] + "\t" + after[1] + "\t" + str(round(((100.0/int(before[2]))*int(after[2])), 2)))
+			del coverage[0]
+			if int(next[1]) - int(after[1]) != 1:
+				del coverage[0]
+		else:
+			print("Whoops, something went wrong!")
+			sys.exit()
+
+	# Delete the temporary file
+
+	os.remove(temp_bed)
+
+
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
 	# from a part of the reference sequence specified by args.range
@@ -275,12 +336,14 @@ def extract_sequence():
 def main():
 	if args.deletion:
 		deletion()
-	elif args.exons or args.mutations:
-		if args.exons and args.mutations:
+	elif args.exons:
+		if args.mutations:
 			exon_mutations()
 		else:
 			print("Both -x and -m must be specified to find mutations in exons")
 			exit()
+	elif args.homohetero:
+		HomoDel_or_Hetero()
 	elif args.zero:
 		zero_regions()
 	elif args.range:
