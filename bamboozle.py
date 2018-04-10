@@ -18,6 +18,8 @@ parser.add_argument("-z", "--zero", action="store_true", help="Find regions of 0
 parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions")
 parser.add_argument("-e", "--events", action="store_true", help="Report number of deletion events, rather than individual positions")
 parser.add_argument("-f", "--frameshift", action="store_true", help="Used with -d (equivalent to -e -f); only report mutations causing a frameshift")
+parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
+parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -e or -f. -x also required.")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -218,6 +220,33 @@ def new_mutation(new_position, old_position):
 	if (int(new_position) - int(old_position)) != 1:
 		return True
 
+def exon_mutations():
+
+	# Need to find a way to pass results of deletion function directly into this function
+
+	frameshifts = 0
+	exon_list = []
+	mutation_list = []
+
+	with open(args.exons,'r') as bed_file:
+		for line in bed_file:
+			exon_list.append(line)
+
+	with open(args.mutations,'r') as in_file:
+		for line in in_file:
+			mutation_list.append(line)
+
+	for mut in mutation_list:
+		mut = mut.split("\t")
+		for ex in exon_list:
+			ex = ex.split("\t")
+			if (mut[1] == ex[0]) and (int(ex[1]) <= int(mut[2]) <= int(ex[2])):
+				frameshifts += 1
+				print(mut[3].strip("\n") + "bp mutation at " + mut[1] + " " + mut[2] + \
+				      " hits exon " + ex[3] + ".")
+				break
+
+	print("Total number of frameshifts: " + str(frameshifts))
 
 
 def extract_sequence():
@@ -244,6 +273,12 @@ def extract_sequence():
 def main():
 	if args.deletion:
 		deletion()
+	elif args.exons or args.mutations:
+		if args.exons and args.mutations:
+			exon_mutations()
+		else:
+			print("Both -x and -m must be specified to find mutations in exons")
+			exit()
 	elif args.zero:
 		zero_regions()
 	elif args.range:

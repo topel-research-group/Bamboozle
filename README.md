@@ -54,6 +54,16 @@ those events resulting in a frameshift
 * With `-f` flag (or `-e -f`) - only report events which represent a frameshift (i.e. not divisible by 3)
 ```bash
 ./bamboozle.py -d [-e] -f -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+```
+
+Finding deletions occuring within exons; requires a bed file of exons and a text file of deletions (the output
+of the above `-d -e/-f` function)
+* Note: Both `-x` and `-m` are required
+* Note: This function will eventually be merged with the above `deletions` function
+
+```bash
+./bamboozle.py -x <EXONS> -m <MUTATIONS>
+```
 
 
 
@@ -76,7 +86,8 @@ Contigs to try: 000343F, 000111F-001-01
     of the data but not another (e.g Warm vs. Cold results)
 * Refine handling of borderline deletion cases, i.e. a three bp heterozygous event where the first
   base is just outside the boundary of being reported (see P8352_101 - 000202F:6,205-6,207)
-
+* In exon_mutations function, find a way to pass the results of deletion function directly into
+  exon_mutations, rather than requiring an intermediate file
 
 ## Existing codes to incorporate
 
