@@ -19,8 +19,8 @@ parser.add_argument("-z", "--zero", action="store_true", help="Find regions of 0
 parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions")
 parser.add_argument("-e", "--events", action="store_true", help="Report deletion events, rather than individual positions")
 parser.add_argument("-f", "--frameshift", action="store_true", help="Report frameshift deletions, rather than individual positions")
-parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
 parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
+parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
 parser.add_argument("-o", "--homohetero", action="store_true", help="Determine whether a given deletion is homo- or heterozygous; WIP")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
@@ -35,6 +35,7 @@ if args.frameshift == True:
 
 if args.events == True:
 	args.deletion = True
+
 
 def coverage_stats():
 	# This function calculates the percentage of positions in an assembly/contig
@@ -214,6 +215,7 @@ def deletion():
 		if args.events:					# Ensure that the final event is reported
 			print_deletion(deletion, del_size)
 
+
 def new_mutation(new_position, old_position):
 	if (int(new_position) - int(old_position)) != 1:
 		return True
@@ -232,27 +234,30 @@ def exon_mutations():
 	exon_list = []
 	mutation_list = []
 
-	with open(args.exons,'r') as bed_file:
-		for line in bed_file:
-			exon_list.append(line)
-
-	with open(args.mutations,'r') as in_file:
-		for line in in_file:
-			mutation_list.append(line)
+	list_append(args.exons, exon_list)
+	list_append(args.mutations, mutation_list)
 
 	for mut in mutation_list:
 		mut = mut.split("\t")
 		for ex in exon_list:
 			ex = ex.split("\t")
-			if (mut[1] == ex[0]) and (int(ex[1]) <= int(mut[2]) <= int(ex[2])):
-				frameshifts += 1
+			if (mut[0] == ex[0]) and (int(ex[1]) <= int(mut[1]) <= int(ex[2])):
+				if int(mut[2]) % 3 != 0:
+					frameshifts += 1
 				if args.verbose:
-					print(mut[3].strip("\n") + "bp mutation at " + mut[1] + " " + mut[2] + " hits exon " + ex[3] + ".")
+					print(mut[2].strip("\n") + "bp mutation at " + mut[0] + " " + mut[1] + " hits exon " + ex[3] + ".")
 				else:
-					print(mut[1] + "\t" + mut[2] + "\t" + mut[3].strip("\n") + "bp" + "\t" + ex[3])
+					print(mut[0],mut[1],mut[2].strip("\n"),ex[3],sep="\t")
 				break
 
-	print("Total number of frameshifts: " + str(frameshifts))
+	print("Total number of frameshifts in exons: " + str(frameshifts))
+
+
+def list_append(argument, list):
+	with open(argument, 'r') as input:
+		for line in input:
+			list.append(line)
+
 
 
 def HomoDel_or_Hetero():
@@ -308,9 +313,8 @@ def HomoDel_or_Hetero():
 			print("Whoops, something went wrong!")
 			sys.exit()
 
-	# Delete the temporary file
+	os.remove(temp_bed)	# Delete the temporary file
 
-	os.remove(temp_bed)
 
 
 def extract_sequence():
@@ -333,6 +337,8 @@ def extract_sequence():
 				seq += row.split("\t")[4]
 		print(header)
 		print(seq)
+
+
 
 def main():
 	if args.deletion:
