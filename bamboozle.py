@@ -52,9 +52,9 @@ def coverage_stats():
 
 	if args.verbose == True:
 		if args.contig:
-			print("Obtaining stats for " + args.contig + " in " + args.bam + "; coverage >+" + str(args.threshold) + "%.")
+			print("Obtaining stats for ",args.contig," in ",os.path.basename(args.bam),"; coverage >+",args.threshold,"%.",sep="")
 		else:
-			print("Obtaining whole-genome stats for " + args.bam + "; coverage >+" + str(args.threshold) + "%.")
+			print("Obtaining whole-genome stats for ",os.path.basename(args.bam),"; coverage >+",args.threshold,"%.",sep="")
 	cov_stats = {}
 	num_lines = 0
 	with process.stdout as result:
@@ -77,9 +77,9 @@ def coverage_stats():
 					else:
 						cov_stats[coverage] = 1
 
-	print("Length of assembly/contig: " + str(num_lines))
+	print("Length of assembly/contig:",num_lines)
 	value = 100.0 / num_lines * sum(cov_stats.values())
-	print(str(round(value, 3)) + "% of the assembly/contig has >=" + str(args.threshold) + "x coverage.")
+	print(round(value, 3),"% of the assembly/contig has >=",args.threshold,"x coverage.",sep="")
 
 
 
@@ -122,7 +122,7 @@ def zero_regions():
 		exit()
 
 	if args.verbose == True:
-		print("Finding zero coverage areas in contig " + args.contig)
+		print("Finding zero coverage areas in contig",args.contig)
 
 	cmd = ["bedtools genomecov -bga -ibam %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -139,17 +139,14 @@ def zero_regions():
 	with open(args.refference) as fasta:
 		for name, seq in read_fasta(fasta):
 			if name[1:] == args.contig:
-				print("GC% for contig: " + str(round(get_gc(seq), 3)))
+				print("GC% for contig:",round(get_gc(seq), 3))
 				print("Contig\tPositions\tGC%\tSequence")
 				for key in zeroes:
 					if key + 1 == (zeroes[key]):
-						print(args.contig + "\t" + str(zeroes[key]) + "\t-\t" + \
-						str(seq[key:zeroes[key]]))
+						print(args.contig,zeroes[key],"-",seq[key:zeroes[key]],sep="\t")
 					else:
-						print(args.contig + "\t" + str(key + 1) + "-" + \
-						str(zeroes[key]) + "\t" + \
-						str(round(get_gc(seq[key:zeroes[key]]), 3)) + "\t" + \
-						str(seq[key:zeroes[key]]))
+						zero_range = str(key + 1) + "-" + str(zeroes[key])
+						print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
 
 
 
@@ -204,7 +201,7 @@ def deletion():
 									else:
 										del_size +=1
 								else:
-									print(ctg + "\t" + str(x))
+									print(ctg,x,sep="\t")
 								old_position = x
 				else:
 					window[position] = coverage
@@ -223,7 +220,7 @@ def new_mutation(new_position, old_position):
 def print_deletion(m, n):
 	m.append(n)
 	if (args.frameshift == False) or (args.frameshift and n % 3 != 0):
-		print(m[0] + "\t" + str(m[1]) + "\t" + str(m[2]))
+		print(m[0],m[1],m[2],sep="\t")
 
 
 
@@ -245,12 +242,12 @@ def exon_mutations():
 				if int(mut[2]) % 3 != 0:
 					frameshifts += 1
 				if args.verbose:
-					print(mut[2].strip("\n") + "bp mutation at " + mut[0] + " " + mut[1] + " hits exon " + ex[3] + ".")
+					print(mut[2].strip("\n"),"bp mutation at",mut[0],mut[1],"hits exon",ex[3])
 				else:
 					print(mut[0],mut[1],mut[2].strip("\n"),ex[3],sep="\t")
 				break
 
-	print("Total number of frameshifts in exons: " + str(frameshifts))
+	print("Total number of frameshifts in exons:",frameshifts)
 
 
 def list_append(argument, list):
@@ -275,7 +272,7 @@ def HomoDel_or_Hetero():
 	temp_bed = "TEMP_" + os.path.basename(args.mutations)
 
 	if os.path.isfile(temp_bed) == True:
-		print("Temporary file can't be written; please ensure " + temp_bed + " is not a file.")
+		print("Temporary file can't be written; please ensure",temp_bed,"is not a file.")
 		sys.exit()
 
 	rows = (line.split('\t') for line in open(args.mutations))
@@ -303,9 +300,10 @@ def HomoDel_or_Hetero():
 			next = coverage[2]
 		if int(after[1]) - int(before[1]) == 1:
 			if (int(before[2]) == 0 and int(after[2]) == 0) or (int(before[2]) == 0):
-				print(after[0] + "\t" + after[1] + "\tN/A")
+				print(after[0],after[1],"N/A",sep="\t")
 			else:
-				print(after[0] + "\t" + after[1] + "\t" + str(round(((100.0/int(before[2]))*int(after[2])), 2)))
+				print(after[0],after[1],round(((100.0/int(before[2]))*int(after[2])), 2),sep="\t")
+
 			del coverage[0]
 			if int(next[1]) - int(after[1]) != 1:
 				del coverage[0]
@@ -363,4 +361,4 @@ if __name__ == "__main__":
 	main()
 
 if args.dev == True:
-	print("Time taken = " + str(time.time() - start_time) + " seconds.")
+	print("Time taken =",(time.time() - start_time),"seconds.")
