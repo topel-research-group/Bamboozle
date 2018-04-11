@@ -17,11 +17,11 @@ parser.add_argument("-b", "--bam", help="Bam file")
 parser.add_argument("--range", help="somethingsomsing")
 parser.add_argument("-z", "--zero", action="store_true", help="Find regions of 0x coverage")
 parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions")
-parser.add_argument("-e", "--events", action="store_true", help="Report number of deletion events, rather than individual positions")
-parser.add_argument("-f", "--frameshift", action="store_true", help="Used with -d (equivalent to -e -f); only report mutations causing a frameshift")
+parser.add_argument("-e", "--events", action="store_true", help="Report deletion events, rather than individual positions")
+parser.add_argument("-f", "--frameshift", action="store_true", help="Report frameshift deletions, rather than individual positions")
 parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
-parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f.")
-parser.add_argument("-o", "--homohetero", action="store_true", help="Determine whether a given deletion is homo- or heterozygous; WIP.")
+parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
+parser.add_argument("-o", "--homohetero", action="store_true", help="Determine whether a given deletion is homo- or heterozygous; WIP")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -30,8 +30,11 @@ args = parser.parse_args()
 if args.dev == True:
 	start_time = time.time()
 
-if args.frameshift == True and args.events == False:
+if args.frameshift == True:
 	args.events = True
+
+if args.events == True:
+	args.deletion = True
 
 def coverage_stats():
 	# This function calculates the percentage of positions in an assembly/contig
@@ -185,20 +188,17 @@ def deletion():
 				if len(window) == 12:
 					del window[position - 12]
 					window[position] = coverage
-					if ((window[position - 11]*0.8) <= window[position] <= (window[position - 11]*1.25)) and (window[position - 11] > 0) and (window[position] >= args.threshold):
+					base1 = window[position - 11]
+					if ((base1*0.8) <= window[position] <= (base1*1.25)) and (base1 > 0) and (window[position] >= args.threshold):
 						for x, y in window.items():
-							if y < (window[position - 11]*0.6) and x not in reported:
+							if y < (base1*0.6) and x not in reported:
 								reported.append(x)
 								if args.events:
 									if new_mutation(x, old_position):
 										if len(deletion) != 0:
-											deletion.append(del_size)
-											if (args.frameshift == False) or (args.frameshift and del_size % 3 != 0):
-												print(deletion[0] + "\t" + str(deletion[1]) + "\t" + str(deletion[2]))
+											print_deletion(deletion, del_size)
 											deletion = []
-# Merge the two lines below using deletion.extend
-										deletion.append(ctg)
-										deletion.append(x)
+										deletion.extend([ctg,x])
 										del_size = 1
 									else:
 										del_size +=1
@@ -211,17 +211,18 @@ def deletion():
 			if args.contig and args.contig == previous_ctg:
 				break
 
-# Ensure the final event is printed
-
-		if args.events:
-			deletion.append(del_size)
-			if (args.frameshift == False) or (args.frameshift and del_size % 3 != 0):
-				print(deletion[0] + "\t" + str(deletion[1]) + "\t" + str(deletion[2]))
-
+		if args.events:					# Ensure that the final event is reported
+			print_deletion(deletion, del_size)
 
 def new_mutation(new_position, old_position):
 	if (int(new_position) - int(old_position)) != 1:
 		return True
+
+def print_deletion(m, n):
+	m.append(n)
+	if (args.frameshift == False) or (args.frameshift and n % 3 != 0):
+		print(m[0] + "\t" + str(m[1]) + "\t" + str(m[2]))
+
 
 
 def exon_mutations():

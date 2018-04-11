@@ -2,6 +2,7 @@
 
 Script for retrieving statistics or other types of sequence information from .bam files. 
 
+## Coverage statistics
 
 Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage
 
@@ -16,6 +17,9 @@ Retrieving a statistic for what percentage of bases in an assembly have >= Nx co
 * Note: Requires a version of samtools which allows the `depth -aa` option
 * Note: percentage values are rounded to 3 decimal places
 
+
+## Consensus sequence
+
 Extracting consensus sequence of aligned reads from a specific region of the referense sequence.
 
 ```bash
@@ -24,6 +28,9 @@ Extracting consensus sequence of aligned reads from a specific region of the ref
 ```bash
 ./bamboozle.py -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
 ```
+
+
+## Zero coverage
 
 Finding areas of zero coverage and printing the reference sequence, along with a GC percentage
 
@@ -34,6 +41,9 @@ Finding areas of zero coverage and printing the reference sequence, along with a
 ./bamboozle.py -z -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_101_sorted.bam -c 000343F
 ```
 * Note: percentage values are rounded to 3 decimal places
+
+
+## Identify deletions
 
 Finding deletions; can print each deletion position, groups of adjacent deletion positions into events, or only
 those events resulting in a frameshift
@@ -48,22 +58,26 @@ those events resulting in a frameshift
 
 * With `-e` flag - combine adjacent deletion positions into discrete events
 ```bash
-./bamboozle.py -d -e -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+./bamboozle.py -e -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
 ```
 
-* With `-f` flag (or `-e -f`) - only report events which represent a frameshift (i.e. not divisible by 3)
+* With `-f` flag - only report events which represent a frameshift (i.e. not divisible by 3)
 ```bash
-./bamboozle.py -d [-e] -f -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+./bamboozle.py -f -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
 ```
+
+## Identify deletions within exons
 
 Finding deletions occuring within exons; requires a bed file of exons and a text file of deletions (the output
-of the above `-d -e/-f` function)
+of the above `-e/-f` function)
 * Note: Both `-x` and `-m` are required
 * Note: This function will eventually be merged with the above `deletions` function
 
 ```bash
 ./bamboozle.py -x <EXONS> -m <MUTATIONS>
 ```
+
+## Identify homozygous or heterozygous deletions
 
 Helping to identify whether a deletion is homozygous or heterozygous, by comparing coverage between the deletion
 and the previous base
@@ -74,14 +88,6 @@ and the previous base
 ./bamboozle.py -o -b <BAMFILE> -m <MUTATIONS>
 ```
 
-## File to point tests at
-
-example/P8352_101_sorted.bam
-
-Expected results (20x) - 97393434, 60.78250203191316%
-
-Contigs to try: 000343F, 000111F-001-01
-(Stats for 000343F (20x): 8932, 87.3152709359606%)
 
 ## Features to add
 
