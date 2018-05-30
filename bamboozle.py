@@ -22,6 +22,7 @@ parser.add_argument("-f", "--frameshift", action="store_true", help="Report fram
 parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
 parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
 parser.add_argument("-o", "--homohetero", action="store_true", help="Determine whether a given deletion is homo- or heterozygous; WIP")
+parser.add_argument("--average", action="store_true", help="Report average coverage, and bases +/-50% of this. (WIP)")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -314,6 +315,46 @@ def HomoDel_or_Hetero():
 	os.remove(temp_bed)	# Delete the temporary file
 
 
+def average_coverage():
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
+	# Count the bases in a contig (and note their coverage), then calculate an average coverage
+	# and which areas fall t% below this average
+
+
+	cmd = ["samtools depth -aa %s" % args.bam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+	cov_stats = {}
+	num_lines = 0
+	check_me = 0
+	with process.stdout as result:
+		print("Checking...")
+		rows = (line.decode().split('\t') for line in result)
+		for row in rows:
+			ctg = str(row[0])
+			position = int(row[1])
+			coverage = int(row[2])
+			if ctg == args.contig:
+				check_me = 1
+				num_lines += 1
+				cov_stats[position] = coverage
+			elif check_me == 1:
+				break
+	ave_cov = sum(cov_stats.values())/num_lines
+	print("Average coverage =",ave_cov)
+
+	for key in cov_stats:
+		if 50 < key < (num_lines - 50):
+			if (ave_cov*2) < cov_stats[key]:
+				print("Position",key,"too high")
+			elif (ave_cov/2) > cov_stats[key]:
+				print("Position",key,"too low")
+
 
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
@@ -353,6 +394,8 @@ def main():
 		zero_regions()
 	elif args.range:
 		extract_sequence()
+	elif args.average:
+		average_coverage()
 	else:
 		coverage_stats()
 
