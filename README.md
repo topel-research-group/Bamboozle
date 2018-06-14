@@ -114,3 +114,10 @@ and the previous base
   exon_mutations, rather than requiring an intermediate file
 * In HomoDel_or_Hetero function, find a way to pass the results of deletion function directly into
   HomoDel_or_Hetero, rather than requiring two intermediate files
+
+## Things to fix
+
+* In mode/modeall, if the mode is 0, then the whole contig is labelled as 'high coverage'
+  * Examples from v1.1.1 PE data - 000060F-001-01 and 000047F-001-01
+  * Experiment with median instead? This would circumvent this problem, but may create new ones
+  * Or, if the mode is 0, go for the next most common value?
