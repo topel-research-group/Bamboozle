@@ -6,6 +6,7 @@ import argparse
 import time
 import os.path
 from statistics import mode
+from collections import Counter
 
 parser = argparse.ArgumentParser(description='Obtain statistics regarding percentage coverage from bam files. \
                                               The script gives percentage of positions in an assembly/contig \
@@ -344,7 +345,14 @@ def mode_deviation():
 				cov_stats[position] = coverage
 			elif check_me == 1:
 				break
-	mode_cov = mode(cov_stats.values())
+	try:
+		mode_cov = mode(cov_stats.values())
+	except:
+		print("# Note: There is not a single mode in this contig; please check results")
+		value_counts = Counter(cov_stats.values())
+		for item, frequency in value_counts.most_common(1):
+			mode_cov = item
+
 	low_threshold = mode_cov * 0.5	# This is open to change as needed
 	high_threshold = mode_cov * 1.5
 #	print("Mode of coverage =",mode_cov)
@@ -372,6 +380,7 @@ def mode_deviation_all():
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	cov_stats = {}
+	problem_contigs = []
 	current_contig = "None"
 	print("track name=WeirdCoverage","description='Areas +/- 50% of the mode coverage'",sep="\t")
 
@@ -386,7 +395,14 @@ def mode_deviation_all():
 			if ctg == current_contig:
 				cov_stats[position] = coverage
 			elif ctg != current_contig:
-				mode_cov = mode(cov_stats.values())
+				try:
+					mode_cov = mode(cov_stats.values())
+				except:
+					problem_contigs.append(current_contig)
+					value_counts = Counter(cov_stats.values())
+					for item, frequency in value_counts.most_common(1):
+						mode_cov = item
+
 				low_threshold = mode_cov * 0.5
 				high_threshold = mode_cov * 1.5
 
@@ -395,6 +411,9 @@ def mode_deviation_all():
 				cov_stats = {}
 				current_contig = ctg
 				cov_stats[position] = coverage
+	print("# Note: the following contigs do not have a single mode; please review them")
+	for item in problem_contigs:
+		print("#",item)
 
 def make_bed(contig_lib,this_contig,lower,upper):
 	FirstHigh = 0
