@@ -88,10 +88,10 @@ and the previous base
 ./bamboozle.py -o -b <BAMFILE> -m <MUTATIONS>
 ```
 
-## Get mean average of coverage for a contig, and find bases which differ from this average by +/- 50%
+## Find regions which differ from the contig mode by +/- 50%, and output them in .bed format
 
 ```bash
-./bamboozle.py --average -c <CONTIG> -b <BAMFILE>
+./bamboozle.py --average -c <CONTIG> -b <BAMFILE> > <output.bed>
 ```
 
 
@@ -108,4 +108,3 @@ and the previous base
   exon_mutations, rather than requiring an intermediate file
 * In HomoDel_or_Hetero function, find a way to pass the results of deletion function directly into
   HomoDel_or_Hetero, rather than requiring two intermediate files
-* In `average`, compress outlier regions into groups rather than line-by-line for every base

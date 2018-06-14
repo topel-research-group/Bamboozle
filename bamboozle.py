@@ -5,6 +5,7 @@ import subprocess
 import argparse
 import time
 import os.path
+from statistics import mode
 
 parser = argparse.ArgumentParser(description='Obtain statistics regarding percentage coverage from bam files. \
                                               The script gives percentage of positions in an assembly/contig \
@@ -323,17 +324,14 @@ def average_coverage():
 		exit()
 
 	# Count the bases in a contig (and note their coverage), then calculate an average coverage
-	# and which areas fall t% below this average
-
+	# and where substantial deviations occur
 
 	cmd = ["samtools depth -aa %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	cov_stats = {}
-	num_lines = 0
 	check_me = 0
 	with process.stdout as result:
-		print("Checking...")
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
 			ctg = str(row[0])
@@ -341,19 +339,50 @@ def average_coverage():
 			coverage = int(row[2])
 			if ctg == args.contig:
 				check_me = 1
-				num_lines += 1
 				cov_stats[position] = coverage
 			elif check_me == 1:
 				break
-	ave_cov = sum(cov_stats.values())/num_lines
-	print("Average coverage =",ave_cov)
+	mode_cov = mode(cov_stats.values())
+	low_threshold = mode_cov * 0.5	# This is open to change as needed
+	high_threshold = mode_cov * 1.5
+#	print("Mode of coverage =",mode_cov)
+#	print("Low threshold =",low_threshold)
+#	print("High threshold =",high_threshold)
+
+	FirstHigh = 0
+	LastHigh = 0
+	FirstLow = 0
+	LastLow = 0
+
+	print("track name=WeirdCoverage","description='Areas +/- 50% of the mode coverage'",sep="\t")
+
+	# Need to fix for situation where there is only a single high/low base
+	# Shows funky behaviour at stretches hovering around the threshold...
 
 	for key in cov_stats:
-		if 50 < key < (num_lines - 50):
-			if (ave_cov*2) < cov_stats[key]:
-				print("Position",key,"too high")
-			elif (ave_cov/2) > cov_stats[key]:
-				print("Position",key,"too low")
+		if cov_stats[key] > high_threshold and FirstHigh == 0:
+			FirstHigh = key
+		if cov_stats[key] > high_threshold and FirstHigh != 0:
+			LastHigh = key
+		if cov_stats[key] < low_threshold and FirstLow == 0:
+			FirstLow = key
+		if cov_stats[key] < low_threshold and FirstLow != 0:
+			LastLow = key
+		if cov_stats[key] < high_threshold and LastHigh != 0:
+			print(args.contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
+			FirstHigh = 0
+			LastHigh = 0
+		if cov_stats[key] > low_threshold and LastLow != 0:
+			print(args.contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
+			FirstLow=0
+			LastLow=0
+	# Print last high event, if contig ends on a high
+	if LastHigh != 0:
+		print(args.contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
+	# Print last low event, if contig ends on a low
+	if LastLow != 0:
+		print(args.contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
+
 
 
 def extract_sequence():
