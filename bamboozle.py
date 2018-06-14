@@ -23,7 +23,8 @@ parser.add_argument("-f", "--frameshift", action="store_true", help="Report fram
 parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
 parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
 parser.add_argument("-o", "--homohetero", action="store_true", help="Determine whether a given deletion is homo- or heterozygous; WIP")
-parser.add_argument("--average", action="store_true", help="Report average coverage, and bases +/-50% of this. (WIP)")
+parser.add_argument("--mode", action="store_true", help="Report regions whose coverage differs by +/- >50% of the contig mode; single contig.")
+parser.add_argument("--modeall", action="store_true", help="Report regions whose coverage differs by +/- >50% of the contig mode; whole assembly.")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -316,21 +317,22 @@ def HomoDel_or_Hetero():
 	os.remove(temp_bed)	# Delete the temporary file
 
 
-def average_coverage():
+def mode_deviation():
 	try:
 		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
 		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
 		exit()
 
-	# Count the bases in a contig (and note their coverage), then calculate an average coverage
-	# and where substantial deviations occur
+	# Calculate mode coverage of contig, then identify regions which deviate from this by +/- 50%
+	# Output in bed format
 
 	cmd = ["samtools depth -aa %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	cov_stats = {}
 	check_me = 0
+	current_contig = args.contig
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
@@ -349,40 +351,80 @@ def average_coverage():
 #	print("Low threshold =",low_threshold)
 #	print("High threshold =",high_threshold)
 
+
+	# Shows funky behaviour at stretches hovering around the threshold...
+
+	print("track name=WeirdCoverage","description='Areas +/- 50% of the mode coverage'",sep="\t")
+
+	make_bed(cov_stats,current_contig,low_threshold,high_threshold)
+
+
+def mode_deviation_all():
+	# Shows funky behaviour at stretches hovering around the threshold...
+
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
+	cmd = ["samtools depth -aa %s" % args.bam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+	cov_stats = {}
+	current_contig = "None"
+	print("track name=WeirdCoverage","description='Areas +/- 50% of the mode coverage'",sep="\t")
+
+	with process.stdout as result:
+		rows = (line.decode().split('\t') for line in result)
+		for row in rows:
+			ctg = str(row[0])
+			position = int(row[1])
+			coverage = int(row[2])
+			if current_contig == "None":
+				current_contig = ctg
+			if ctg == current_contig:
+				cov_stats[position] = coverage
+			elif ctg != current_contig:
+				mode_cov = mode(cov_stats.values())
+				low_threshold = mode_cov * 0.5
+				high_threshold = mode_cov * 1.5
+
+				make_bed(cov_stats,current_contig,low_threshold,high_threshold)
+
+				cov_stats = {}
+				current_contig = ctg
+				cov_stats[position] = coverage
+
+def make_bed(contig_lib,this_contig,lower,upper):
 	FirstHigh = 0
 	LastHigh = 0
 	FirstLow = 0
 	LastLow = 0
 
-	print("track name=WeirdCoverage","description='Areas +/- 50% of the mode coverage'",sep="\t")
-
-	# Need to fix for situation where there is only a single high/low base
-	# Shows funky behaviour at stretches hovering around the threshold...
-
-	for key in cov_stats:
-		if cov_stats[key] > high_threshold and FirstHigh == 0:
+	for key in contig_lib:
+		if contig_lib[key] > upper and FirstHigh == 0:
 			FirstHigh = key
-		if cov_stats[key] > high_threshold and FirstHigh != 0:
+		if contig_lib[key] > upper and FirstHigh != 0:
 			LastHigh = key
-		if cov_stats[key] < low_threshold and FirstLow == 0:
+		if contig_lib[key] < lower and FirstLow == 0:
 			FirstLow = key
-		if cov_stats[key] < low_threshold and FirstLow != 0:
+		if contig_lib[key] < lower and FirstLow != 0:
 			LastLow = key
-		if cov_stats[key] < high_threshold and LastHigh != 0:
-			print(args.contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
+		if contig_lib[key] < upper and LastHigh != 0:
+			print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
 			FirstHigh = 0
 			LastHigh = 0
-		if cov_stats[key] > low_threshold and LastLow != 0:
-			print(args.contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
+		if contig_lib[key] > lower and LastLow != 0:
+			print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
 			FirstLow=0
 			LastLow=0
 	# Print last high event, if contig ends on a high
 	if LastHigh != 0:
-		print(args.contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
+		print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
 	# Print last low event, if contig ends on a low
 	if LastLow != 0:
-		print(args.contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
-
+		print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
 
 
 def extract_sequence():
@@ -423,8 +465,10 @@ def main():
 		zero_regions()
 	elif args.range:
 		extract_sequence()
-	elif args.average:
-		average_coverage()
+	elif args.mode:
+		mode_deviation()
+	elif args.modeall:
+		mode_deviation_all()
 	else:
 		coverage_stats()
 

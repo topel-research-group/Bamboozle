@@ -91,7 +91,13 @@ and the previous base
 ## Find regions which differ from the contig mode by +/- 50%, and output them in .bed format
 
 ```bash
-./bamboozle.py --average -c <CONTIG> -b <BAMFILE> > <output.bed>
+./bamboozle.py --mode -c <CONTIG> -b <BAMFILE> > <output.bed>
+```
+
+## As above, but for each contig in the assembly
+
+```bash
+./bamboozle.py --modeall -b <BAMFILE> > <output.bed>
 ```
 
 
