@@ -88,16 +88,16 @@ and the previous base
 ./bamboozle.py -o -b <BAMFILE> -m <MUTATIONS>
 ```
 
-## Find regions which differ from the contig mode by +/- 50%, and output them in .bed format
+## Find regions which differ from the contig median by +/- 50%, and output them in .bed format
 
 ```bash
-./bamboozle.py --mode -c <CONTIG> -b <BAMFILE> > <output.bed>
+./bamboozle.py --median -c <CONTIG> -b <BAMFILE> > <output.bed>
 ```
 
 ## As above, but for each contig in the assembly
 
 ```bash
-./bamboozle.py --modeall -b <BAMFILE> > <output.bed>
+./bamboozle.py --medianall -b <BAMFILE> > <output.bed>
 ```
 
 
@@ -115,9 +115,4 @@ and the previous base
 * In HomoDel_or_Hetero function, find a way to pass the results of deletion function directly into
   HomoDel_or_Hetero, rather than requiring two intermediate files
 
-## Things to fix
-
-* In mode/modeall, if the mode is 0, then the whole contig is labelled as 'high coverage'
-  * Examples from v1.1.1 PE data - 000060F-001-01 and 000047F-001-01
-  * Experiment with median instead? This would circumvent this problem, but may create new ones
-  * Or, if the mode is 0, go for the next most common value?
+* Would it be useful to have an 'average' function, to report the median of each contig?

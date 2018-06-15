@@ -5,8 +5,7 @@ import subprocess
 import argparse
 import time
 import os.path
-from statistics import mode
-from collections import Counter
+from statistics import median
 
 parser = argparse.ArgumentParser(description='Obtain statistics regarding percentage coverage from bam files. \
                                               The script gives percentage of positions in an assembly/contig \
@@ -24,8 +23,8 @@ parser.add_argument("-f", "--frameshift", action="store_true", help="Report fram
 parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
 parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
 parser.add_argument("-o", "--homohetero", action="store_true", help="Determine whether a given deletion is homo- or heterozygous; WIP")
-parser.add_argument("--mode", action="store_true", help="Report regions whose coverage differs by +/- >50% of the contig mode; single contig.")
-parser.add_argument("--modeall", action="store_true", help="Report regions whose coverage differs by +/- >50% of the contig mode; whole assembly.")
+parser.add_argument("--median", action="store_true", help="Report regions whose coverage differs by +/- >50% of the contig median; single contig.")
+parser.add_argument("--medianall", action="store_true", help="Report regions whose coverage differs by +/- >50% of the contig median; whole assembly.")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -318,14 +317,14 @@ def HomoDel_or_Hetero():
 	os.remove(temp_bed)	# Delete the temporary file
 
 
-def mode_deviation():
+def median_deviation():
 	try:
 		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
 		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
 		exit()
 
-	# Calculate mode coverage of contig, then identify regions which deviate from this by +/- 50%
+	# Calculate median coverage of contig, then identify regions which deviate from this by +/- 50%
 	# Output in bed format
 
 	cmd = ["samtools depth -aa %s" % args.bam]
@@ -345,29 +344,22 @@ def mode_deviation():
 				cov_stats[position] = coverage
 			elif check_me == 1:
 				break
-	try:
-		mode_cov = mode(cov_stats.values())
-	except:
-		print("# Note: There is not a single mode in this contig; please check results")
-		value_counts = Counter(cov_stats.values())
-		for item, frequency in value_counts.most_common(1):
-			mode_cov = item
-
-	low_threshold = mode_cov * 0.5	# This is open to change as needed
-	high_threshold = mode_cov * 1.5
-#	print("Mode of coverage =",mode_cov)
+	median_cov = median(cov_stats.values())
+	low_threshold = median_cov * 0.5	# This is open to change as needed
+	high_threshold = median_cov * 1.5
+#	print("Median coverage =",median_cov)
 #	print("Low threshold =",low_threshold)
 #	print("High threshold =",high_threshold)
 
 
 	# Shows funky behaviour at stretches hovering around the threshold...
 
-	print("track name=WeirdCoverage","description='Areas +/- 50% of the mode coverage'",sep="\t")
+	print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
 
 	make_bed(cov_stats,current_contig,low_threshold,high_threshold)
 
 
-def mode_deviation_all():
+def median_deviation_all():
 	# Shows funky behaviour at stretches hovering around the threshold...
 
 	try:
@@ -380,9 +372,8 @@ def mode_deviation_all():
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	cov_stats = {}
-	problem_contigs = []
 	current_contig = "None"
-	print("track name=WeirdCoverage","description='Areas +/- 50% of the mode coverage'",sep="\t")
+	print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
 
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
@@ -395,25 +386,15 @@ def mode_deviation_all():
 			if ctg == current_contig:
 				cov_stats[position] = coverage
 			elif ctg != current_contig:
-				try:
-					mode_cov = mode(cov_stats.values())
-				except:
-					problem_contigs.append(current_contig)
-					value_counts = Counter(cov_stats.values())
-					for item, frequency in value_counts.most_common(1):
-						mode_cov = item
-
-				low_threshold = mode_cov * 0.5
-				high_threshold = mode_cov * 1.5
+				median_cov = median(cov_stats.values())
+				low_threshold = median_cov * 0.5
+				high_threshold = median_cov * 1.5
 
 				make_bed(cov_stats,current_contig,low_threshold,high_threshold)
 
 				cov_stats = {}
 				current_contig = ctg
 				cov_stats[position] = coverage
-	print("# Note: the following contigs do not have a single mode; please review them")
-	for item in problem_contigs:
-		print("#",item)
 
 def make_bed(contig_lib,this_contig,lower,upper):
 	FirstHigh = 0
@@ -484,10 +465,10 @@ def main():
 		zero_regions()
 	elif args.range:
 		extract_sequence()
-	elif args.mode:
-		mode_deviation()
-	elif args.modeall:
-		mode_deviation_all()
+	elif args.median:
+		median_deviation()
+	elif args.medianall:
+		median_deviation_all()
 	else:
 		coverage_stats()
 
