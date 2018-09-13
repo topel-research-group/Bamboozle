@@ -116,3 +116,8 @@ and the previous base
   HomoDel_or_Hetero, rather than requiring two intermediate files
 
 * Would it be useful to have an 'average' function, to report the median of each contig?
+
+
+## Known bugs
+In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
+together in the output
