@@ -20,7 +20,7 @@ args = parser.parse_args()
 
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
-ref = '/proj/data11/vilma/Pipeline_vilma/P8352_102/Skeletonema_marinoi_Ref_v1.1.1.fst'
+ref = '/proj/data11/vilma/Pipeline_vilma/Skeletonema_marinoi_Ref_v1.1.1.fst'
 base = name + '.contigs'
 #file1 = '/proj/data11/vilma/Pipeline_vilma/P8352_102/P8352_102_S1_L001_R1_001.fastq.gz'
 #file2 = '/proj/data11/vilma/Pipeline_vilma/P8352_102/P8352_102_S1_L001_R2_001.fastq.gz'
@@ -87,6 +87,15 @@ def samtools():
 			cmd5 = ['samtools','index', sorted_bam, sorted_bam_bai]
 			process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd=('Bowtie2'))
 
+	# Remove SAM and BAM file
+	for samfile in os.listdir('Bowtie2'):
+		if fnmatch.fnmatch(samfile, '*.sam'):
+			os.remove(current_directory + '/Bowtie2/' + samfile)
+
+	for bamfile in os.listdir('Bowtie2'):
+		if fnmatch.fnmatch(bamfile, name + '.bam'):
+			os.remove(current_directory + '/Bowtie2/' + bamfile)
+
 # Variant calling using samtools mpileup
 def vcalling():
 	vcalling_directory = os.path.join(current_directory, r'Vcalling')
@@ -107,8 +116,8 @@ def bcftools():
                 os.makedirs(bcftools_directory)
         for file in os.listdir('Bowtie2'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
-                        cmd6 = ("bcftools mpileup -Oz -f %s %s | bcftools call -v -m -O z | bcftools filter -s LowQual -e 'QUAL<20 || DP>100' > %s") \
-                        % (ref, sorted_bam_input, bcftools_out)
+                        cmd6 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
+			-e 'QUAL<20 || DP>100' > %s") % (ref, sorted_bam_input, bcftools_out)
                         process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
                         while process6.wait() is None:
                                 pass
