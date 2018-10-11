@@ -22,15 +22,15 @@ current_directory = os.getcwd()
 name = os.path.basename(current_directory)
 ref = '/proj/data11/vilma/Pipeline_vilma/Skeletonema_marinoi_Ref_v1.1.1.fst'
 base = name + '.contigs'
-#file1 = '/proj/data11/vilma/Pipeline_vilma/P8352_102/P8352_102_S1_L001_R1_001.fastq.gz'
-#file2 = '/proj/data11/vilma/Pipeline_vilma/P8352_102/P8352_102_S1_L001_R2_001.fastq.gz'
 sam = name + '.sam'
 bam = name + '.bam'
 sorted_bam = name + '_sorted.bam'
 sorted_bam_input = current_directory + '/Bowtie2/' + name + '_sorted.bam'
+sorted_bam_input_2 = current_directory + '/' + name + '_sorted.bam'
+sorted_bam_bai = name + '_sorted.bam.bai'
 sorted_bam_bai = name + '_sorted.bam.bai'
 mpileup_out = name + '.mpileup.vcf.gz'
-bcftools_out = name + '.bcftools_filtered.vcf'
+bcftools_out = name + '.bcftools_filtered.bcf'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_filtered_vcf = name + '_annotated_filtered.vcf'
 
@@ -53,14 +53,14 @@ def bowtie2():
 	if not os.path.exists(bowtie2_directory):
    		os.makedirs(bowtie2_directory)
 	cmd1 = ['bowtie2-build', ref, base]
-	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd=('Bowtie2'))	
-	for line in process1.stdout:
-		print line
-	
+	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
+	while process1.wait() is None:
+		pass
+
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.2.bt2'):
 			cmd2 = ['bowtie2', '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
-			process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd=('Bowtie2'))
+			process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process2.wait() is None:
                                 pass
 
@@ -69,25 +69,47 @@ def samtools():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
 			cmd3 = ('samtools view -Sb %s > %s') % (sam, bam)
-			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd=('Bowtie2'), shell=True)
+			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd='Bowtie2', shell=True)
 			while process3.wait() is None:
 				pass
+		else:
+			continue	
 
 	# Sort BAM files
 	for file in os.listdir('Bowtie2'):
        		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', bam, '-o', sorted_bam]
-			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd=('Bowtie2'))
+			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process4.wait() is None:
-                        	pass	
+                    		pass	
+		else: 
+			continue	
+
+	# If the input files are BAM files and previous steps haven't been made the program will look 
+	# for the BAM files in cwd instead of the Bowtie2 directory
+	for file in os.listdir('.'):
+		if fnmatch.fnmatch(file, '*.bam'):
+            		cmd4 = ['samtools', 'sort', bam, '-o', sorted_bam] 
+              		process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='.')
+               		while process4.wait() is None:
+               			pass  
 
 	# Index sorted BAM files
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
 			cmd5 = ['samtools','index', sorted_bam, sorted_bam_bai]
-			process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd=('Bowtie2'))
+			process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='Bowtie2')
+			while process5.wait() is None:
+				pass
+		else:
+			continue	
 
-	# Remove SAM and BAM file
+	for file in os.listdir('.'):
+		if fnmatch.fnmatch(file, '*_sorted.bam'):
+                    	cmd5 = ['samtools','index', sorted_bam, sorted_bam_bai]
+                      	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd=('.'))
+
+        # Remove SAM and BAM files
 	for samfile in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(samfile, '*.sam'):
 			os.remove(current_directory + '/Bowtie2/' + samfile)
@@ -101,12 +123,24 @@ def vcalling():
 	vcalling_directory = os.path.join(current_directory, r'Vcalling')
         if not os.path.exists(vcalling_directory):
                 os.makedirs(vcalling_directory)
+
 	for file in os.listdir('Bowtie2'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
 			cmd6 = ("samtools mpileup -u -g -f %s %s | bcftools call -v -m -O z -o %s") \
 			% (ref, sorted_bam_input, mpileup_out)
-			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Vcalling')
+			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, cwd='Vcalling')
 			while process6.wait() is None:
+                                pass
+		else:
+			continue	
+
+	# If input files were BAM files	
+	for file in os.listdir('.'):
+                if fnmatch.fnmatch(file, '*_sorted.bam'):
+                        cmd6 = ("samtools mpileup -u -g -f %s %s | bcftools call -v -m -O z -o %s") \
+                        % (ref, sorted_bam_input_2, mpileup_out)
+                        process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Vcalling')
+                        while process6.wait() is None:
                                 pass
 
 # Variant calling using bcftools mpileup
@@ -114,10 +148,22 @@ def bcftools():
 	bcftools_directory = os.path.join(current_directory, r'Bcftools')
         if not os.path.exists(bcftools_directory):
                 os.makedirs(bcftools_directory)
+
         for file in os.listdir('Bowtie2'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
                         cmd6 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
 			-e 'QUAL<20 || DP>100' > %s") % (ref, sorted_bam_input, bcftools_out)
+                        process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+                        while process6.wait() is None:
+                                pass
+		else:
+			continue	
+
+	# If input files were BAM files
+	for file in os.listdir('.'):
+                if fnmatch.fnmatch(file, '*_sorted.bam'):
+                        cmd6 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
+                        -e 'QUAL<20 || DP>100' > %s") % (ref, sorted_bam_input_2, bcftools_out)
                         process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
                         while process6.wait() is None:
                                 pass
