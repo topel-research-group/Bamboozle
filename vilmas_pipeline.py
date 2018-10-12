@@ -15,6 +15,7 @@ parser.add_argument("-c", "--vcalling", action="store_true", help="Run mpileup")
 parser.add_argument("-a", "--annotation", action="store_true", help="Run snpEff")
 parser.add_argument("-f", "--filtering", action="store_true", help="Run snpSift")
 parser.add_argument("-t", "--bcftools", action="store_true", help="Run Bcftools")
+parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
 args = parser.parse_args()
 ##################################################################################
 
@@ -28,9 +29,7 @@ sorted_bam = name + '_sorted.bam'
 sorted_bam_input = current_directory + '/Bowtie2/' + name + '_sorted.bam'
 sorted_bam_input_2 = current_directory + '/' + name + '_sorted.bam'
 sorted_bam_bai = name + '_sorted.bam.bai'
-sorted_bam_bai = name + '_sorted.bam.bai'
-mpileup_out = name + '.mpileup.vcf.gz'
-bcftools_out = name + '.bcftools_filtered.bcf'
+bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_filtered_vcf = name + '_annotated_filtered.vcf'
 
@@ -58,7 +57,7 @@ def bowtie2():
 		pass
 
 	for file in os.listdir('Bowtie2'):
-		if fnmatch.fnmatch(file, '*.rev.2.bt2'):
+		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
 			cmd2 = ['bowtie2', '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
 			process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process2.wait() is None:
@@ -89,7 +88,8 @@ def samtools():
 	# for the BAM files in cwd instead of the Bowtie2 directory
 	for file in os.listdir('.'):
 		if fnmatch.fnmatch(file, '*.bam'):
-            		cmd4 = ['samtools', 'sort', bam, '-o', sorted_bam] 
+			input_bam = file
+            		cmd4 = ['samtools', 'sort', input_bam, '-o', sorted_bam] 
               		process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='.')
                		while process4.wait() is None:
                			pass  
@@ -110,38 +110,14 @@ def samtools():
                       	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd=('.'))
 
         # Remove SAM and BAM files
-	for samfile in os.listdir('Bowtie2'):
-		if fnmatch.fnmatch(samfile, '*.sam'):
-			os.remove(current_directory + '/Bowtie2/' + samfile)
+	if args.clean:
+		for samfile in os.listdir('Bowtie2'):
+			if fnmatch.fnmatch(samfile, '*.sam'):
+				os.remove(current_directory + '/Bowtie2/' + samfile)
 
-	for bamfile in os.listdir('Bowtie2'):
-		if fnmatch.fnmatch(bamfile, name + '.bam'):
-			os.remove(current_directory + '/Bowtie2/' + bamfile)
-
-# Variant calling using samtools mpileup
-def vcalling():
-	vcalling_directory = os.path.join(current_directory, r'Vcalling')
-        if not os.path.exists(vcalling_directory):
-                os.makedirs(vcalling_directory)
-
-	for file in os.listdir('Bowtie2'):
-                if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd6 = ("samtools mpileup -u -g -f %s %s | bcftools call -v -m -O z -o %s") \
-			% (ref, sorted_bam_input, mpileup_out)
-			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, cwd='Vcalling')
-			while process6.wait() is None:
-                                pass
-		else:
-			continue	
-
-	# If input files were BAM files	
-	for file in os.listdir('.'):
-                if fnmatch.fnmatch(file, '*_sorted.bam'):
-                        cmd6 = ("samtools mpileup -u -g -f %s %s | bcftools call -v -m -O z -o %s") \
-                        % (ref, sorted_bam_input_2, mpileup_out)
-                        process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Vcalling')
-                        while process6.wait() is None:
-                                pass
+		for bamfile in os.listdir('Bowtie2'):
+			if fnmatch.fnmatch(bamfile, name + '.bam'):
+				os.remove(current_directory + '/Bowtie2/' + bamfile)
 
 # Variant calling using bcftools mpileup
 def bcftools():
@@ -152,7 +128,7 @@ def bcftools():
         for file in os.listdir('Bowtie2'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
                         cmd6 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-			-e 'QUAL<20 || DP>100' > %s") % (ref, sorted_bam_input, bcftools_out)
+			-e 'QUAL<20 || DP>100' -Oz -o %s") % (ref, sorted_bam_input, bcftools_out)
                         process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
                         while process6.wait() is None:
                                 pass
@@ -163,35 +139,32 @@ def bcftools():
 	for file in os.listdir('.'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
                         cmd6 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-                        -e 'QUAL<20 || DP>100' > %s") % (ref, sorted_bam_input_2, bcftools_out)
+                        -e 'QUAL<20 || DP>100' -Oz -o %s") % (ref, sorted_bam_input_2, bcftools_out, bcftools_out)
                         process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
                         while process6.wait() is None:
                                 pass
 
 # Variant annotation and effect prediction
 def annotation():
-	for file in os.listdir('Vcalling'):
-                if fnmatch.fnmatch(file, '*.mpileup.vcf.gz'):
+	for file in os.listdir('Bcftools'):
+                if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
 			cmd7 = ("snpEff -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
-			-stats snpEff_summary.html %s > %s") % (mpileup_out, annotated_vcf)
-			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Vcalling')
+			-stats snpEff_summary.html %s > %s") % (bcftools_out, annotated_vcf)
+			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process7.wait() is None:
                                 pass
 
 # Filtering and manipulation of annotated files
 def filtering():
-	for file in os.listdir('Vcalling'):
+	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*_annotated.vcf'):
 			cmd8 = ('cat %s | java -jar /usr/local/packages/snpEff/SnpSift.jar \
 			filter "(QUAL>=10)&(DP>=10)" > %s') % (annotated_vcf, annotated_filtered_vcf) 
-			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Vcalling')
+			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process8.wait() is None:
 				pass
 
-#def main():
-
-if __name__ == "__main__":
-
+def main():
 	if args.bowtie2:
 		bowtie2()
 
@@ -209,3 +182,7 @@ if __name__ == "__main__":
 
 	if args.bcftools:
 		bcftools()
+
+if __name__ == "__main__":
+	main()
+
