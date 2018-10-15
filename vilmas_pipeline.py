@@ -16,6 +16,7 @@ parser.add_argument("-a", "--annotation", action="store_true", help="Run snpEff"
 parser.add_argument("-f", "--filtering", action="store_true", help="Run snpSift")
 parser.add_argument("-t", "--bcftools", action="store_true", help="Run Bcftools")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
+parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
 args = parser.parse_args()
 ##################################################################################
 
@@ -164,6 +165,10 @@ def filtering():
 			while process8.wait() is None:
 				pass
 
+# Add empty file when the pipeline is done
+def done():
+	open("pipeline.done", 'a').close()
+	
 def main():
 	if args.bowtie2:
 		bowtie2()
@@ -182,6 +187,9 @@ def main():
 
 	if args.bcftools:
 		bcftools()
+
+	if args.done:
+		done()
 
 if __name__ == "__main__":
 	main()
