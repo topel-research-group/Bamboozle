@@ -44,34 +44,34 @@ def main():
 
 	# Make directory for the merged vcf-files for population1 and population2
 	population_directory = os.path.join(current_directory, r'Populations')
-        if not os.path.exists(population_directory):
-        	os.makedirs(population_directory)
+	if not os.path.exists(population_directory):
+       		os.makedirs(population_directory)
 
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population1
 	directories2 = current_directory + '/*_1/*/Bcftools/*.bcftools_filtered.vcf.gz'
-        name_list1 = glob.glob(directories2)
+	name_list1 = glob.glob(directories2)
 	myfile = open("name_1_list.txt","w")
 	for n1 in name_list1:
-        	myfile.write("%s\n" % n1)
+		myfile.write("%s\n" % n1)
 
 	myfile.close()
-       	cmd2 = ['bcftools', 'merge', '-l', names1, '-Oz', '-o', merged_vcf_pop1]   
+	cmd2 = ['bcftools', 'merge', '-l', names1, '-Oz', '-o', merged_vcf_pop1]   
 	process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Populations')
 	while process2.wait() is None:
-            	pass
+		pass
 
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population2
-   	directories3 = current_directory + '/*_2/*/Bcftools/*.bcftools_filtered.vcf.gz'
-        name_list2 = glob.glob(directories3)
-        myfile2 = open("name_2_list.txt","w")
-        for n2 in name_list2:
-                myfile2.write("%s\n" % n2)
+	directories3 = current_directory + '/*_2/*/Bcftools/*.bcftools_filtered.vcf.gz'
+	name_list2 = glob.glob(directories3)
+	myfile2 = open("name_2_list.txt","w")
+	for n2 in name_list2:
+		myfile2.write("%s\n" % n2)
 
-        myfile2.close()
-        cmd3 = ['bcftools', 'merge', '-l', names2, '-Oz', '-o', merged_vcf_pop2]   
-        process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd='Populations')
-        while process3.wait() is None:
-                pass
+	myfile2.close()
+	cmd3 = ['bcftools', 'merge', '-l', names2, '-Oz', '-o', merged_vcf_pop2]   
+	process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd='Populations')
+	while process3.wait() is None:
+		pass
 
 	# Making a txt file of the names of the individuals in the populations that is needed for vcftools --wei-fst-pop
 	# and indexing the merged files for population1 and population2
@@ -83,82 +83,82 @@ def main():
         			pass
 
 			cmd6 = ['bcftools', 'index', '-c', merged_vcf_pop1]
-                        process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, cwd='Populations')
-                        while process6.wait() is None:
-                                pass
+			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, cwd='Populations')
+			while process6.wait() is None:
+				pass
 
 		elif fnmatch.fnmatch(file, '*_merged_pop2.vcf.gz'):
-                        cmd7 = ('bcftools query -l %s > %s') % (merged_vcf_pop2, indv_txt_pop2)
-                        process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Populations')
-                        while process7.wait() is None:
-                                pass
+			cmd7 = ('bcftools query -l %s > %s') % (merged_vcf_pop2, indv_txt_pop2)
+			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Populations')
+			while process7.wait() is None:
+				pass
 
 			cmd8 = ['bcftools', 'index', '-c', merged_vcf_pop2]
-                	process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, cwd='Populations')
-                	while process8.wait() is None:
-                		pass
+			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, cwd='Populations')
+			while process8.wait() is None:
+				pass
 	
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population1 and population2
 	# to a "all_merged" vcf file, which will be the input file to vcftools --weir-fst-pop 
 	directories4 = current_directory + '/Populations/*_merged_*.vcf.gz'
-        pop_list = glob.glob(directories4)
+	pop_list = glob.glob(directories4)
 	myfile3 = open("pop_list.txt","w")
-       	for p in pop_list:
-            	myfile3.write("%s\n" % p)
+	for p in pop_list:
+		myfile3.write("%s\n" % p)
 
-        myfile3.close()
+	myfile3.close()
 	cmd9 = ['bcftools', 'merge', '-l', population_list, '-Oz', '-o', all_pop_merged] 
-       	process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, cwd='Populations')
+	process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, cwd='Populations')
 	while process9.wait() is None:
-       		pass
+		pass
 
 	# Making directory for Fst-results, input-files to highcharts
 	fst_directory = os.path.join(current_directory, r'Fst_stats')
-        if not os.path.exists(fst_directory):
-                os.makedirs(fst_directory)
+	if not os.path.exists(fst_directory):
+		os.makedirs(fst_directory)
 
 	# Fst_statistics 
 	for file in os.listdir('Populations'):
-                if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
+		if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
 			cmd10 = ['vcftools', '--gzvcf', all_pop_merged, '--weir-fst-pop', indv_txt_pop1, '--weir-fst-pop', indv_txt_pop2, '--out', fst_out]
 			process10 = subprocess.Popen(cmd10, stdout=subprocess.PIPE, cwd='Populations')
 			while process10.wait() is None:
-                                pass
+				pass
 
 	# Filtering the resulting files from vcftools and making a new directory called Fst_stats with the resulting files,  
 	# the csv-file will be the input file to high charts 
 	for file in os.listdir('Populations'):
-        	if fnmatch.fnmatch(file, '*.weir.fst'):
+		if fnmatch.fnmatch(file, '*.weir.fst'):
 			cmd11 = ('cat %s | grep -v "nan" > %s') % (fst_out_in, fst_out_flt)
 			process11 = subprocess.Popen(cmd11, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process11.wait() is None:
-        			pass
+				pass
 
 	# Removing the results below zero
-        for file in os.listdir('Fst_stats'):
-        	if fnmatch.fnmatch(file, '*flt.table'):
-        		cmd12 = ("awk '{if ($3 >=0) print}' %s > %s") % (fst_out_flt, fst_out_flt_results)
-        		process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
+	for file in os.listdir('Fst_stats'):
+		if fnmatch.fnmatch(file, '*flt.table'):
+			cmd12 = ("awk '{if ($3 >=0) print}' %s > %s") % (fst_out_flt, fst_out_flt_results)
+			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process12.wait() is None:
-        			pass
+				pass
 
 			# Rearrange columns
-                        cmd13 = ('''awk '{print $2 "\t" $3}' %s > %s''') % (fst_out_flt_results, fst_out_flt2_results)
-                        process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, executable='/bin/bash', cwd='Fst_stats')
-                        while process13.wait() is None:
-                                pass
+			cmd13 = ('''awk '{print $2 "\t" $3}' %s > %s''') % (fst_out_flt_results, fst_out_flt2_results)
+			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, executable='/bin/bash', cwd='Fst_stats')
+			while process13.wait() is None:
+				pass
 
 			# Sorting the POS column (needed for x-axis in highcharts)
-                        cmd14 = ("cat %s | sort -n > %s") % (fst_out_flt2_results, fst_results_sorted)
-                        process14 = subprocess.Popen(cmd14, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
-                        while process14.wait() is None:
-                                pass
+			cmd14 = ("cat %s | sort -n > %s") % (fst_out_flt2_results, fst_results_sorted)
+			process14 = subprocess.Popen(cmd14, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
+			while process14.wait() is None:
+				pass
 
 			# Making a csv-file
-                        cmd15 = ('cat %s | tr "\t" ","  > %s') % (fst_results_sorted, fst_results_sorted_csv)
-                        process15 = subprocess.Popen(cmd15, stdout=subprocess.PIPE, shell=True, executable='/bin/bash', cwd='Fst_stats')
-                        while process15.wait() is None:
-                                pass
+			cmd15 = ('cat %s | tr "\t" ","  > %s') % (fst_results_sorted, fst_results_sorted_csv)
+			process15 = subprocess.Popen(cmd15, stdout=subprocess.PIPE, shell=True, executable='/bin/bash', cwd='Fst_stats')
+			while process15.wait() is None:
+				pass
 
 	# Removing tmp-files
 	if args.clean:
@@ -166,11 +166,11 @@ def main():
 			if fnmatch.fnmatch(textfile, 'name_*_list.txt'):
 				os.remove(textfile)
 			elif fnmatch.fnmatch(textfile, 'pop_list.txt'):
-                                os.remove(textfile)
+				os.remove(textfile)
 		
 		for fstfile in os.listdir('Fst_stats'):
-                        if fnmatch.fnmatch(fstfile, 'tmp.*'):
-                                os.remove(current_directory + '/Fst_stats/' + fstfile)
+			if fnmatch.fnmatch(fstfile, 'tmp.*'):
+				os.remove(current_directory + '/Fst_stats/' + fstfile)
 		
 
 if __name__ == "__main__":
