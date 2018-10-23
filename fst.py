@@ -11,7 +11,6 @@ import csv
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
-parser.add_argument("-p", "--plot", action="store_true", help="Plot the Fst results")
 parser.add_argument("-c", "--clean", action="store_true", help="Remove some files")
 args = parser.parse_args()
 ##################################################################################
@@ -147,8 +146,8 @@ def main():
 				pass
 
 			# Rearrange columns (if needed)
-			cmd13 = ('''awk '{print $1 "\t" $2 "\t" $3}' %s > %s''') % (fst_out_flt_results, fst_out_flt2_results)
-			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, executable='/bin/bash', cwd='Fst_stats')
+			cmd13 = ('''awk '{print $1 "\\t" $2 "\\t" $3}' %s > %s''') % (fst_out_flt_results, fst_out_flt2_results)
+			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process13.wait() is None:
 				pass
 
@@ -159,31 +158,30 @@ def main():
 				pass
 
 			# Making a csv-file
-			cmd15 = ('cat %s | tr "\t" ","  > %s') % (fst_results_sorted, fst_results_sorted_csv)
-			process15 = subprocess.Popen(cmd15, stdout=subprocess.PIPE, shell=True, executable='/bin/bash', cwd='Fst_stats')
+			cmd15 = ('cat %s | tr "\\t" ","  > %s') % (fst_results_sorted, fst_results_sorted_csv)
+			process15 = subprocess.Popen(cmd15, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process15.wait() is None:
 				pass
 
 	# Making a plot of the Fst results using highcharts, the output is a html file
-	if args.plot:
-		for file in os.listdir('Fst_stats'):
-			if fnmatch.fnmatch(file, 'pop1_pop2_flt_results_sorted.csv'):
-				with open(path_for_plot + 'pop1_pop2_flt_results_sorted.csv') as infile: 
-					csv_infile = csv.reader(infile)
-					next(csv_infile)
-					csv_list = [] 
+	for file in os.listdir('Fst_stats'):
+		if fnmatch.fnmatch(file, 'pop1_pop2_flt_results_sorted.csv'):
+			with open(path_for_plot + 'pop1_pop2_flt_results_sorted.csv') as infile: 
+				csv_infile = csv.reader(infile)
+				next(csv_infile)
+				csv_list = [] 
 
-					for line in csv_infile:
-						csv_list.append('\\n\\"' +line[0]+ '\\"' + ";" + line[1] + ";" + line[2])  
+				for line in csv_infile:
+					csv_list.append('\\n\\"' +line[0]+ '\\"' + ";" + line[1] + ";" + line[2])  
 
-				file=open(path_for_plot + 'Fst_results.html', 'w')
+			file=open(path_for_plot + 'Fst_results.html', 'w')
 
-				string_prefix = '''"\\"CHROM\\";\\"POS\\";\\"WEIR_AND_COCKERHAM_FST\\"''' 
+			string_prefix = '''"\\"CHROM\\";\\"POS\\";\\"WEIR_AND_COCKERHAM_FST\\"''' 
  
-				html_part1= '''<div id="highcharts-aac96e77-0ad0-4715-a815-b427470cf979"></div><script>
-						(function(){ var files = ["https://code.highcharts.com/stock/highstock.js","https://code.highcharts.com/highcharts-more.js","https://code.highcharts.com/highcharts-3d.js","https://code.highcharts.com/modules/data.js","https://code.highcharts.com/modules/exporting.js","http://code.highcharts.com/modules/funnel.js","http://code.highcharts.com/modules/solid-gauge.js"],loaded = 0; if (typeof window["HighchartsEditor"] === "undefined") {window.HighchartsEditor = {ondone: [cl],hasWrapped: false,hasLoaded: false};include(files[0]);} else {if (window.HighchartsEditor.hasLoaded) {cl();} else {window.HighchartsEditor.ondone.push(cl);}}function isScriptAlreadyIncluded(src){var scripts = document.getElementsByTagName("script");for (var i = 0; i < scripts.length; i++) {if (scripts[i].hasAttribute("src")) {if ((scripts[i].getAttribute("src") || "").indexOf(src) >= 0 || (scripts[i].getAttribute("src") === "http://code.highcharts.com/highcharts.js" && src === "https://code.highcharts.com/stock/highstock.js")) {return true;}}}return false;}function check() {if (loaded === files.length) {for (var i = 0; i < window.HighchartsEditor.ondone.length; i++) {try {window.HighchartsEditor.ondone[i]();} catch(e) {console.error(e);}}window.HighchartsEditor.hasLoaded = true;}}function include(script) {function next() {++loaded;if (loaded < files.length) {include(files[loaded]);}check();}if (isScriptAlreadyIncluded(script)) {return next();}var sc=document.createElement("script");sc.src = script;sc.type="text/javascript";sc.onload=function() { next(); };document.head.appendChild(sc);}function each(a, fn){if (typeof a.forEach !== "undefined"){a.forEach(fn);}else{for (var i = 0; i < a.length; i++){if (fn) {fn(a[i]);}}}}var inc = {},incl=[]; each(document.querySelectorAll("script"), function(t) {inc[t.src.substr(0, t.src.indexOf("?"))] = 1; }); function cl() {if(typeof window["Highcharts"] !== "undefined"){var options={"chart":{"type":"column","zoomType":"x"},"series[0]":{"type":"column"},"title":{"text":"Weir and Cockerham Fst"},"subtitle":{"text":"VCFtools - v0.1.13"},"series":[{"turboThreshold":0,"_colorIndex":0,"_symbolIndex":0,"type":"line","marker":{"enabled":false},"colorByPoint":false}],"data":{"csv":'''
+			html_part1= '''<div id="highcharts-aac96e77-0ad0-4715-a815-b427470cf979"></div><script>
+					(function(){ var files = ["https://code.highcharts.com/stock/highstock.js","https://code.highcharts.com/highcharts-more.js","https://code.highcharts.com/highcharts-3d.js","https://code.highcharts.com/modules/data.js","https://code.highcharts.com/modules/exporting.js","http://code.highcharts.com/modules/funnel.js","http://code.highcharts.com/modules/solid-gauge.js"],loaded = 0; if (typeof window["HighchartsEditor"] === "undefined") {window.HighchartsEditor = {ondone: [cl],hasWrapped: false,hasLoaded: false};include(files[0]);} else {if (window.HighchartsEditor.hasLoaded) {cl();} else {window.HighchartsEditor.ondone.push(cl);}}function isScriptAlreadyIncluded(src){var scripts = document.getElementsByTagName("script");for (var i = 0; i < scripts.length; i++) {if (scripts[i].hasAttribute("src")) {if ((scripts[i].getAttribute("src") || "").indexOf(src) >= 0 || (scripts[i].getAttribute("src") === "http://code.highcharts.com/highcharts.js" && src === "https://code.highcharts.com/stock/highstock.js")) {return true;}}}return false;}function check() {if (loaded === files.length) {for (var i = 0; i < window.HighchartsEditor.ondone.length; i++) {try {window.HighchartsEditor.ondone[i]();} catch(e) {console.error(e);}}window.HighchartsEditor.hasLoaded = true;}}function include(script) {function next() {++loaded;if (loaded < files.length) {include(files[loaded]);}check();}if (isScriptAlreadyIncluded(script)) {return next();}var sc=document.createElement("script");sc.src = script;sc.type="text/javascript";sc.onload=function() { next(); };document.head.appendChild(sc);}function each(a, fn){if (typeof a.forEach !== "undefined"){a.forEach(fn);}else{for (var i = 0; i < a.length; i++){if (fn) {fn(a[i]);}}}}var inc = {},incl=[]; each(document.querySelectorAll("script"), function(t) {inc[t.src.substr(0, t.src.indexOf("?"))] = 1; }); function cl() {if(typeof window["Highcharts"] !== "undefined"){var options={"chart":{"type":"column","zoomType":"x"},"series[0]":{"type":"column"},"title":{"text":"Weir and Cockerham Fst"},"subtitle":{"text":"VCFtools - v0.1.13"},"series":[{"turboThreshold":0,"_colorIndex":0,"_symbolIndex":0,"type":"line","marker":{"enabled":false},"colorByPoint":false}],"data":{"csv":'''
 
-				html_part2 = '''","googleSpreadsheetKey":false,"googleSpreadsheetWorksheet":false},"pane":{"background":[]},"responsive":{"rules":[]},"legend":{"enabled":true,"floating":false},"xAxis":[{}],"yAxis":[{"max":1}],"tooltip":{"shared":true},"mapNavigation":{"enableMouseWheelZoom":true,"enableButtons":true,"enabled":true},"plotOptions":{"series":{"animation":false}}};/*
+			html_part2 = '''","googleSpreadsheetKey":false,"googleSpreadsheetWorksheet":false},"pane":{"background":[]},"responsive":{"rules":[]},"legend":{"enabled":true,"floating":false},"xAxis":[{}],"yAxis":[{"max":1}],"tooltip":{"shared":true},"mapNavigation":{"enableMouseWheelZoom":true,"enableButtons":true,"enabled":true},"plotOptions":{"series":{"animation":false}}};/*
 // Sample of extending options:
 Highcharts.merge(true, options, {
     chart: {
@@ -205,10 +203,10 @@ Highcharts.merge(true, options, {
 });
 */new Highcharts.Chart("highcharts-aac96e77-0ad0-4715-a815-b427470cf979", options);}}})();
 </script> '''
-				csv_string = html_part1 + string_prefix + ''.join(csv_list) + html_part2
+			csv_string = html_part1 + string_prefix + ''.join(csv_list) + html_part2
 
-				file.write(csv_string)
-				file.close()
+			file.write(csv_string)
+			file.close()
 				
 
 	# Removing tmp-files
