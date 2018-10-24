@@ -8,12 +8,15 @@ import fnmatch
 
 ##################################################################################
 parser = argparse.ArgumentParser(prog="make_plot.py")
-parser.add_argument("-g", "--grep", help="grep the contig you want to make a plot of, name should be in quotation marks")
+parser.add_argument("-g", "--grep", help="grep the contig you want to make a plot of, the name should be in quotation marks", required=True)
 args = parser.parse_args()
 ##################################################################################
 filtered = 'tmp_filtered.csv'
 output_name = args.grep + "_results.html"
 ##################################################################################
+
+# This script makes a highcharts plot of a selected contig by using '--grep [NAME]',
+# where [NAME] is the name of the contig in quotation marks
 
 def main():
 	for f in os.listdir('.'):
