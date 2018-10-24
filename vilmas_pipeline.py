@@ -14,6 +14,7 @@ parser.add_argument("-s", "--samtools", action="store_true", help="Run Samtools"
 parser.add_argument("-c", "--vcalling", action="store_true", help="Run mpileup")
 parser.add_argument("-a", "--annotation", action="store_true", help="Run snpEff")
 parser.add_argument("-f", "--filtering", action="store_true", help="Run snpSift")
+parser.add_argument("-i", "--infile", help="bam infile")  
 parser.add_argument("-l", "--bcftools", action="store_true", help="Run Bcftools")
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
@@ -86,30 +87,40 @@ def samtools():
 		else: 
 			continue	
 
+	# BAM infile
+	if args.infile:
+		cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.infile, '-o', sorted_bam]
+                process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='.')
+                while process5.wait() is None:
+                	pass	
+
 	# If the input files are BAM files and previous steps haven't been made the program will look 
 	# for the BAM files in cwd instead of the Bowtie2 directory
 	for file in os.listdir('.'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			input_bam = file
-            		cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', input_bam, '-o', sorted_bam] 
-              		process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='.')
-               		while process4.wait() is None:
-               			pass  
+			cmd6 = ['samtools', 'sort', '-@', '$NSLOTS', input_bam, '-o', sorted_bam] 
+			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, cwd='.')
+			while process6.wait() is None:
+				pass  
+		
 
-		# Index sorted BAM files
+	# Index sorted BAM files
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd5 = ['samtools','index', sorted_bam, sorted_bam_bai]
-			process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='Bowtie2')
-			while process5.wait() is None:
+			cmd7 = ['samtools','index', sorted_bam, sorted_bam_bai]
+			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, cwd='Bowtie2')
+			while process7.wait() is None:
 				pass
 		else:
 			continue	
 
 	for file in os.listdir('.'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-                    	cmd5 = ['samtools','index', sorted_bam, sorted_bam_bai]
-                      	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd=('.'))
+                    	cmd8 = ['samtools','index', sorted_bam, sorted_bam_bai]
+                      	process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, cwd=('.'))
+			while process8.wait() is None:
+                                pass
 
         # Remove SAM and BAM files
 	if args.clean:
@@ -129,10 +140,10 @@ def bcftools():
 
         for file in os.listdir('Bowtie2'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
-                        cmd6 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
+                        cmd9 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
 			-e 'QUAL<20 || DP>100' -Oz -o %s") % (ref, sorted_bam_input, bcftools_out)
-                        process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-                        while process6.wait() is None:
+                        process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+                        while process9.wait() is None:
                                 pass
 		else:
 			continue	
@@ -140,30 +151,30 @@ def bcftools():
 	# If input files were BAM files
 	for file in os.listdir('.'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
-                        cmd6 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
+                        cmd10 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
                         -e 'QUAL<20 || DP>100' -Oz -o %s") % (ref, sorted_bam_input_2, bcftools_out, bcftools_out)
-                        process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-                        while process6.wait() is None:
+                        process10 = subprocess.Popen(cmd10, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+                        while process10.wait() is None:
                                 pass
 
 # Variant annotation and effect prediction
 def annotation():
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
-			cmd7 = ("snpEff -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
+			cmd11 = ("snpEff -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
 			-stats snpEff_summary.html %s > %s") % (bcftools_out, annotated_vcf)
-			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-			while process7.wait() is None:
+			process11 = subprocess.Popen(cmd11, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			while process11.wait() is None:
                                 pass
 
 # Filtering and manipulation of annotated files
 def filtering():
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*_annotated.vcf'):
-			cmd8 = ('cat %s | java -jar /usr/local/packages/snpEff/SnpSift.jar \
+			cmd12 = ('cat %s | java -jar /usr/local/packages/snpEff/SnpSift.jar \
 			filter "(QUAL>=10)&(DP>=10)" > %s') % (annotated_vcf, annotated_filtered_vcf) 
-			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-			while process8.wait() is None:
+			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			while process12.wait() is None:
 				pass
 
 # Add empty file when the pipeline is done
