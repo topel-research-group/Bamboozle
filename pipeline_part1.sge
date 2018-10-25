@@ -39,7 +39,7 @@ for DIR in `find ./* -maxdepth 0 -type d`; do
 	# Variant calling
         mkdir ${DIR}/Vcalling
 
-        samtools mpileup -u -g -f Skeletonema_marinoi_Ref_v1.1.1.fst ${DIR}/Bowtie2/${DIR}_sorted.bam | bcftools call -v -m -O z -o ${DIR}/Vcalling/outputvcffile.mpileup.vcf.gz
+	samtools mpileup -u -g -f Skeletonema_marinoi_Ref_v1.1.1.fst ${DIR}/Bowtie2/${DIR}_sorted.bam | bcftools call -v -m -O z -o ${DIR}/Vcalling/outputvcffile.mpileup.vcf.gz
 
 	# Variant annotation and effect prediction
 

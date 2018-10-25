@@ -140,7 +140,7 @@ def main():
 	# Removing the results below zero
 	for file in os.listdir('Fst_stats'):
 		if fnmatch.fnmatch(file, '*flt.table'):
-			cmd12 = ("awk '{if ($3 >=0) print}' %s > %s") % (fst_out_flt, fst_out_flt_results)
+			cmd12 = ("awk '{if ($3 >0) print}' %s > %s") % (fst_out_flt, fst_out_flt_results)
 			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process12.wait() is None:
 				pass
