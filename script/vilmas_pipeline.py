@@ -8,7 +8,7 @@ import os
 													        
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--ref", required=True, help="Reference")
+#parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 parser.add_argument("-i", "--infile", help="BAM infile")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
@@ -47,9 +47,21 @@ def input_files():
         input_files = sys.argv[1:]
         for file in input_files:
                 if fnmatch.fnmatch(file, '*.f*q.gz'):
-                        print ('fastq file')
+			main()
                 elif fnmatch.fnmatch(file, '*.bam'):
-                        print ('bam file')
+			samtools_sort()
+			samtools_index()
+			bcftools()
+			annotation()
+
+			if args.filtering:
+				filtering()
+
+			if args.clean:
+				clean()
+
+			if args.done:
+				done()
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
 def bowtie2_build():
