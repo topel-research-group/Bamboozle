@@ -10,7 +10,7 @@ import os
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 #parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
-parser.add_argument("-i", "--infile", help="BAM infile")  
+#parser.add_argument("-i", "--infile", help="BAM infile")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
 parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
@@ -33,35 +33,17 @@ annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
 # Find the files in current working directory
 file1 = current_directory + '/' 
 for f1 in os.listdir('.'):
-        if fnmatch.fnmatch(f1, '*_R1_*f*q.gz'):
-                file1+=str(f1)
+	if fnmatch.fnmatch(f1, '*_R1_*f*q.gz'):
+		file1+=str(f1)
 
 file2 = current_directory + '/'
 for f2 in os.listdir('.'):
-        if fnmatch.fnmatch(f2, '*_R2_*f*q.gz'):
-                file2+=str(f2)
+	if fnmatch.fnmatch(f2, '*_R2_*f*q.gz'):
+		file2+=str(f2)
 
 ##################################################################################
 
 def input_files():
-        input_files = sys.argv[1:]
-        for file in input_files:
-                if fnmatch.fnmatch(file, '*.f*q.gz'):
-			main()
-                elif fnmatch.fnmatch(file, '*.bam'):
-			samtools_sort()
-			samtools_index()
-			bcftools()
-			annotation()
-
-			if args.filtering:
-				filtering()
-
-			if args.clean:
-				clean()
-
-			if args.done:
-				done()
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
 def bowtie2_build():
@@ -180,6 +162,7 @@ def done():
 	open("pipeline.done", 'a').close()
 	
 def main():
+	input_files()
 	bowtie2_build()
 	bowtie2()
 	samtools_view()
