@@ -24,13 +24,22 @@ args = parser.parse_args()
 
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
+
+# Modifies the reference file so that the names start with 'Sm_'
+modified_ref= current_directory + '/modified_Skeletonema_marinoi_Ref_v1.1.1.fst'
 ref = '/proj/data11/vilma/Pipeline_vilma/Skeletonema_marinoi_Ref_v1.1.1.fst'
+cmd = ("sed 's/^>/>Sm_/g' %s > %s") % (ref, modified_ref)
+process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+while process.wait() is None:
+	pass
+
 base = name + '.contigs'
 sam = name + '.sam'
-bam = name + '.bam'
+bam = current_directory + '/Bowtie2/' + name + '.bam'
 sorted_bam = name + '_sorted.bam'
-sorted_bam_input = current_directory + '/Bowtie2/' + name + '_sorted.bam'
-sorted_bam_input_2 = current_directory + '/' + name + '_sorted.bam'
+#sorted_bam_input = current_directory + '/Bowtie2/' + name + '_sorted.bam'
+#sorted_bam_input_2 = current_directory + '/' + name + '_sorted.bam'
+sorted_bam_out = current_directory + '/Bowtie2/' + name + '_sorted.bam'
 sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
@@ -54,7 +63,7 @@ def bowtie2():
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
    		os.makedirs(bowtie2_directory)
-	cmd1 = ['bowtie2-build', ref, base]
+	cmd1 = ['bowtie2-build', modified_ref, base]
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
@@ -78,49 +87,41 @@ def bowtie2():
 
 # Sort BAM files
 def samtools():
+	cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
 	for file in os.listdir('Bowtie2'):
        		if fnmatch.fnmatch(file, '*.bam'):
-			cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam]
 			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process4.wait() is None:
                     		pass	
-		else: 
-			continue	
-
-	# BAM infile
-	if args.infile:
-		cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.infile, '-o', sorted_bam]
-                process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='.')
-                while process5.wait() is None:
-                	pass	
 
 	# If the input files are BAM files and previous steps haven't been made the program will look 
 	# for the BAM files in cwd instead of the Bowtie2 directory
-	for file in os.listdir('.'):
-		if fnmatch.fnmatch(file, '*.bam'):
-			input_bam = file
-			cmd6 = ['samtools', 'sort', '-@', '$NSLOTS', input_bam, '-o', sorted_bam] 
-			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, cwd='.')
-			while process6.wait() is None:
-				pass  
+			for file in os.listdir('.'):
+				if fnmatch.fnmatch(file, '*.bam'):
+					process6 = subprocess.Popen(cmd4, stdout=subprocess.PIPE)
+					while process6.wait() is None:
+						pass  
 		
+	# BAM infile
+	if args.infile:
+		cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.infile, '-o', sorted_bam_out]
+                process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
+                while process5.wait() is None:
+                	pass	
 
 	# Index sorted BAM files
+	cmd7 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd7 = ['samtools','index', sorted_bam, sorted_bam_bai]
 			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process7.wait() is None:
 				pass
 		else:
-			continue	
-
-	for file in os.listdir('.'):
-		if fnmatch.fnmatch(file, '*_sorted.bam'):
-                    	cmd8 = ['samtools','index', sorted_bam, sorted_bam_bai]
-                      	process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, cwd=('.'))
-			while process8.wait() is None:
-                                pass
+			for file in os.listdir('.'):
+				if fnmatch.fnmatch(file, '*_sorted.bam'):
+               	   			process8 = subprocess.Popen(cmd7, stdout=subprocess.PIPE )
+					while process8.wait() is None:
+                   	       			pass
 
         # Remove SAM and BAM files
 	if args.clean:
@@ -141,21 +142,20 @@ def bcftools():
         for file in os.listdir('Bowtie2'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
                         cmd9 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-			-e 'QUAL<20 || DP>100' -Oz -o %s") % (ref, sorted_bam_input, bcftools_out)
+			-e 'QUAL<20 || DP>100' -Oz -o %s") % (modified_ref, sorted_bam_out, bcftools_out)
                         process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
                         while process9.wait() is None:
                                 pass
-		else:
-			continue	
-
-	# If input files were BAM files
-	for file in os.listdir('.'):
-                if fnmatch.fnmatch(file, '*_sorted.bam'):
-                        cmd10 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-                        -e 'QUAL<20 || DP>100' -Oz -o %s") % (ref, sorted_bam_input_2, bcftools_out, bcftools_out)
-                        process10 = subprocess.Popen(cmd10, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-                        while process10.wait() is None:
-                                pass
+#		else:
+#
+#			# If input files were BAM files
+#			for file in os.listdir('.'):
+ #       		        if fnmatch.fnmatch(file, '*_sorted.bam'):
+  #              		        cmd10 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
+   #                     		-e 'QUAL<20 || DP>100' -Oz -o %s") % (ref, sorted_bam_input_2, bcftools_out, bcftools_out)
+    #                   			process10 = subprocess.Popen(cmd10, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+     #                   		while process10.wait() is None:
+ #                               		pass
 
 # Variant annotation and effect prediction
 def annotation():
@@ -182,7 +182,8 @@ def done():
 	open("pipeline.done", 'a').close()
 	
 def main():
-	bowtie2()
+	if args.bowtie2:
+		bowtie2()
 
 	if args.samtools:
 		samtools()
