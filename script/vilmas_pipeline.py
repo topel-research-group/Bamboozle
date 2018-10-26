@@ -8,7 +8,8 @@ import os
 													        
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--filtering", action="store_true", help="Run snpSift")
+parser.add_argument("-f", "--ref", required=True, help="Reference")
+parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 parser.add_argument("-i", "--infile", help="BAM infile")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
@@ -27,7 +28,7 @@ sorted_bam_out = current_directory + '/Bowtie2/' + name + '_sorted.bam'
 sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
-annotated_filtered_vcf = name + '_annotated_filtered.vcf'
+annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
 
 # Find the files in current working directory
 file1 = current_directory + '/' 
@@ -41,6 +42,14 @@ for f2 in os.listdir('.'):
                 file2+=str(f2)
 
 ##################################################################################
+
+def input_files():
+        input_files = sys.argv[1:]
+        for file in input_files:
+                if fnmatch.fnmatch(file, '*.f*q.gz'):
+                        print ('fastq file')
+                elif fnmatch.fnmatch(file, '*.bam'):
+                        print ('bam file')
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
 def bowtie2_build():
