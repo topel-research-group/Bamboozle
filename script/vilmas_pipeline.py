@@ -43,7 +43,7 @@ for f2 in os.listdir('.'):
 ##################################################################################
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
-def bowtie2():
+def bowtie2_build():
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
    		os.makedirs(bowtie2_directory)
@@ -51,7 +51,7 @@ def bowtie2():
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
-
+def bowtie2():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
 			cmd2 = ['bowtie2', '-p', args.threads, '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
@@ -59,6 +59,7 @@ def bowtie2():
 			while process2.wait() is None:
                                 pass
 
+def samtools_view():
 	# Converting SAM to BAM using samtools view
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
@@ -70,7 +71,7 @@ def bowtie2():
 			continue	
 
 # Sort BAM files
-def samtools():
+def samtools_sort():
 	cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
 	for file in os.listdir('Bowtie2'):
        		if fnmatch.fnmatch(file, '*.bam'):
@@ -93,6 +94,7 @@ def samtools():
                 while process5.wait() is None:
                 	pass	
 
+def samtools_index():
 	# Index sorted BAM files
 	cmd7 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
 	for file in os.listdir('Bowtie2'):
@@ -107,6 +109,7 @@ def samtools():
 					while process8.wait() is None:
                    	       			pass
 
+def clean():
         # Remove SAM and BAM files
 	if args.clean:
 		for samfile in os.listdir('Bowtie2'):
@@ -156,14 +159,20 @@ def done():
 	open("pipeline.done", 'a').close()
 	
 def main():
+	bowtie2_build()
 	bowtie2()
-	samtools()
+	samtools_view()
+	samtools_sort()
+	samtools_index()
 	bcftools()
 	annotation()
 
 	if args.filtering:
-		filtering()
+ 		filtering()
 	
+	if args.clean:
+		clean()
+
 	if args.done:
 		done()
 
