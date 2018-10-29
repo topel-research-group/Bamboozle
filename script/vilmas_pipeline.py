@@ -11,8 +11,8 @@ parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 parser.add_argument("-c", "--cwd", action="store_true", help="Find the files in current working directory")
-parser.add_argument("-F", "--forward", action='append', nargs='+', help="Forward reads")
-parser.add_argument("-R", "--reverse", action='append', nargs='+', help="Reverse reads")
+parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
+parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 #parser.add_argument("-b", "--bamfile", help="BAM infile")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
@@ -32,15 +32,19 @@ sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
-file1 = []
+
+f1 = [] 
 if args.forward:
-	for filename1 in args.forward:
-		file1.append(filename1)  
-file2 = []
+	for name in args.forward:
+		f1.append(current_directory + '/' + name)
+file1 = ','.join(map(str, f1)) 
+
+f2 = [] 
 if args.reverse:
-	for filename2 in args.reverse:
-		file2.append(filename2) 
-print file1
+	for name2 in args.reverse:  
+		f2.append(current_directory + '/' + name2)
+file2 = ','.join(map(str, f2))
+
 # Find the files in current working directory
 if args.cwd:
 	file1 = current_directory + '/' 
@@ -160,7 +164,7 @@ def annotation():
                                 pass
 
 # Filtering and manipulation of annotated files
-def filtering():
+def snpsift():
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*_annotated.vcf'):
 			cmd12 = ('cat %s | java -jar /usr/local/packages/snpEff/SnpSift.jar \
@@ -183,8 +187,8 @@ def main():
 	bcftools()
 	annotation()
 
-	if args.filtering:
- 		filtering()
+	if args.snpsift:
+ 		snpsift()
 	
 	if args.clean:
 		clean()
