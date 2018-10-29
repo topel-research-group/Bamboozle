@@ -13,7 +13,7 @@ parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 parser.add_argument("-c", "--cwd", action="store_true", help="Find the files in current working directory")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
-#parser.add_argument("-b", "--bamfile", help="BAM infile")  
+parser.add_argument("-b", "--bamfile", help="BAM infile")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
 parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
@@ -22,7 +22,6 @@ args = parser.parse_args()
 
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
-#ref = '/proj/data11/Skeletonema_marinoi_Ref_v1.1_Primary.all.fst'
 base = name + '.contigs'
 sam = name + '.sam'
 bam = current_directory + '/Bowtie2/' + name + '.bam'
@@ -33,6 +32,7 @@ bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
 
+# Selected input files using forward and reverse flags, the flags can take several input files
 f1 = [] 
 if args.forward:
 	for name in args.forward:
@@ -47,19 +47,41 @@ file2 = ','.join(map(str, f2))
 
 # Find the files in current working directory
 if args.cwd:
-	file1 = current_directory + '/' 
-	for f1 in os.listdir('.'):
-		if fnmatch.fnmatch(f1, '*_R1_*f*q.gz'):
-			file1+=str(f1)
+	f1 = [] 
+	for fname1 in os.listdir('.'):
+		if fnmatch.fnmatch(fname1, '*_R1_*f*q.gz'):
+			f1.append(current_directory + '/' + fname1)
+	file1 = ','.join(map(str, f1))	
 
-	file2 = current_directory + '/'
-	for f2 in os.listdir('.'):
-		if fnmatch.fnmatch(f2, '*_R2_*f*q.gz'):
-			file2+=str(f2)
+	f2 = [] 
+	for fname2 in os.listdir('.'):
+		if fnmatch.fnmatch(fname2, '*_R2_*f*q.gz'):
+			f2.append(current_directory + '/' + fname2) 
+        file2 = ','.join(map(str, f2)) 
 
 ##################################################################################
 
-#def input_files():
+def input_files():
+	if args.forward:
+		bowtie2()
+		samtools_view()
+		samtools_sort()
+		samtools_index()
+		bcftools()
+		annotation()
+	elif args.cwd:
+		bowtie2()
+		samtools_view()
+		samtools_sort()
+		samtools_index()
+		bcftools()
+		annotation()
+
+	elif args.bamfile:
+                bam_input()
+                samtools_index()
+                bcftools()
+                annotation()
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
 def bowtie2():
@@ -106,12 +128,13 @@ def samtools_sort():
 					while process6.wait() is None:
 						pass  
 		
+def bam_input():
 	# BAM infile
-#	if args.infile:
-#		cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.infile, '-o', sorted_bam_out]
- #               process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
-  #              while process5.wait() is None:
-   #             	pass	
+	if args.bamfile:
+		cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.bamfile, '-o', sorted_bam_out]
+                process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
+                while process5.wait() is None:
+                	pass	
 
 def samtools_index():
 	# Index sorted BAM files
@@ -178,14 +201,7 @@ def done():
 	open("pipeline.done", 'a').close()
 	
 def main():
-	#input_files()
-#	bowtie2_build()
-	bowtie2()
-	samtools_view()
-	samtools_sort()
-	samtools_index()
-	bcftools()
-	annotation()
+	input_files()
 
 	if args.snpsift:
  		snpsift()
