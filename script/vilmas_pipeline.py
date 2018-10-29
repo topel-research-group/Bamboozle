@@ -11,8 +11,8 @@ parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 parser.add_argument("-c", "--cwd", action="store_true", help="Find the files in current working directory")
-parser.add_argument("-F", "--forward", help="Forward reads")
-parser.add_argument("-R", "--reverse", help="Reverse reads")
+parser.add_argument("-F", "--forward", action='append', nargs='+', help="Forward reads")
+parser.add_argument("-R", "--reverse", action='append', nargs='+', help="Reverse reads")
 #parser.add_argument("-b", "--bamfile", help="BAM infile")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
@@ -32,10 +32,15 @@ sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
-
-file1 = current_directory + '/' + args.forward 
-file2 = current_directory + '/' + args.reverse 
-
+file1 = []
+if args.forward:
+	for filename1 in args.forward:
+		file1.append(filename1)  
+file2 = []
+if args.reverse:
+	for filename2 in args.reverse:
+		file2.append(filename2) 
+print file1
 # Find the files in current working directory
 if args.cwd:
 	file1 = current_directory + '/' 
