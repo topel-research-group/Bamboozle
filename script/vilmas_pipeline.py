@@ -8,9 +8,12 @@ import os
 													        
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-#parser.add_argument("-f", "--ref", required=True, help="Reference")
+parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
-#parser.add_argument("-i", "--infile", help="BAM infile")  
+parser.add_argument("-c", "--cwd", action="store_true", help="Find the files in current working directory")
+parser.add_argument("-F", "--forward", help="Forward reads")
+parser.add_argument("-R", "--reverse", help="Reverse reads")
+#parser.add_argument("-b", "--bamfile", help="BAM infile")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
 parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
@@ -19,7 +22,7 @@ args = parser.parse_args()
 
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
-ref = '/proj/data11/Skeletonema_marinoi_Ref_v1.1_Primary.all.fst'
+#ref = '/proj/data11/Skeletonema_marinoi_Ref_v1.1_Primary.all.fst'
 base = name + '.contigs'
 sam = name + '.sam'
 bam = current_directory + '/Bowtie2/' + name + '.bam'
@@ -29,28 +32,31 @@ sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
+file1 = args.forward
+file2 = args.reverse
 
 # Find the files in current working directory
-file1 = current_directory + '/' 
-for f1 in os.listdir('.'):
-	if fnmatch.fnmatch(f1, '*_R1_*f*q.gz'):
-		file1+=str(f1)
+if args.cwd:
+	file1 = current_directory + '/' 
+	for f1 in os.listdir('.'):
+		if fnmatch.fnmatch(f1, '*_R1_*f*q.gz'):
+			file1+=str(f1)
 
-file2 = current_directory + '/'
-for f2 in os.listdir('.'):
-	if fnmatch.fnmatch(f2, '*_R2_*f*q.gz'):
-		file2+=str(f2)
+	file2 = current_directory + '/'
+	for f2 in os.listdir('.'):
+		if fnmatch.fnmatch(f2, '*_R2_*f*q.gz'):
+			file2+=str(f2)
 
 ##################################################################################
 
-def input_files():
+#def input_files():
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
 def bowtie2_build():
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
    		os.makedirs(bowtie2_directory)
-	cmd1 = ['bowtie2-build', ref, base]
+	cmd1 = ['bowtie2-build', args.ref, base]
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
@@ -162,7 +168,7 @@ def done():
 	open("pipeline.done", 'a').close()
 	
 def main():
-	input_files()
+	#input_files()
 	bowtie2_build()
 	bowtie2()
 	samtools_view()
