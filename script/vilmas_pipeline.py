@@ -32,8 +32,9 @@ sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
-file1 = args.forward
-file2 = args.reverse
+
+file1 = current_directory + '/' + args.forward 
+file2 = current_directory + '/' + args.reverse 
 
 # Find the files in current working directory
 if args.cwd:
@@ -52,7 +53,7 @@ if args.cwd:
 #def input_files():
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
-def bowtie2_build():
+def bowtie2():
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
    		os.makedirs(bowtie2_directory)
@@ -60,7 +61,7 @@ def bowtie2_build():
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
-def bowtie2():
+
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
 			cmd2 = ['bowtie2', '-p', args.threads, '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
@@ -97,11 +98,11 @@ def samtools_sort():
 						pass  
 		
 	# BAM infile
-	if args.infile:
-		cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.infile, '-o', sorted_bam_out]
-                process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
-                while process5.wait() is None:
-                	pass	
+#	if args.infile:
+#		cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.infile, '-o', sorted_bam_out]
+ #               process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
+  #              while process5.wait() is None:
+   #             	pass	
 
 def samtools_index():
 	# Index sorted BAM files
@@ -138,7 +139,7 @@ def bcftools():
         for file in os.listdir('Bowtie2'):
                 if fnmatch.fnmatch(file, '*_sorted.bam'):
                         cmd9 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-			-e 'QUAL<20 || DP>100' -Oz -o %s") % (ref, sorted_bam_out, bcftools_out)
+			-e 'QUAL<20 || DP>100' -Oz -o %s") % (args.ref, sorted_bam_out, bcftools_out)
                         process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
                         while process9.wait() is None:
                                 pass
@@ -169,7 +170,7 @@ def done():
 	
 def main():
 	#input_files()
-	bowtie2_build()
+#	bowtie2_build()
 	bowtie2()
 	samtools_view()
 	samtools_sort()
