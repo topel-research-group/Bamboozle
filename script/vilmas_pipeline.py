@@ -50,13 +50,15 @@ if args.cwd:
 	f1 = [] 
 	for fname1 in os.listdir('.'):
 		if fnmatch.fnmatch(fname1, '*_R1_*f*q.gz'):
-			f1.append(current_directory + '/' + fname1)
+			n1 = os.path.abspath(fname1)
+			f1.append(n1)
 	file1 = ','.join(map(str, f1))	
 
 	f2 = [] 
 	for fname2 in os.listdir('.'):
 		if fnmatch.fnmatch(fname2, '*_R2_*f*q.gz'):
-			f2.append(current_directory + '/' + fname2) 
+			n2 = os.path.abspath(fname2)
+			f2.append(n2) 
         file2 = ','.join(map(str, f2)) 
 
 ##################################################################################
@@ -70,6 +72,7 @@ def input_files():
 		bcftools()
 		snpEff_test()
 		annotation()
+
 	elif args.cwd:
 		bowtie2()
 		samtools_view()
