@@ -68,6 +68,7 @@ def input_files():
 		samtools_sort()
 		samtools_index()
 		bcftools()
+		snpEff_test()
 		annotation()
 	elif args.cwd:
 		bowtie2()
@@ -75,12 +76,14 @@ def input_files():
 		samtools_sort()
 		samtools_index()
 		bcftools()
+		snpEff_test()
 		annotation()
 
 	elif args.bamfile:
                 bam_input()
                 samtools_index()
                 bcftools()
+		snpEff_test()
                 annotation()
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
@@ -177,7 +180,48 @@ def bcftools():
                                 pass
 
 # Variant annotation and effect prediction
-def annotation():
+def snpEff_test():
+	try:
+		cmdx = ('snpEff databases | grep "Skeletonema"')
+		processx = subprocess.check_output(cmdx, shell=True)
+	except OSError:
+		raise RuntimeError('Skeletonema database not found; building new database...')
+		try:
+			cmdy = ['snpEff', 'build', '-gff3', '-v', 'Skeletonema_marinoi_v1.1.1.1'] 
+			processy = subprocess.Popen(cmdy, stdout=subprocess.PIPE)
+		except:
+			print('Skeletonema database not found; printing manual...')
+
+			cmdz = ['snpEff', 'build', '-h']
+			processz = subprocess.Popen(cmdz, stdout=subprocess.PIPE)
+			while processz.wait() is None:
+			        pass
+			print ('''
+			Build Skeletonema database:     
+				Step 1: 
+				To 'snpEFF.contig' Add this:
+				#---
+				# Skeletonema marinoi, version 1.1.1.1
+				#---
+				Skeletonema_marinoi_v1.1.1.1.genome : Skeletonema_marinoi_v1.1.1.1
+				
+				Step 2:
+				mkdir path/to/snpEff/data/Skeletonema_marinoi_v1.1.1.1
+				cd path/to/snpEff/data/Skeletonema_marinoi_v1.1.1.1
+				rsync -hav path/to/Skeletonema.gff.gz . 
+				mv Skeletonema.gff.gz genes.gff.gz 
+				
+				Additional:
+				GFF3 files can have sequence information either in the same file or in a separate fasta file. 
+				In order to add sequence information in the GFF file, you can do this:
+
+				cat Skeletonema.gff > genes.gff
+				echo "###"  >> genes.gff
+				echo "##FASTA"  >> genes.gff
+				cat sequence.fa  >> genes.gff
+			''')
+
+def annotation():					
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
 			cmd11 = ("snpEff -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
