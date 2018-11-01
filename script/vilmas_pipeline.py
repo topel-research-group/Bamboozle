@@ -70,10 +70,9 @@ def input_files():
                 bcftools()
 		snpEff_test()
                 annotation()
-	else:
-		continue
+	exit()	
 
-# Running bowtie2-build to index reference genome and bowtie2 to align
+# Running bowtie2-build to index reference genome and bowtie2 to elign
 def bowtie2():
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
