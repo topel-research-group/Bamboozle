@@ -64,30 +64,14 @@ if args.cwd:
 ##################################################################################
 
 def input_files():
-	if args.forward:
-		bowtie2()
-		samtools_view()
-		samtools_sort()
-		samtools_index()
-		bcftools()
-		snpEff_test()
-		annotation()
-
-	elif args.cwd:
-		bowtie2()
-		samtools_view()
-		samtools_sort()
-		samtools_index()
-		bcftools()
-		snpEff_test()
-		annotation()
-
-	elif args.bamfile:
+	if args.bamfile:
                 bam_input()
                 samtools_index()
                 bcftools()
 		snpEff_test()
                 annotation()
+	else:
+		continue
 
 # Running bowtie2-build to index reference genome and bowtie2 to align
 def bowtie2():
@@ -249,6 +233,13 @@ def done():
 	
 def main():
 	input_files()
+	bowtie2()
+	samtools_view()
+	samtools_sort()
+	samtools_index()
+	bcftools()
+	snpEff_test()
+	annotation()
 
 	if args.snpsift:
  		snpsift()
