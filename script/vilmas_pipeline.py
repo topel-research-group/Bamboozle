@@ -33,31 +33,36 @@ annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
-f1 = [] 
+file1 = ''
+file2 = ''
+
 if args.forward:
+	f1 = [] 
 	for name in args.forward:
 		f1.append(current_directory + '/' + name)
-	file1 = ','.join(map(str, f1)) 
+	file1 += ','.join(map(str, f1)) 
 
-f2 = [] 
 if args.reverse:
+	f2 = [] 
 	for name2 in args.reverse:  
 		f2.append(current_directory + '/' + name2)
-	file2 = ','.join(map(str, f2))
+	file2 += ','.join(map(str, f2))
 
 # Find the files in current working directory
 if args.cwd:
+	fi1 = []
 	for fname1 in os.listdir('.'):
 		if fnmatch.fnmatch(fname1, '*_R1_*f*q.gz'):
 			n1 = os.path.abspath(fname1)
-			f1.append(n1)
-	file1 = ','.join(map(str, f1))	
+			fi1.append(n1)
+	file1 += ','.join(map(str, fi1))	
 
+	fi2 = []
 	for fname2 in os.listdir('.'):
 		if fnmatch.fnmatch(fname2, '*_R2_*f*q.gz'):
 			n2 = os.path.abspath(fname2)
-			f2.append(n2) 
-        file2 = ','.join(map(str, f2)) 
+			fi2.append(n2) 
+	file2 += ','.join(map(str, fi2)) 
 
 ##################################################################################
 
@@ -68,7 +73,9 @@ def input_files():
                 bcftools()
 		snpEff_test()
                 annotation()
-	exit()	
+		exit()	
+	else:
+		pass
 
 # Running bowtie2-build to index reference genome and bowtie2 to elign
 def bowtie2():
