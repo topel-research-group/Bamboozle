@@ -37,24 +37,22 @@ f1 = []
 if args.forward:
 	for name in args.forward:
 		f1.append(current_directory + '/' + name)
-file1 = ','.join(map(str, f1)) 
+	file1 = ','.join(map(str, f1)) 
 
 f2 = [] 
 if args.reverse:
 	for name2 in args.reverse:  
 		f2.append(current_directory + '/' + name2)
-file2 = ','.join(map(str, f2))
+	file2 = ','.join(map(str, f2))
 
 # Find the files in current working directory
 if args.cwd:
-	f1 = [] 
 	for fname1 in os.listdir('.'):
 		if fnmatch.fnmatch(fname1, '*_R1_*f*q.gz'):
 			n1 = os.path.abspath(fname1)
 			f1.append(n1)
 	file1 = ','.join(map(str, f1))	
 
-	f2 = [] 
 	for fname2 in os.listdir('.'):
 		if fnmatch.fnmatch(fname2, '*_R2_*f*q.gz'):
 			n2 = os.path.abspath(fname2)
