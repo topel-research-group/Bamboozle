@@ -235,6 +235,15 @@ def input_files():
 	bcftools()
 	snpEff_test()
 	annotation()
+	
+	if args.snpsift:
+                snpsift()
+
+        if args.clean:
+                clean()
+
+        if args.done:
+                done()
 
 def exit():
 	sys.exit()
