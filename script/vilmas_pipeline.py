@@ -10,7 +10,7 @@ import os
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
-parser.add_argument("-c", "--cwd", action="store_true", help="Find the files in current working directory")
+#parser.add_argument("-c", "--cwd", action="store_true", help="Find the files in current working directory")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
@@ -41,41 +41,35 @@ if args.forward:
 	for name in args.forward:
 		f1.append(current_directory + '/' + name)
 	file1 += ','.join(map(str, f1)) 
+else:
+	pass
 
 if args.reverse:
 	f2 = [] 
 	for name2 in args.reverse:  
 		f2.append(current_directory + '/' + name2)
 	file2 += ','.join(map(str, f2))
-
+else:
+	pass
 # Find the files in current working directory
-if args.cwd:
-	fi1 = []
-	for fname1 in os.listdir('.'):
-		if fnmatch.fnmatch(fname1, '*_R1_*f*q.gz'):
-			n1 = os.path.abspath(fname1)
-			fi1.append(n1)
-	file1 += ','.join(map(str, fi1))	
+#if args.cwd:
+#	fi1 = []
+#	for fname1 in os.listdir('.'):
+#		if fnmatch.fnmatch(fname1, '*_R1_*f*q.gz'):
+#			n1 = current_directory + '/' + fname1
+#			fi1.append(n1)
+#	file1 += ','.join(map(str, fi1))	
 
-	fi2 = []
-	for fname2 in os.listdir('.'):
-		if fnmatch.fnmatch(fname2, '*_R2_*f*q.gz'):
-			n2 = os.path.abspath(fname2)
-			fi2.append(n2) 
-	file2 += ','.join(map(str, fi2)) 
+#	fi2 = []
+#	for fname2 in os.listdir('.'):
+#		if fnmatch.fnmatch(fname2, '*_R2_*f*q.gz'):
+#			n2 = current_directory + '/' + fname2
+#			fi2.append(n2) 
+#	file2 += ','.join(map(str, fi2)) 
+#else:
+#	pass
 
 ##################################################################################
-
-def input_files():
-	if args.bamfile:
-                bam_input()
-                samtools_index()
-                bcftools()
-		snpEff_test()
-                annotation()
-		exit()	
-	else:
-		pass
 
 # Running bowtie2-build to index reference genome and bowtie2 to elign
 def bowtie2():
@@ -124,11 +118,10 @@ def samtools_sort():
 		
 def bam_input():
 	# BAM infile
-	if args.bamfile:
-		cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.bamfile, '-o', sorted_bam_out]
-                process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
-                while process5.wait() is None:
-                	pass	
+	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.bamfile, '-o', sorted_bam_out]
+	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
+	while process5.wait() is None:
+		pass	
 
 def samtools_index():
 	# Index sorted BAM files
@@ -235,8 +228,22 @@ def snpsift():
 def done():
 	open("pipeline.done", 'a').close()
 	
+
+def input_files():
+	bam_input()
+	samtools_index()
+	bcftools()
+	snpEff_test()
+	annotation()
+
+def exit():
+	sys.exit()
+
 def main():
-	input_files()
+	if args.bamfile:
+		input_files()
+		exit()
+
 	bowtie2()
 	samtools_view()
 	samtools_sort()
@@ -246,7 +253,7 @@ def main():
 	annotation()
 
 	if args.snpsift:
- 		snpsift()
+		snpsift()
 	
 	if args.clean:
 		clean()
