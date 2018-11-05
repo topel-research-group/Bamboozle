@@ -1,12 +1,38 @@
 # Pipeline_vilma
 
-This is a pipeline that will take raw data, as fastq files, or BAM files as input and give a filtered output.
+This is a pipeline that will take raw data, as fastq files, or a BAM file as input and give a filtered human readable output. The purpose is to simplify and make the bioinformatic analysis easier to reproduce.
 
-The steps will include mapping, SNP calling, Fst statistics, filtering and plotting.
+The steps include mapping, SNP calling, Fst statistics, filtering and plotting of the results.  
+
+## Features  
+* This pipeline will give you a table with effect prediction and annotated variants  
+* Fst statistics on the results can be made with the additional program `fst.py`, this will give you a table with Fst statistics and a plot of the Fst results
+* If you want to plot a specific contig use additional program `make_plot.py`
+
+## Usage  
+```NAME -f <REFERENCE>```   
+Input files:  
+```-F <FORWARD READS> 
+-R <REVERSE READS> ```  
+or `[-b BAMFILE]`  
+ 
+####Example:  
+Fastq files as input:
+`NAME -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F file_R1.fastq.gz -file_R2.fastq.gz`  
+
+BAM file as input:  
+`NAME -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -b file.bam`
 
 ### Dependencies
+```
 Versions used:  
 Bowtie2/v2.3.3.1  
 samtools/v1.9  
 bcftools/v1.9  
-snpEff/v.4.3t  
+snpEff/v.4.3t
+
+Versions used in fst.py and make_plot.py:
+VCFtools/v0.1.13  
+Highcharts/v6.2.0
+```  
+
