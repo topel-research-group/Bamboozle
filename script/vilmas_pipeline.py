@@ -214,14 +214,19 @@ def annotation():
 			while process11.wait() is None:
                                 pass
 
+			cmd12 = ['bgzip', annotated_vcf]
+                        process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, cwd='Bcftools')
+                        while process12.wait() is None:
+                                pass
+
 # Filtering and manipulation of annotated files
 def snpsift():
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*_annotated.vcf'):
-			cmd12 = ('cat %s | java -jar /usr/local/packages/snpEff/SnpSift.jar \
+			cmd13 = ('cat %s | java -jar /usr/local/packages/snpEff/SnpSift.jar \
 			filter "(QUAL>=10)&(DP>=10)" > %s') % (annotated_vcf, annotated_filtered_vcf) 
-			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-			while process12.wait() is None:
+			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			while process13.wait() is None:
 				pass
 
 # Add empty file when the pipeline is done
