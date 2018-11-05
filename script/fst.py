@@ -36,7 +36,7 @@ path_for_plot = current_directory + '/Fst_stats/'
 
 # Perform Fst-statistics on gziped vcf-files
 def main():
-	directories = current_directory + '/*/*/Bcftools/*.bcftools_filtered.vcf.gz'
+	directories = current_directory + '/*/*/Bcftools/*.snpeff_annotated.vcf'
 	file_list = glob.glob(directories)
 	for f in file_list:
 		cmd1 = ['bcftools', 'index', '-c', '-f', f]
@@ -50,7 +50,7 @@ def main():
        		os.makedirs(population_directory)
 
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population1
-	directories2 = current_directory + '/*_1/*/Bcftools/*.bcftools_filtered.vcf.gz'
+	directories2 = current_directory + '/*_1/*/Bcftools/*.snpeff_annotated.vcf'
 	name_list1 = glob.glob(directories2)
 	myfile = open("name_1_list.txt","w")
 	for n1 in name_list1:
@@ -63,7 +63,7 @@ def main():
 		pass
 
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population2
-	directories3 = current_directory + '/*_2/*/Bcftools/*.bcftools_filtered.vcf.gz'
+	directories3 = current_directory + '/*_2/*/Bcftools/*.snpeff_annotated.vcf'
 	name_list2 = glob.glob(directories3)
 	myfile2 = open("name_2_list.txt","w")
 	for n2 in name_list2:
