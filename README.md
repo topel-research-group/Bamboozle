@@ -5,20 +5,20 @@ This is a pipeline that will take raw data, as fastq files, or a BAM file as inp
 The steps include mapping, SNP calling, Fst statistics, filtering and plotting of the results.  
 
 ## Features  
-* This pipeline will give you a table with effect prediction and annotated variants  
+* This pipeline will give you a summary of the analysis in table format with effect prediction and annotated variants  
 * Fst statistics on the results can be made with the additional program `fst.py`, this will give you a table with Fst statistics and a plot of the Fst results
-* If you want to plot a specific contig use additional program `make_plot.py`
+* If you want to plot a specific contig use the additional program `make_plot.py`
 
 ## Usage  
 ```NAME -f <REFERENCE>```   
 Input files:  
 ```-F <FORWARD READS> 
 -R <REVERSE READS> ```  
-or `[-b BAMFILE]`  
+or `-b <BAMFILE>`  
  
 ####Example:  
 Fastq files as input:
-`NAME -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F file_R1.fastq.gz -file_R2.fastq.gz`  
+`NAME -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F file_R1.fastq.gz -R file_R2.fastq.gz`  
 
 BAM file as input:  
 `NAME -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -b file.bam`
