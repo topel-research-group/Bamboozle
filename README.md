@@ -20,7 +20,7 @@ Retrieving a statistic for what percentage of bases in an assembly have >= Nx co
 
 ## Consensus sequence
 
-Extracting consensus sequence of aligned reads from a specific region of the referense sequence.
+Extracting consensus sequence of aligned reads from a specific region of the reference sequence.
 
 ```bash
 ./bamboozle.py -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG> -a <RANGE>
@@ -68,7 +68,7 @@ those events resulting in a frameshift
 
 ## Identify deletions within exons
 
-Finding deletions occuring within exons; requires a bed file of exons and a text file of deletions (the output
+Finding deletions occurring within exons; requires a bed file of exons and a text file of deletions (the output
 of the above `-e/-f` function)
 * Note: Both `-x` and `-m` are required
 * Note: This function will eventually be merged with the above `deletions` function
@@ -103,6 +103,7 @@ and the previous base
 
 ## Features to add
 
+* Add capacity to first run Bowtie2 mapping?
 * Allow -c flag to accept multiple contigs (one dictionary per contig?)
   * Would therefore need to add additional arguments into both coverage-related functions...
 * Move print statement out of coverage_stats function
@@ -121,3 +122,10 @@ and the previous base
 ## Known bugs
 In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
 together in the output
+
+The following expressions need updating:
+`if args.mode == "deletion-3":`
+`	args.events = True`
+
+`if args.mode == "deletion-2":`
+`	args.deletion = True`

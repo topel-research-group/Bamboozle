@@ -3,28 +3,37 @@
 import sys
 import subprocess
 import argparse
+from argparse import RawTextHelpFormatter
 import time
 import os.path
 from statistics import median
 
-parser = argparse.ArgumentParser(description='Obtain statistics regarding percentage coverage from bam files. \
-                                              The script gives percentage of positions in an assembly/contig \
-                                              with coverage greater than or equal to a given threshold')
+parser = argparse.ArgumentParser(description='Obtain statistics regarding percentage coverage from bam files.\n\
+The script gives percentage of positions in an assembly/contig,\nwith coverage greater than or equal to a given \
+threshold', formatter_class=RawTextHelpFormatter)
+parser.add_argument('--mode', choices=['coverage','consensus','zero','deletion-1','deletion-2','deletion-3',\
+'deletion-x','homohetero','median-one','median-all'],help="Specify the desired mode of Bamboozle, where:\n\
+* coverage = Print a statistic for what percentage of bases in an assembly have >=Nx coverage\n\
+* consensus = Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)\n\
+* zero = Find areas of zero coverage and print the reference sequence, along with a GC percentage\n\
+* deletion-1 = Find deletions\n\
+* deletion-2 = Find deletion events\n\
+* deletion-3 = Find frameshift deletion events\n\
+* deletion-x = Find deletions occurring within exons\n\
+* homohetero = Attempt to determine whether a deletion is homozygous or heterozygous\n\
+* median-one = Find regions differing from the contig median  by +/- 50%%\n\
+* median-all = Find regions differing from the contig median  by +/- 50%%, for each contig")
+
 parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
-#parser.add_argument('-c', '--contig', type=str, nargs='+', help='Gives cov. stats for the specified contigs')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
-parser.add_argument("-r", "--refference", help="Reference sequence file")
+parser.add_argument("-r", "--reference", help="Reference sequence file")
 parser.add_argument("-b", "--bam", help="Bam file")
 parser.add_argument("--range", help="somethingsomsing")
-parser.add_argument("-z", "--zero", action="store_true", help="Find regions of 0x coverage")
 parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions")
 parser.add_argument("-e", "--events", action="store_true", help="Report deletion events, rather than individual positions")
 parser.add_argument("-f", "--frameshift", action="store_true", help="Report frameshift deletions, rather than individual positions")
 parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
 parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
-parser.add_argument("-o", "--homohetero", action="store_true", help="Determine whether a given deletion is homo- or heterozygous; WIP")
-parser.add_argument("--median", action="store_true", help="Report regions whose coverage differs by +/- >50%% of the contig median; single contig.")
-parser.add_argument("--medianall", action="store_true", help="Report regions whose coverage differs by +/- >50%% of the contig median; whole assembly.")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -33,10 +42,10 @@ args = parser.parse_args()
 if args.dev == True:
 	start_time = time.time()
 
-if args.frameshift == True:
+if args.mode == "deletion-3":
 	args.events = True
 
-if args.events == True:
+if args.mode == "deletion-2":
 	args.deletion = True
 
 
@@ -60,18 +69,25 @@ def coverage_stats():
 			print("Obtaining whole-genome stats for ",os.path.basename(args.bam),"; coverage >+",args.threshold,"%.",sep="")
 	cov_stats = {}
 	num_lines = 0
+	correct_contig = 0
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
 			coverage = int(row[2])
 			if args.contig:
 				if str(row[0]) == args.contig:
+					correct_contig = 1
 					num_lines += 1
 					if coverage >= args.threshold:
 						if coverage in cov_stats:
 							cov_stats[coverage] += 1
 						else:
 							cov_stats[coverage] = 1
+				elif str(row[0]) != args.contig and correct_contig == 1:
+					coverage_results("contig", num_lines, cov_stats)
+					if args.dev == True:
+						print("Time taken =",(time.time() - start_time),"seconds.")
+					exit()
 			else:
 				num_lines += 1
 				if coverage >= args.threshold:
@@ -79,11 +95,13 @@ def coverage_stats():
 						cov_stats[coverage] += 1
 					else:
 						cov_stats[coverage] = 1
+	coverage_results("assembly", num_lines, cov_stats)
 
-	print("Length of assembly/contig:",num_lines)
-	value = 100.0 / num_lines * sum(cov_stats.values())
-	print(round(value, 3),"% of the assembly/contig has >=",args.threshold,"x coverage.",sep="")
 
+def coverage_results(sequence, lines, cov):
+	print("Length of " + sequence + ":",lines)
+	value = 100.0 / lines * sum(cov.values())
+	print(round(value, 3),"% of the " + sequence + " >=",args.threshold,"x coverage.",sep="")
 
 
 def zero_regions():
@@ -451,26 +469,29 @@ def extract_sequence():
 
 
 def main():
-	if args.deletion:
+	if args.mode == "deletion-1":
 		deletion()
-	elif args.exons:
+	elif args.mode == "deletion-x":
 		if args.mutations:
 			exon_mutations()
 		else:
 			print("Both -x and -m must be specified to find mutations in exons")
 			exit()
-	elif args.homohetero:
+	elif args.mode == "homohetero":
 		HomoDel_or_Hetero()
-	elif args.zero:
+	elif args.mode == "zero":
 		zero_regions()
-	elif args.range:
+	elif args.mode == "consensus":
 		extract_sequence()
-	elif args.median:
+	elif args.mode == "median-one":
 		median_deviation()
-	elif args.medianall:
+	elif args.mode == "median-all":
 		median_deviation_all()
-	else:
+	elif args.mode == "coverage":
 		coverage_stats()
+	else:
+		print("Please specify a mode with the --mode option!")
+		exit()
 
 
 if __name__ == "__main__":
