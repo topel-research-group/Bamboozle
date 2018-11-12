@@ -28,10 +28,7 @@ parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
 parser.add_argument("-r", "--reference", help="Reference sequence file")
 parser.add_argument("-b", "--bam", help="Bam file")
-parser.add_argument("--range", help="somethingsomsing")
-parser.add_argument("-d", "--deletion", action="store_true", help="Scan for potential deletions")
-parser.add_argument("-e", "--events", action="store_true", help="Report deletion events, rather than individual positions")
-parser.add_argument("-f", "--frameshift", action="store_true", help="Report frameshift deletions, rather than individual positions")
+parser.add_argument("-a", "--range", help="somethingsomsing")
 parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
 parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
@@ -42,12 +39,9 @@ args = parser.parse_args()
 if args.dev == True:
 	start_time = time.time()
 
-if args.mode == "deletion-3":
-	args.events = True
-
-if args.mode == "deletion-2":
-	args.deletion = True
-
+def time_taken():
+	if args.dev == True:
+		print("Time taken =",(time.time() - start_time),"seconds.")
 
 def coverage_stats():
 	# This function calculates the percentage of positions in an assembly/contig
@@ -85,8 +79,9 @@ def coverage_stats():
 							cov_stats[coverage] = 1
 				elif str(row[0]) != args.contig and correct_contig == 1:
 					coverage_results("contig", num_lines, cov_stats)
-					if args.dev == True:
-						print("Time taken =",(time.time() - start_time),"seconds.")
+					time_taken()
+#					if args.dev == True:
+#						print("Time taken =",(time.time() - start_time),"seconds.")
 					exit()
 			else:
 				num_lines += 1
@@ -138,7 +133,7 @@ def zero_regions():
 		print("Please specify contig with the -c flag")
 		exit()
 
-	if not args.refference:
+	if not args.reference:
 		print("Please specify reference with the -r flag")
 		exit()
 
@@ -148,26 +143,42 @@ def zero_regions():
 	cmd = ["bedtools genomecov -bga -ibam %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	zeroes = {}
+	correct_contig = 0
 
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
 			if str(row[0]) == args.contig:
+				correct_contig = 1
 				coverage = int(row[3])
 				if coverage == 0:
 					zeroes[int(row[1])] = int(row[2])
+			elif str(row[0]) != args.contig and correct_contig == 1:
+				with open(args.reference) as fasta:
+					for name, seq in read_fasta(fasta):
+						if name[1:] == args.contig:
+							print("GC% for contig:",round(get_gc(seq), 3))
+							print("Contig\tPositions\tGC%\tSequence")
+							for key in zeroes:
+								if key + 1 == (zeroes[key]):
+									print(args.contig,zeroes[key],"-",seq[key:zeroes[key]],sep="\t")
+								else:
+									zero_range = str(key + 1) + "-" + str(zeroes[key])
+									print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
+				time_taken()
+				exit()					
 
-	with open(args.refference) as fasta:
-		for name, seq in read_fasta(fasta):
-			if name[1:] == args.contig:
-				print("GC% for contig:",round(get_gc(seq), 3))
-				print("Contig\tPositions\tGC%\tSequence")
-				for key in zeroes:
-					if key + 1 == (zeroes[key]):
-						print(args.contig,zeroes[key],"-",seq[key:zeroes[key]],sep="\t")
-					else:
-						zero_range = str(key + 1) + "-" + str(zeroes[key])
-						print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
+#	with open(args.reference) as fasta:
+#		for name, seq in read_fasta(fasta):
+#			if name[1:] == args.contig:
+#				print("GC% for contig:",round(get_gc(seq), 3))
+#				print("Contig\tPositions\tGC%\tSequence")
+#				for key in zeroes:
+#					if key + 1 == (zeroes[key]):
+#						print(args.contig,zeroes[key],"-",seq[key:zeroes[key]],sep="\t")
+#					else:
+#						zero_range = str(key + 1) + "-" + str(zeroes[key])
+#						print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
 
 
 
@@ -212,7 +223,7 @@ def deletion():
 						for x, y in window.items():
 							if y < (base1*0.6) and x not in reported:
 								reported.append(x)
-								if args.events:
+								if args.mode in ("deletion-2","deletion-3"):
 									if new_mutation(x, old_position):
 										if len(deletion) != 0:
 											print_deletion(deletion, del_size)
@@ -230,7 +241,7 @@ def deletion():
 			if args.contig and args.contig == previous_ctg:
 				break
 
-		if args.events:					# Ensure that the final event is reported
+		if args.mode in ("deletion-2","deletion-3"):	# Ensure that the final event is reported
 			print_deletion(deletion, del_size)
 
 
@@ -240,7 +251,7 @@ def new_mutation(new_position, old_position):
 
 def print_deletion(m, n):
 	m.append(n)
-	if (args.frameshift == False) or (args.frameshift and n % 3 != 0):
+	if (args.mode != "deletion-3") or (args.mode != "deletion-3" and n % 3 != 0):
 		print(m[0],m[1],m[2],sep="\t")
 
 
@@ -449,7 +460,7 @@ def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
 	# from a part of the reference sequence specified by args.range
 	command = ("samtools mpileup -uf %s %s -r %s:%s | bcftools view -cg -") \
-	% (args.refference, args.bam, args.contig, args.range)
+	% (args.reference, args.bam, args.contig, args.range)
 	bam = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 	header = ">" + args.contig + ":" + args.range
 	seq = ""
@@ -469,7 +480,7 @@ def extract_sequence():
 
 
 def main():
-	if args.mode == "deletion-1":
+	if args.mode in ("deletion-1","deletion-2","deletion-3"):
 		deletion()
 	elif args.mode == "deletion-x":
 		if args.mutations:
@@ -497,5 +508,5 @@ def main():
 if __name__ == "__main__":
 	main()
 
-if args.dev == True:
-	print("Time taken =",(time.time() - start_time),"seconds.")
+#if args.dev == True:
+#	print("Time taken =",(time.time() - start_time),"seconds.")

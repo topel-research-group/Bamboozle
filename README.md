@@ -7,10 +7,10 @@ Script for retrieving statistics or other types of sequence information from .ba
 Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage
 
 ```bash
-./bamboozle.py -b <BAMFILE> -c <CHROMOSOME/CONTIG> -t <THRESHOLD>
+./bamboozle.py --mode coverage -b <BAMFILE> -c <CHROMOSOME/CONTIG> -t <THRESHOLD>
 ```
 ```bash
-./bamboozle.py -b P8352_101_sorted.bam -c 000343F -t 25
+./bamboozle.py --mode coverage -b P8352_101_sorted.bam -c 000343F -t 25
 ```
 * `-c` flag is optional; if not specified, analysis will be run on the whole assembly
 * `-t` flag is optional; if not specified, coverage of >= 20x will be reported
@@ -23,10 +23,10 @@ Retrieving a statistic for what percentage of bases in an assembly have >= Nx co
 Extracting consensus sequence of aligned reads from a specific region of the reference sequence.
 
 ```bash
-./bamboozle.py -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG> -a <RANGE>
+./bamboozle.py --mode consensus -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG> -a <RANGE>
 ```
 ```bash
-./bamboozle.py -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
+./bamboozle.py --mode consensus -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
 ```
 
 
@@ -35,10 +35,10 @@ Extracting consensus sequence of aligned reads from a specific region of the ref
 Finding areas of zero coverage and printing the reference sequence, along with a GC percentage
 
 ```bash
-./bamboozle.py -z -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG>
+./bamboozle.py --mode zero -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG>
 ```
 ```bash
-./bamboozle.py -z -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_101_sorted.bam -c 000343F
+./bamboozle.py --mode zero -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_101_sorted.bam -c 000343F
 ```
 * Note: percentage values are rounded to 3 decimal places
 
@@ -51,30 +51,30 @@ those events resulting in a frameshift
 * Note: this uses the default threshold of 20 for assessing the surrounding coverage; `-t` can therefore be used
   to try and find deletions in lower-coverage areas, however this hasn't been extensively tested
 
-* Default usage - prints every deletion position
+* Mode 1 - prints every deletion position
 ```bash
-./bamboozle.py -d -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+./bamboozle.py --mode deletion-1 -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
 ```
 
-* With `-e` flag - combine adjacent deletion positions into discrete events
+* Mode 2 - combine adjacent deletion positions into discrete events
 ```bash
-./bamboozle.py -e -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+./bamboozle.py --mode deletion-2 -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
 ```
 
-* With `-f` flag - only report events which represent a frameshift (i.e. not divisible by 3)
+* Mode 3 - only report events which represent a frameshift (i.e. not divisible by 3)
 ```bash
-./bamboozle.py -f -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+./bamboozle.py --mode deletion-3 -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
 ```
 
 ## Identify deletions within exons
 
 Finding deletions occurring within exons; requires a bed file of exons and a text file of deletions (the output
-of the above `-e/-f` function)
+of the above `deletion-2` and `deletion-3` modes)
 * Note: Both `-x` and `-m` are required
 * Note: This function will eventually be merged with the above `deletions` function
 
 ```bash
-./bamboozle.py -x <EXONS> -m <MUTATIONS>
+./bamboozle.py --mode deletion-x -x <EXONS> -m <MUTATIONS>
 ```
 
 ## Identify homozygous or heterozygous deletions
@@ -85,19 +85,19 @@ and the previous base
 * Note: This function will eventually be merged with the above `deletions` function
 
 ```bash
-./bamboozle.py -o -b <BAMFILE> -m <MUTATIONS>
+./bamboozle.py --mode homohetero -b <BAMFILE> -m <MUTATIONS>
 ```
 
 ## Find regions which differ from the contig median by +/- 50%, and output them in .bed format
 
 ```bash
-./bamboozle.py --median -c <CONTIG> -b <BAMFILE> > <output.bed>
+./bamboozle.py --mode median-one -c <CONTIG> -b <BAMFILE> > <output.bed>
 ```
 
 ## As above, but for each contig in the assembly
 
 ```bash
-./bamboozle.py --medianall -b <BAMFILE> > <output.bed>
+./bamboozle.py --mode median-all -b <BAMFILE> > <output.bed>
 ```
 
 
@@ -118,14 +118,8 @@ and the previous base
 
 * Would it be useful to have an 'average' function, to report the median of each contig?
 
+* Any way to speed things up when searching a contig later in the .bam file?
 
 ## Known bugs
 In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
 together in the output
-
-The following expressions need updating:
-`if args.mode == "deletion-3":`
-`	args.events = True`
-
-`if args.mode == "deletion-2":`
-`	args.deletion = True`
