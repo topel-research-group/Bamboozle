@@ -168,42 +168,9 @@ def snpEff_test():
 	try:
 		cmdx = ('snpEff databases | grep "Skeletonema"')
 		processx = subprocess.check_output(cmdx, shell=True)
-	except OSError:
-		raise RuntimeError('Skeletonema database not found; building new database...')
-		try:
-			cmdy = ['snpEff', 'build', '-gff3', '-v', 'Skeletonema_marinoi_v1.1.1.1'] 
-			processy = subprocess.Popen(cmdy, stdout=subprocess.PIPE)
-		except:
-			print('Skeletonema database not found; printing manual...')
-
-			cmdz = ['snpEff', 'build', '-h']
-			processz = subprocess.Popen(cmdz, stdout=subprocess.PIPE)
-			while processz.wait() is None:
-			        pass
-			print ('''
-			Build Skeletonema database:     
-				Step 1: 
-				To 'snpEFF.contig' Add this:
-				#---
-				# Skeletonema marinoi, version 1.1.1.1
-				#---
-				Skeletonema_marinoi_v1.1.1.1.genome : Skeletonema_marinoi_v1.1.1.1
-				
-				Step 2:
-				mkdir path/to/snpEff/data/Skeletonema_marinoi_v1.1.1.1
-				cd path/to/snpEff/data/Skeletonema_marinoi_v1.1.1.1
-				rsync -hav path/to/Skeletonema.gff.gz . 
-				mv Skeletonema.gff.gz genes.gff.gz 
-				
-				Additional:
-				GFF3 files can have sequence information either in the same file or in a separate fasta file. 
-				In order to add sequence information in the GFF file, you can do this:
-
-				cat Skeletonema.gff > genes.gff
-				echo "###"  >> genes.gff
-				echo "##FASTA"  >> genes.gff
-				cat sequence.fa  >> genes.gff
-			''')
+	except:
+		print('Skeletonema database not found...')
+		exit()
 
 def annotation():					
 	for file in os.listdir('Bcftools'):
@@ -256,14 +223,14 @@ def exit():
 def main():
 	if args.bamfile:
 		input_files()
-#		exit()
+#		exit()	
 
+	snpEff_test()
 	bowtie2()
 	samtools_view()
 	samtools_sort()
 	samtools_index()
 	bcftools()
-	snpEff_test()
 	annotation()
 
 	if args.snpsift:
