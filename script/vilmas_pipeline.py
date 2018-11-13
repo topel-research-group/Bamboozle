@@ -223,7 +223,7 @@ def exit():
 def main():
 	if args.bamfile:
 		input_files()
-#		exit()	
+		exit()	
 
 	snpEff_test()
 	bowtie2()
