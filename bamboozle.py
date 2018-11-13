@@ -39,10 +39,6 @@ args = parser.parse_args()
 if args.dev == True:
 	start_time = time.time()
 
-def time_taken():
-	if args.dev == True:
-		print("Time taken =",(time.time() - start_time),"seconds.")
-
 def coverage_stats():
 	# This function calculates the percentage of positions in an assembly/contig
 	# with read coverage >= a given threshold (default: 20x)
@@ -53,7 +49,13 @@ def coverage_stats():
 		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
 		exit()
 
-	cmd = ["samtools depth -aa %s" % args.bam]
+	if args.contig:
+		cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
+		sequence = "contig"
+	else:
+		cmd = ["samtools depth -aa %s" % args.bam]
+		sequence = "assembly"
+
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	if args.verbose == True:
@@ -63,40 +65,19 @@ def coverage_stats():
 			print("Obtaining whole-genome stats for ",os.path.basename(args.bam),"; coverage >+",args.threshold,"%.",sep="")
 	cov_stats = {}
 	num_lines = 0
-	correct_contig = 0
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
 			coverage = int(row[2])
-			if args.contig:
-				if str(row[0]) == args.contig:
-					correct_contig = 1
-					num_lines += 1
-					if coverage >= args.threshold:
-						if coverage in cov_stats:
-							cov_stats[coverage] += 1
-						else:
-							cov_stats[coverage] = 1
-				elif str(row[0]) != args.contig and correct_contig == 1:
-					coverage_results("contig", num_lines, cov_stats)
-					time_taken()
-#					if args.dev == True:
-#						print("Time taken =",(time.time() - start_time),"seconds.")
-					exit()
-			else:
-				num_lines += 1
-				if coverage >= args.threshold:
-					if coverage in cov_stats:
-						cov_stats[coverage] += 1
-					else:
-						cov_stats[coverage] = 1
-	coverage_results("assembly", num_lines, cov_stats)
-
-
-def coverage_results(sequence, lines, cov):
-	print("Length of " + sequence + ":",lines)
-	value = 100.0 / lines * sum(cov.values())
-	print(round(value, 3),"% of the " + sequence + " >=",args.threshold,"x coverage.",sep="")
+			num_lines += 1
+			if coverage >= args.threshold:
+				if coverage in cov_stats:
+					cov_stats[coverage] += 1
+				else:
+					cov_stats[coverage] = 1
+		print("Length of " + sequence + ":",num_lines)
+		value = 100.0 / num_lines * sum(cov_stats.values())
+		print(round(value, 3),"% of the " + sequence + " with >=",args.threshold,"x coverage.",sep="")
 
 
 def zero_regions():
@@ -129,12 +110,23 @@ def zero_regions():
 		gc_content = 100.0 / len(input) * count
 		return gc_content
 
-	if not args.contig:
-		print("Please specify contig with the -c flag")
+	def zero_print():
+		with open(args.reference) as fasta:
+			for name, seq in read_fasta(fasta):
+				if name[1:] == args.contig:
+					print("GC% for contig:",round(get_gc(seq), 3))
+					print("Contig\tPositions\tGC%\tSequence")
+					for key in zeroes:
+						if key + 1 == (zeroes[key]):
+							print(args.contig,zeroes[key],"-",seq[key:zeroes[key]],sep="\t")
+						else:
+							zero_range = str(key + 1) + "-" + str(zeroes[key])
+							print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
+		time_taken()
 		exit()
 
-	if not args.reference:
-		print("Please specify reference with the -r flag")
+	if not args.contig or not args.reference or not args.bam:
+		print("Please ensure all required flags are specified; see readme file")
 		exit()
 
 	if args.verbose == True:
@@ -154,32 +146,8 @@ def zero_regions():
 				if coverage == 0:
 					zeroes[int(row[1])] = int(row[2])
 			elif str(row[0]) != args.contig and correct_contig == 1:
-				with open(args.reference) as fasta:
-					for name, seq in read_fasta(fasta):
-						if name[1:] == args.contig:
-							print("GC% for contig:",round(get_gc(seq), 3))
-							print("Contig\tPositions\tGC%\tSequence")
-							for key in zeroes:
-								if key + 1 == (zeroes[key]):
-									print(args.contig,zeroes[key],"-",seq[key:zeroes[key]],sep="\t")
-								else:
-									zero_range = str(key + 1) + "-" + str(zeroes[key])
-									print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
-				time_taken()
-				exit()					
-
-#	with open(args.reference) as fasta:
-#		for name, seq in read_fasta(fasta):
-#			if name[1:] == args.contig:
-#				print("GC% for contig:",round(get_gc(seq), 3))
-#				print("Contig\tPositions\tGC%\tSequence")
-#				for key in zeroes:
-#					if key + 1 == (zeroes[key]):
-#						print(args.contig,zeroes[key],"-",seq[key:zeroes[key]],sep="\t")
-#					else:
-#						zero_range = str(key + 1) + "-" + str(zeroes[key])
-#						print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
-
+				zero_print()
+	zero_print()
 
 
 def deletion():
@@ -192,7 +160,28 @@ def deletion():
 		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
 		exit()
 
-	cmd = ["samtools depth -aa %s" % args.bam]
+	if args.verbose == True:
+		if args.mode == "deletion-1":
+			if args.contig:
+				print("Finding individual deletions in",args.contig)
+			else:
+				print("Finding individual deletions in assembly")
+		elif args.mode == "deletion-2":
+			if args.contig:
+				print("Finding deletion events in",args.contig)
+			else:
+				print("Finding deletion events in assembly")
+		elif args.mode == "deletion-3":
+			if args.contig:
+				print("Finding frameshift deletion events in",args.contig)
+			else:
+				print("Finding frameshift deletion events in assembly")
+
+	if args.contig:
+		cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
+	else:
+		cmd = ["samtools depth -aa %s" % args.bam]
+
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	
 	old_position = 0
@@ -214,46 +203,38 @@ def deletion():
 
 	# Currently skips the first position...
 
-			if (args.contig == None) or (args.contig and args.contig == str(row[0])):
-				if len(window) == 12:
-					del window[position - 12]
-					window[position] = coverage
-					base1 = window[position - 11]
-					if ((base1*0.8) <= window[position] <= (base1*1.25)) and (base1 > 0) and (window[position] >= args.threshold):
-						for x, y in window.items():
-							if y < (base1*0.6) and x not in reported:
-								reported.append(x)
-								if args.mode in ("deletion-2","deletion-3"):
-									if new_mutation(x, old_position):
-										if len(deletion) != 0:
-											print_deletion(deletion, del_size)
-											deletion = []
-										deletion.extend([ctg,x])
-										del_size = 1
-									else:
-										del_size +=1
+			if len(window) == 12:
+				del window[position - 12]
+				window[position] = coverage
+				base1 = window[position - 11]
+				if ((base1*0.8) <= window[position] <= (base1*1.25)) and (base1 > 0) and (window[position] >= args.threshold):
+					for x, y in window.items():
+						if y < (base1*0.6) and x not in reported:
+							reported.append(x)
+							if args.mode in ("deletion-2","deletion-3"):
+								if (int(x) - int(old_position)) != 1:
+									if len(deletion) != 0:
+										print_deletion(deletion, del_size)
+										deletion = []
+									deletion.extend([ctg,x])
+									del_size = 1
 								else:
-									print(ctg,x,sep="\t")
-								old_position = x
-				else:
-					window[position] = coverage
-
-			if args.contig and args.contig == previous_ctg:
-				break
+									del_size +=1
+							else:
+								print(ctg,x,sep="\t")
+							old_position = x
+			else:
+				window[position] = coverage
 
 		if args.mode in ("deletion-2","deletion-3"):	# Ensure that the final event is reported
 			print_deletion(deletion, del_size)
 
-
-def new_mutation(new_position, old_position):
-	if (int(new_position) - int(old_position)) != 1:
-		return True
+	time_taken()
 
 def print_deletion(m, n):
 	m.append(n)
-	if (args.mode != "deletion-3") or (args.mode != "deletion-3" and n % 3 != 0):
+	if (args.mode != "deletion-3") or (args.mode == "deletion-3" and n % 3 != 0):
 		print(m[0],m[1],m[2],sep="\t")
-
 
 
 def exon_mutations():
@@ -356,7 +337,7 @@ def median_deviation():
 	# Calculate median coverage of contig, then identify regions which deviate from this by +/- 50%
 	# Output in bed format
 
-	cmd = ["samtools depth -aa %s" % args.bam]
+	cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	cov_stats = {}
@@ -365,14 +346,9 @@ def median_deviation():
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
-			ctg = str(row[0])
 			position = int(row[1])
 			coverage = int(row[2])
-			if ctg == args.contig:
-				check_me = 1
-				cov_stats[position] = coverage
-			elif check_me == 1:
-				break
+			cov_stats[position] = coverage
 	median_cov = median(cov_stats.values())
 	low_threshold = median_cov * 0.5	# This is open to change as needed
 	high_threshold = median_cov * 1.5
@@ -508,5 +484,5 @@ def main():
 if __name__ == "__main__":
 	main()
 
-#if args.dev == True:
-#	print("Time taken =",(time.time() - start_time),"seconds.")
+if args.dev == True:
+	print("Time taken =",(time.time() - start_time),"seconds.")

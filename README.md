@@ -119,6 +119,13 @@ and the previous base
 * Would it be useful to have an 'average' function, to report the median of each contig?
 
 * Any way to speed things up when searching a contig later in the .bam file?
+  * Is speed also an issue when reading through the output of bedtools?
+    * Try `mmap`? (https://www.quora.com/What-are-the-fastest-ways-to-read-text-lines-in-large-files-by-Python)
+
+* SPEED-UP CAN BE ACHIEVED USING `samtools depth -aa -r`
+  * Can't speed up functions which use `bedtoools genomecov`, e.g. `--mode zero`
+    * Speed is definitely an issue here...
+* Code can be simplified thanks to this flag...
 
 ## Known bugs
 In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
