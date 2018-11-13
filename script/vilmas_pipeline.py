@@ -241,14 +241,14 @@ def input_files():
 	snpEff_test()
 	annotation()
 	
-	if args.snpsift:
-                snpsift()
+#	if args.snpsift:
+ #               snpsift()
 
-        if args.clean:
-                clean()
+  #      if args.clean:
+   #             clean()
 
-        if args.done:
-                done()
+    #    if args.done:
+     #           done()
 
 def exit():
 	sys.exit()
@@ -256,7 +256,7 @@ def exit():
 def main():
 	if args.bamfile:
 		input_files()
-		exit()
+#		exit()
 
 	bowtie2()
 	samtools_view()
