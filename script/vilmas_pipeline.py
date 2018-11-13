@@ -9,12 +9,12 @@ import os
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-f", "--ref", required=True, help="Reference")
-parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 #parser.add_argument("-c", "--cwd", action="store_true", help="Find the files in current working directory")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
+parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
 parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
 args = parser.parse_args()
@@ -88,8 +88,8 @@ def bowtie2():
 			while process2.wait() is None:
                                 pass
 
+# Converting SAM to BAM using samtools view
 def samtools_view():
-	# Converting SAM to BAM using samtools view
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
 			cmd3 = ('samtools view -@ %s -Sb %s > %s') % (args.threads, sam, bam)
@@ -108,23 +108,23 @@ def samtools_sort():
 			while process4.wait() is None:
                     		pass	
 
-	# If the input files are BAM files and previous steps haven't been made the program will look 
-	# for the BAM files in cwd instead of the Bowtie2 directory
+			# If the input files are BAM files and previous steps haven't been made the program will look 
+			# for the BAM files in cwd instead of the Bowtie2 directory
 			for file in os.listdir('.'):
 				if fnmatch.fnmatch(file, '*.bam'):
 					process6 = subprocess.Popen(cmd4, stdout=subprocess.PIPE)
 					while process6.wait() is None:
 						pass  
 		
+# BAM infile
 def bam_input():
-	# BAM infile
 	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.bamfile, '-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
 	while process5.wait() is None:
 		pass	
 
+# Index sorted BAM files
 def samtools_index():
-	# Index sorted BAM files
 	cmd7 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
@@ -138,8 +138,8 @@ def samtools_index():
 					while process8.wait() is None:
                    	       			pass
 
+# Remove SAM and BAM files
 def clean():
-        # Remove SAM and BAM files
 	if args.clean:
 		for samfile in os.listdir('Bowtie2'):
 			if fnmatch.fnmatch(samfile, '*.sam'):
