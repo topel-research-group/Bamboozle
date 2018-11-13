@@ -167,7 +167,7 @@ def bcftools():
 def snpEff_test():
 	try:
 		cmdx = ('snpEff databases | grep "Skeletonema"')
-		processx = subprocess.check_output(cmdx, shell=True)
+		processx = subprocess.Popen(cmdx, shell=True)
 		while processx.wait() is None:
 			pass
 
