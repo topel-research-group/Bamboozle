@@ -1,6 +1,6 @@
 # Pipeline_vilma
 
-This is a pipeline that will take raw data, as fastq files, or a BAM file as input and give a filtered human readable output. The purpose is to simplify and make the bioinformatic analysis easier to reproduce.
+This is a pipeline that will take raw data, such as fastq files, or a BAM file as input and give a filtered human readable output. The purpose is to simplify and make the bioinformatic analysis easier to reproduce.
 
 The steps include mapping, SNP calling, Fst statistics, filtering and plotting of the results.  
 
@@ -10,11 +10,9 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 * If you want to plot a specific contig use the additional program `make_plot.py`
 
 ## Usage  
-```NAME -f <REFERENCE>```   
-Input files:  
-```-F <FORWARD READS> 
--R <REVERSE READS> ```  
-or `-b <BAMFILE>`  
+`NAME -f <REFERENCE> <INPUT>`  
+Input files:    
+`-F <FORWARD READS> -R <REVERSE READS>` or `-b <BAMFILE>` 
  
 ####Example:  
 Fastq files as input:
