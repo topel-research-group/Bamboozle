@@ -168,6 +168,9 @@ def snpEff_test():
 	try:
 		cmdx = ('snpEff databases | grep "Skeletonema"')
 		processx = subprocess.check_output(cmdx, shell=True)
+		while processx.wait() is None:
+			pass
+
 	except:
 		print('Skeletonema database not found...')
 		exit()
@@ -208,24 +211,25 @@ def input_files():
 	snpEff_test()
 	annotation()
 	
-#	if args.snpsift:
- #               snpsift()
+	if args.snpsift:
+                snpsift()
 
-  #      if args.clean:
-   #             clean()
+        if args.clean:
+                clean()
 
-    #    if args.done:
-     #           done()
+        if args.done:
+                done()
 
 def exit():
 	sys.exit()
 
 def main():
+	snpEff_test()
+
 	if args.bamfile:
 		input_files()
 		exit()	
 
-	snpEff_test()
 	bowtie2()
 	samtools_view()
 	samtools_sort()
