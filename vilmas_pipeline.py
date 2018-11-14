@@ -165,8 +165,8 @@ def annotation():
 			while process11.wait() is None:
                                 pass
 
-			cmd12 = ('bgzip %s > %s') % (annotated_vcf, annotated_vcf_gz)
-                        process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			cmd12 = ['bgzip', '-c', annotated_vcf]
+                        process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, cwd='Bcftools')
                         while process12.wait() is None:
                                 pass
 
