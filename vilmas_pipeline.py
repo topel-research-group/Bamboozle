@@ -9,7 +9,6 @@ import os
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-f", "--ref", required=True, help="Reference")
-#parser.add_argument("-c", "--cwd", action="store_true", help="Find the files in current working directory")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
@@ -51,23 +50,6 @@ if args.reverse:
 	file2 += ','.join(map(str, f2))
 else:
 	pass
-# Find the files in current working directory
-#if args.cwd:
-#	fi1 = []
-#	for fname1 in os.listdir('.'):
-#		if fnmatch.fnmatch(fname1, '*_R1_*f*q.gz'):
-#			n1 = current_directory + '/' + fname1
-#			fi1.append(n1)
-#	file1 += ','.join(map(str, fi1))	
-
-#	fi2 = []
-#	for fname2 in os.listdir('.'):
-#		if fnmatch.fnmatch(fname2, '*_R2_*f*q.gz'):
-#			n2 = current_directory + '/' + fname2
-#			fi2.append(n2) 
-#	file2 += ','.join(map(str, fi2)) 
-#else:
-#	pass
 
 ##################################################################################
 
