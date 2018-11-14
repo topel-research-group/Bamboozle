@@ -165,11 +165,13 @@ def bcftools():
 
 # Variant annotation and effect prediction
 def snpEff_test():
-	cmdx = ('snpEff databases | grep "Skeletonema"')
-	processx = subprocess.Popen(cmdx, stdout=subprocess.PIPE, shell=True)
-	if processx == False:
-		print('Skeletonema database not found...')
-		exit()
+	try:
+		cmdx = ('snpEff databases | grep "xxxxSkeletonema"')
+		processx = subprocess.check_output(cmdx, shell=True)
+	except subprocess.CalledProcessError as e:
+		if e.returncode >= 1:
+			print('snpEff: Skeletonema database not found, exit program...')
+			exit()
 
 def annotation():					
 	for file in os.listdir('Bcftools'):
