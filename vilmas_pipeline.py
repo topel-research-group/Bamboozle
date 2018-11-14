@@ -29,6 +29,7 @@ sorted_bam_out = current_directory + '/Bowtie2/' + name + '_sorted.bam'
 sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
+annotated_vcf_gz = name + '.snpeff_annotated.vcf.gz'
 annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
@@ -164,8 +165,8 @@ def annotation():
 			while process11.wait() is None:
                                 pass
 
-			cmd12 = ['bgzip', annotated_vcf]
-                        process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, cwd='Bcftools')
+			cmd12 = ('bgzip %s > %s') % (annotated_vcf, annotated_vcf_gz)
+                        process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
                         while process12.wait() is None:
                                 pass
 
@@ -189,9 +190,8 @@ def input_files():
 	samtools_index()
 	bcftools()
 	annotation()
-	
 	if args.snpsift:
-                snpsift()
+		snpsift()
 
         if args.clean:
                 clean()
