@@ -166,7 +166,7 @@ def bcftools():
 # Variant annotation and effect prediction
 def snpEff_test():
 	try:
-		cmdx = ('snpEff databases | grep "xxxxSkeletonema"')
+		cmdx = ('snpEff databases | grep "Skeletonema"')
 		processx = subprocess.check_output(cmdx, shell=True)
 	except subprocess.CalledProcessError as e:
 		if e.returncode >= 1:
