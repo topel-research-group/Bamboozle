@@ -31,7 +31,6 @@ bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_vcf_gz = name + '.snpeff_annotated.vcf.gz'
 annotated_table = name + '.snpsift_table.txt'
-annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
 file1 = ''
@@ -177,16 +176,10 @@ def annotation():
 def snpsift():
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*_annotated.vcf'):
-			cmd13 = ('cat %s | java -jar /usr/local/packages/snpEff/SnpSift.jar \
-			filter "(QUAL>=10)&(DP>=10)" > %s') % (annotated_vcf, annotated_filtered_vcf) 
+			cmd13 = ('java -jar /usr/local/packages/snpEff/SnpSift.jar extractFields -e "." -s "," %s \
+			CHROM POS "EFF[*].GENE" REF ALT QUAL DP AF "EFF[*].EFFECT" "EFF[*].AA" "EFF[*].FUNCLASS" > %s') % (annotated_vcf, annotated_table) 
 			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process13.wait() is None:
-				pass
-
-			cmd14 = ('java -jar /usr/local/packages/snpEff/SnpSift.jar extractFields -e "." -s "," %s \
-			CHROM POS "EFF[*].GENE" REF ALT QUAL DP AF "EFF[*].EFFECT" "EFF[*].AA" "EFF[*].FUNCLASS" > %s') % (annotated_vcf, annotated_table) 
-			process14 = subprocess.Popen(cmd14, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-			while process14.wait() is None:
 				pass
 
 # Add empty file when the pipeline is done
