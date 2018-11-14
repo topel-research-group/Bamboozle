@@ -30,6 +30,7 @@ sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_vcf_gz = name + '.snpeff_annotated.vcf.gz'
+annotated_table = name + '.snpsift_table.txt'
 annotated_filtered_vcf = name + '.snpsift_filtered.vcf'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
@@ -180,6 +181,12 @@ def snpsift():
 			filter "(QUAL>=10)&(DP>=10)" > %s') % (annotated_vcf, annotated_filtered_vcf) 
 			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process13.wait() is None:
+				pass
+
+			cmd14 = ('java -jar /usr/local/packages/snpEff/SnpSift.jar extractFields -e "." -s "," %s \
+			CHROM POS "EFF[*].GENE" REF ALT QUAL DP AF "EFF[*].EFFECT" "EFF[*].AA" "EFF[*].FUNCLASS" > %s') % (annotated_vcf, annotated_table) 
+			process14 = subprocess.Popen(cmd14, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			while process14.wait() is None:
 				pass
 
 # Add empty file when the pipeline is done
