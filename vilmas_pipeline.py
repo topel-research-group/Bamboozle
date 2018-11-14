@@ -204,7 +204,6 @@ def input_files():
 	bam_input()
 	samtools_index()
 	bcftools()
-	snpEff_test()
 	annotation()
 	
 	if args.snpsift:
