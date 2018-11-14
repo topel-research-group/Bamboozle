@@ -156,6 +156,8 @@ def snpEff_test():
 			print('snpEff: Skeletonema database not found, exit program...')
 			exit()
 
+# Annotating bcftools output using snpEff, output is a vcf, the vcf file is bgzipped to work as an input file to the Fst analysis,
+# the original vcf file is kept by using the -c flag 
 def annotation():					
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
@@ -165,12 +167,12 @@ def annotation():
 			while process11.wait() is None:
                                 pass
 
-			cmd12 = ['bgzip', '-c', annotated_vcf]
-                        process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, cwd='Bcftools')
+			cmd12 = ('bgzip -c %s > %s') % (annotated_vcf, annotated_vcf_gz)
+                        process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
                         while process12.wait() is None:
                                 pass
 
-# Filtering and manipulation of annotated files
+# Filtering and manipulation of annotated files using the vcf (not bgzipped) output file from snpEff
 def snpsift():
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*_annotated.vcf'):
