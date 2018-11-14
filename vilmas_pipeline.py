@@ -24,7 +24,6 @@ name = os.path.basename(current_directory)
 base = name + '.contigs'
 sam = name + '.sam'
 bam = current_directory + '/Bowtie2/' + name + '.bam'
-sorted_bam = name + '_sorted.bam'
 sorted_bam_out = current_directory + '/Bowtie2/' + name + '_sorted.bam'
 sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
