@@ -23,7 +23,7 @@ BAM file as input:
 `vilmas_pipeline.py -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -b file.bam`
 
 ### Dependencies
-```
+
 Versions used:  
 Bowtie2/v2.3.3.1  
 samtools/v1.9  
@@ -33,5 +33,5 @@ snpEff/v.4.3t
 Versions used in fst.py and make_plot.py:
 VCFtools/v0.1.13  
 Highcharts/v6.2.0
-```  
+
 
