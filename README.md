@@ -22,7 +22,7 @@ FASTQ files as input:
 BAM file as input:   
 `vilmas_pipeline.py -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -b file.bam`
 
-### Dependencies
+## Dependencies
 
 Versions used:  
 Bowtie2/v2.3.3.1  
