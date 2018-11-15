@@ -30,7 +30,7 @@ samtools/v1.9
 bcftools/v1.9  
 snpEff/v.4.3t
 
-Versions used in fst.py and make_plot.py:
+Versions used in `fst.py` and `make_plot.py`:  
 VCFtools/v0.1.13  
 Highcharts/v6.2.0
 
