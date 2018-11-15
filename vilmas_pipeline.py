@@ -53,7 +53,7 @@ else:
 
 ##################################################################################
 
-# Running bowtie2-build to index reference genome and bowtie2 to elign
+# Running bowtie2-build to index reference genome and bowtie2 to align
 def bowtie2():
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
@@ -98,7 +98,7 @@ def samtools_sort():
 					while process6.wait() is None:
 						pass  
 		
-# BAM infile
+# BAM input file
 def bam_input():
 	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.bamfile, '-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
@@ -145,11 +145,13 @@ def bcftools():
                         while process9.wait() is None:
                                 pass
 
-# Variant annotation and effect prediction
+# Variant annotation and effect prediction, the snpEff_test checks if there is a Skeletonema database, 
+# if it doesn't exists the program will exit and you have to create it by using 'snpEff build'
 def snpEff_test():
 	try:
 		cmdx = ('snpEff databases | grep "Skeletonema"')
 		processx = subprocess.check_output(cmdx, shell=True)
+	
 	except subprocess.CalledProcessError as e:
 		if e.returncode >= 1:
 			print('snpEff: Skeletonema database not found, exit program...')
