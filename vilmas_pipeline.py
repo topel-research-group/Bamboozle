@@ -53,11 +53,12 @@ else:
 
 ##################################################################################
 
-# Running bowtie2-build to index reference genome and bowtie2 to align
+# Running bowtie2-build to index reference genome and bowtie2 to align, makes new directory 'Bowtie2' if it doesn't exists
 def bowtie2():
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
    		os.makedirs(bowtie2_directory)
+	
 	cmd1 = ['bowtie2-build', args.ref, base]
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
@@ -98,7 +99,7 @@ def samtools_sort():
 					while process6.wait() is None:
 						pass  
 		
-# BAM input file
+# BAM input file by using the '-b' flag
 def bam_input():
 	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.bamfile, '-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
@@ -131,7 +132,7 @@ def clean():
 			if fnmatch.fnmatch(bamfile, name + '.bam'):
 				os.remove(current_directory + '/Bowtie2/' + bamfile)
 
-# Variant calling using bcftools mpileup
+# Variant calling using bcftools mpileup, makes new directory 'Bcftools' if it doesn't exists
 def bcftools():
 	bcftools_directory = os.path.join(current_directory, r'Bcftools')
         if not os.path.exists(bcftools_directory):
@@ -157,7 +158,7 @@ def snpEff_test():
 			print('snpEff: Skeletonema database not found, exit program...')
 			exit()
 
-# Annotating bcftools output using snpEff, output is a vcf, the vcf file is bgzipped to work as an input file to the Fst analysis,
+# Annotating variant calling output using snpEff, output is a vcf, the vcf file is bgzipped to work as an input file to the Fst analysis,
 # the original vcf file is kept by using the -c flag 
 def annotation():					
 	for file in os.listdir('Bcftools'):
@@ -173,7 +174,7 @@ def annotation():
                         while process12.wait() is None:
                                 pass
 
-# Filtering and manipulation of annotated files using the vcf (not bgzipped) output file from snpEff
+# Filtering and making a summary of annotated files using the vcf (not bgzipped) output file from snpEff, the summary will be in table format
 def snpsift():
 	for file in os.listdir('Bcftools'):
                 if fnmatch.fnmatch(file, '*_annotated.vcf'):
@@ -188,6 +189,7 @@ def done():
 	open("pipeline.done", 'a').close()
 	
 
+# If the '-b' flag is used this function will run, excluding the first steps of the program 
 def input_files():
 	bam_input()
 	samtools_index()
@@ -202,6 +204,7 @@ def input_files():
         if args.done:
                 done()
 
+# Exit program
 def exit():
 	sys.exit()
 
