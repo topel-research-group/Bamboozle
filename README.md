@@ -10,16 +10,17 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 * If you want to plot a specific contig use the additional program `make_plot.py`
 
 ## Usage  
-`NAME -f <REFERENCE> <INPUT>`  
-Input files:    
+`vilmas_pipeline.py -f <REFERENCE> <INPUT>`     
+
+Input files:  
 `-F <FORWARD READS> -R <REVERSE READS>` or `-b <BAMFILE>` 
  
 ####Example:  
 Fastq files as input:
-`NAME -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F file_R1.fastq.gz -R file_R2.fastq.gz`  
+`vilmas_pipeline.py -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F file_R1.fastq.gz -R file_R2.fastq.gz`  
 
-BAM file as input:  
-`NAME -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -b file.bam`
+BAM file as input:   
+`vilmas_pipeline.py -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -b file.bam`
 
 ### Dependencies
 ```
