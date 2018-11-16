@@ -1,7 +1,6 @@
 P8352_*
 *.fst
 *.f*q
-test*
 Bcftools/
 bcftools/
 Bowtie2/
