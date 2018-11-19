@@ -23,10 +23,10 @@ import subprocess
 import argparse
 import fnmatch
 import os 
-													        
+
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--ref", required=True, help="Reference")
+parser.add_argument("-f", "--ref"), #required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
@@ -53,21 +53,22 @@ annotated_table = name + '.snpsift_table.txt'
 file1 = ''
 file2 = ''
 
-if args.forward:
-	f1 = [] 
-	for name in args.forward:
-		f1.append(current_directory + '/' + name)
-	file1 += ','.join(map(str, f1)) 
-else:
-	pass
+def input_fq():
+	if args.forward:
+		f1 = [] 
+		for name in args.forward:
+			f1.append(current_directory + '/' + name)
+		file1 += ','.join(map(str, f1)) 
+	else:
+		pass
 
-if args.reverse:
-	f2 = [] 
-	for name2 in args.reverse:  
-		f2.append(current_directory + '/' + name2)
-	file2 += ','.join(map(str, f2))
-else:
-	pass
+	if args.reverse:
+		f2 = [] 
+		for name2 in args.reverse:  
+			f2.append(current_directory + '/' + name2)
+		file2 += ','.join(map(str, f2))
+	else:
+		pass
 
 ##################################################################################
 
@@ -233,6 +234,7 @@ def main():
 		input_files()
 		exit()	
 
+	input_fq()
 	bowtie2()
 	samtools_view()
 	samtools_sort()
