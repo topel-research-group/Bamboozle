@@ -26,7 +26,7 @@ import os
 
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--ref"), #required=True, help="Reference")
+parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
@@ -50,10 +50,10 @@ annotated_vcf_gz = name + '.snpeff_annotated.vcf.gz'
 annotated_table = name + '.snpsift_table.txt'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
-file1 = ''
-file2 = ''
-
 def input_fq():
+	file1 = ''
+	file2 = ''
+
 	if args.forward:
 		f1 = [] 
 		for name in args.forward:
