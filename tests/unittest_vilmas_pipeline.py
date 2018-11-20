@@ -18,12 +18,14 @@ def parse_args(args):
 	parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 	parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
 	parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
-	args = parser.parse_args()
+#	args = parser.parse_args()
+	return parser.parse_args(args)
 
 class TestClass:
 	def setup_args(self):
-		return parse_args(['-f', '/proj/data11/vilma/Pipeline_vilma/example_data/test_Skeletonema_marinoi_Ref.txt', '-F', '../P8352_102/P8352_102_S1_L001_R1_001.fastq.gz', '-R', '../P8352_102/P8352_102_S1_L001_R2_001.fastq.gz'])
-#		print vilmas_pipeline.argparse
+		return parse_args(['-f', '/proj/data11/vilma/Pipeline_vilma/example_data/test_Skeletonema_marinoi_Ref.txt', '-F', '/proj/data11/vilma/Pipeline_vilma/P8352_102/P8352_102_S1_L001_R1_001.fastq.gz', '-R', '/proj/data11/vilma/Pipeline_vilma/P8352_102/P8352_102_S1_L001_R2_001.fastq.gz'])
+#		print vilmas_pipeline.args
+#		pass
 		
 class TestProcess(TestClass, unittest.TestCase):
 
@@ -31,10 +33,10 @@ class TestProcess(TestClass, unittest.TestCase):
 		pass
 
 	def test_bowtie2(self):
-#		self.args = self.setup_args()
-		self.test_bowtie2 = vilmas_pipeline.bowtie2
-		test_bowtie2 = self.test_bowtie2
-		self.assertIsNone(test_bowtie2)	
+		self.args = self.setup_args()
+#		self.bowtie2 = vilmas_pipeline.bowtie2
+#		self.assertIsNone(self.bowtie2)
+		print self.args 
 
 #	def test_samtools_view(self):
 #		cmd3 = ('samtools view -Sb %s > %s') % (sam, bam)
