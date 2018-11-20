@@ -22,7 +22,7 @@ def parse_args(args):
 
 class TestClass:
 	def setup_args(self):
-		return parse_args(['-f', '/proj/data11/vilma/Pipeline_vilma/example_data/test_Skeletonema_marinoi_Ref.txt', '-F', 'P8352_102_S1_L001_R1_001.fastq.gz', '-R', 'P8352_102_S1_L001_R2_001.fastq.gz'])
+		return parse_args(['-f', '/proj/data11/vilma/Pipeline_vilma/example_data/test_Skeletonema_marinoi_Ref.txt', '-F', '../P8352_102/P8352_102_S1_L001_R1_001.fastq.gz', '-R', '../P8352_102/P8352_102_S1_L001_R2_001.fastq.gz'])
 #		print vilmas_pipeline.argparse
 		
 class TestProcess(TestClass, unittest.TestCase):
@@ -31,8 +31,10 @@ class TestProcess(TestClass, unittest.TestCase):
 		pass
 
 	def test_bowtie2(self):
-		self.args = self.setup_args()
-		self.assertIsNone(vilmas_pipeline.bowtie2())	
+#		self.args = self.setup_args()
+		self.test_bowtie2 = vilmas_pipeline.bowtie2
+		test_bowtie2 = self.test_bowtie2
+		self.assertIsNone(test_bowtie2)	
 
 #	def test_samtools_view(self):
 #		cmd3 = ('samtools view -Sb %s > %s') % (sam, bam)
