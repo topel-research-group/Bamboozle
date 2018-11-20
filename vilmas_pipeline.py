@@ -50,25 +50,24 @@ annotated_vcf_gz = name + '.snpeff_annotated.vcf.gz'
 annotated_table = name + '.snpsift_table.txt'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
-def input_fq():
-	file1 = ''
-	file2 = ''
+file1 = ''
+file2 = ''
 
-	if args.forward:
-		f1 = [] 
-		for name in args.forward:
-			f1.append(current_directory + '/' + name)
-		file1 += ','.join(map(str, f1)) 
-	else:
-		pass
+if args.forward:
+	f1 = [] 
+	for name in args.forward:
+		f1.append(current_directory + '/' + name)
+	file1 += ','.join(map(str, f1)) 
+else:
+	pass
 
-	if args.reverse:
-		f2 = [] 
-		for name2 in args.reverse:  
-			f2.append(current_directory + '/' + name2)
-		file2 += ','.join(map(str, f2))
-	else:
-		pass
+if args.reverse:
+	f2 = [] 
+	for name2 in args.reverse:  
+		f2.append(current_directory + '/' + name2)
+	file2 += ','.join(map(str, f2))
+else:
+	pass
 
 ##################################################################################
 
@@ -234,7 +233,6 @@ def main():
 		input_files()
 		exit()	
 
-	input_fq()
 	bowtie2()
 	samtools_view()
 	samtools_sort()
