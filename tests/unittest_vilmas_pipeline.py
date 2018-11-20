@@ -32,10 +32,8 @@ class TestProcess(TestClass, unittest.TestCase):
 	def setUp(self):
 		pass
 
-	def test_bowtie2(self):
+	def test_argsparse(self):
 		self.args = self.setup_args()
-#		self.bowtie2 = vilmas_pipeline.bowtie2
-#		self.assertIsNone(self.bowtie2)
 		print self.args 
 
 #	def test_samtools_view(self):
