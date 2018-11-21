@@ -46,17 +46,15 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.args = self.setup_args()
 		args = self.args
 		print self.setup_test_bowtie2(args)
-#		self.assertIsNone(self.setup_test_bowtie2(args))
+		self.assertIsNone(self.setup_test_bowtie2(args))
 
 
-
-
-
-#	def test_samtools_view(self):
+	# Should test the samtools_view function in vilmas_pipeline
+	def test_samtools_view(self):
 #		cmd3 = ('samtools view -Sb %s > %s') % (sam, bam)
 #		process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 #		stdout = process3.communicate()
-#                self.assertIsNone(stdout)
+                self.assertIsNone(vilmas_pipeline.samtools_view)
 #
 #	def test_samtools_sort(self):
 #		cmd4 = ['samtools', 'sort', bam, '-o', sorted_bam_out]
