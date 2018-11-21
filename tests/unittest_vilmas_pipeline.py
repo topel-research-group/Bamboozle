@@ -38,14 +38,15 @@ class TestProcess(TestClass, unittest.TestCase):
 		print self.args 
 		self.assertTrue(self.args)
 
-#	def setup_test_bowtie2(self):
-#		return vilmas_pipeline.bowtie2
+	def setup_test_bowtie2(self,args):
+		return vilmas_pipeline.bowtie2
 		
 	# Should test the bowtie2 function in vilmas_pipeline
-#	def test_bowtie2(self):
-#		self.args = self.setup_args()
-#		args = self.args
-#		self.assertIsNone(vilmas_pipeline.bowtie2.args)
+	def test_bowtie2(self):
+		self.args = self.setup_args()
+		args = self.args
+		print self.setup_test_bowtie2(args)
+#		self.assertIsNone(self.setup_test_bowtie2(args))
 
 
 
