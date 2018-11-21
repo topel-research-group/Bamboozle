@@ -36,15 +36,16 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test_argsparse(self):
 		self.args = self.setup_args()
 		print self.args 
+		self.assertTrue(self.args)
 
 #	def setup_test_bowtie2(self):
 #		return vilmas_pipeline.bowtie2
 		
 	# Should test the bowtie2 function in vilmas_pipeline
-	def test_bowtie2(self):
-		self.args = self.setup_args()
-		args = self.args
-		self.assertIsNone(vilmas_pipeline.bowtie2(args))
+#	def test_bowtie2(self):
+#		self.args = self.setup_args()
+#		args = self.args
+#		self.assertIsNone(vilmas_pipeline.bowtie2.args)
 
 
 
