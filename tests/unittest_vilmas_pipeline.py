@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import unittest
 from os import sys, path 
@@ -33,31 +34,33 @@ class TestProcess(TestClass, unittest.TestCase):
 		pass
 
 	# Shows the setup_args for now
-	def test_argsparse(self):
-		self.args = self.setup_args()
-		print self.args 
-		self.assertTrue(self.args)
+#	def test_argsparse(self):
+#		self.args = self.setup_args()
+#		print self.args 
+#		self.assertTrue(self.args)
 
-	def setup_test_bowtie2(self,args):
-		return vilmas_pipeline.bowtie2
+#	def setup_test_bowtie2(self,args):
+#		return vilmas_pipeline.bowtie2
 		
 	# Should test the bowtie2 function in vilmas_pipeline
-#	def test_bowtie2(self):
-#		self.args = self.setup_args()
-#		args = self.args
+	def test_bowtie2(self):
+		self.args = self.setup_args()
+		args = self.args
 #		print self.setup_test_bowtie2(args)
-#		self.assertIsNone(self.setup_test_bowtie2(args))
+		print vilmas_pipeline.bowtie2()
+		self.assertIsNone(vilmas_pipeline.bowtie2())
 
 
 	# Should test the samtools_view function in vilmas_pipeline
 	def setup_test_samtools_view(self):
 		pass
 
-	def test_samtools_view(self):
-		process3 = subprocess.Popen('samtools view -Sb /proj/data11/vilma/Pipeline_vilma/P8352_102/test.sam > test_output.bam', stdout=subprocess.PIPE, shell=True)
-		bam = '/proj/data11/vilma/Pipeline_vilma/P8352_102/test.bam'
-		bam_out = 'test_output.bam'
-                self.assertEqual(bam, bam_out) 
+#	def test_samtools_view(self):
+	#	process3 = subprocess.Popen('samtools view -Sb /proj/data11/vilma/Pipeline_vilma/P8352_102/test.sam > test_output.bam', stdout=subprocess.PIPE, shell=True)
+	#	bam = '/proj/data11/vilma/Pipeline_vilma/P8352_102/test.bam'
+	#	bam_out = 'test_output.bam'
+        #       self.assertEqual(bam, bam_out) 
+
 
 #	def test_samtools_sort(self):
 #		cmd4 = ['samtools', 'sort', bam, '-o', sorted_bam_out]
