@@ -10,7 +10,7 @@ import argparse
 class TestClass:
 	# Select specific test-files for testing functions
 	def setup_args(self):
-		return parse_args(['-f', '/proj/data11/vilma/Pipeline_vilma/example_data/test_Skeletonema_marinoi_Ref.txt', \
+		return vilmas_pipeline.args(['-f', '/proj/data11/vilma/Pipeline_vilma/example_data/test_Skeletonema_marinoi_Ref.txt', \
 		'-F', '/proj/data11/vilma/Pipeline_vilma/P8352_102/P8352_102_S1_L001_R1_001.fastq.gz', '-R', '/proj/data11/vilma/Pipeline_vilma/P8352_102/P8352_102_S1_L001_R2_001.fastq.gz'])
 		
 class TestProcess(TestClass, unittest.TestCase):
