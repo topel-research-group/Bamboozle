@@ -5,7 +5,8 @@ from os import sys, path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import vilmas_pipeline  
 import subprocess 
-import argparse 
+#import argparse 
+import os
 
 class TestClass:
 	# Select specific test-files for testing functions
@@ -27,6 +28,9 @@ class TestProcess(TestClass, unittest.TestCase):
 	#	self.assertIsNone(vilmas_pipeline.bowtie2())
 		self.assertRaises(TypeError)
 
+	def tearDown(self):
+		# Remove an empty directory
+		os.rmdir('Bowtie2')
 
 
 if __name__ == '__main__':
