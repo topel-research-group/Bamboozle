@@ -42,20 +42,23 @@ class TestProcess(TestClass, unittest.TestCase):
 		return vilmas_pipeline.bowtie2
 		
 	# Should test the bowtie2 function in vilmas_pipeline
-	def test_bowtie2(self):
-		self.args = self.setup_args()
-		args = self.args
-		print self.setup_test_bowtie2(args)
-		self.assertIsNone(self.setup_test_bowtie2(args))
+#	def test_bowtie2(self):
+#		self.args = self.setup_args()
+#		args = self.args
+#		print self.setup_test_bowtie2(args)
+#		self.assertIsNone(self.setup_test_bowtie2(args))
 
 
 	# Should test the samtools_view function in vilmas_pipeline
+	def setup_test_samtools_view(self):
+		pass
+
 	def test_samtools_view(self):
-#		cmd3 = ('samtools view -Sb %s > %s') % (sam, bam)
-#		process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
-#		stdout = process3.communicate()
-                self.assertIsNone(vilmas_pipeline.samtools_view)
-#
+		process3 = subprocess.Popen('samtools view -Sb /proj/data11/vilma/Pipeline_vilma/P8352_102/test.sam > test_output.bam', stdout=subprocess.PIPE, shell=True)
+		bam = '/proj/data11/vilma/Pipeline_vilma/P8352_102/test.bam'
+		bam_out = 'test_output.bam'
+                self.assertEqual(bam, bam_out) 
+
 #	def test_samtools_sort(self):
 #		cmd4 = ['samtools', 'sort', bam, '-o', sorted_bam_out]
 #		process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE)
