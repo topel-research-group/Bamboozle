@@ -102,20 +102,12 @@ def samtools_view():
 
 # Sort BAM files
 def samtools_sort():
-	cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
+			cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
 			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process4.wait() is None:
 				pass	
-
-			# If the input files are BAM files and previous steps haven't been made the program will look 
-			# for the BAM files in cwd instead of the Bowtie2 directory
-			for file in os.listdir('.'):
-				if fnmatch.fnmatch(file, '*.bam'):
-					process6 = subprocess.Popen(cmd4, stdout=subprocess.PIPE)
-					while process6.wait() is None:
-						pass  
 		
 # BAM input file by using the '-b' flag
 def bam_input():
@@ -126,18 +118,13 @@ def bam_input():
 
 # Index sorted BAM files
 def samtools_index():
-	cmd7 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
+			cmd7 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
 			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process7.wait() is None:
 				pass
-		else:
-			for file in os.listdir('.'):
-				if fnmatch.fnmatch(file, '*_sorted.bam'):
-					process8 = subprocess.Popen(cmd7, stdout=subprocess.PIPE )
-					while process8.wait() is None:
-						pass
+
 # Remove SAM and BAM files
 def clean():
 	if args.clean:
