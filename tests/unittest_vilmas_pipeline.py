@@ -27,7 +27,7 @@ class TestProcess(TestClass, unittest.TestCase):
 	# Test the bowtie2 function in vilmas_pipeline
 	def test_bowtie2(self):
 		args = self.setup_args()
-		self.assertIsNotNone(vilmas_pipeline.bowtie2())
+		self.assertIsNone(vilmas_pipeline.bowtie2(args))
 #		self.assertRaises(TypeError)
 
 	def test_reference_argument(self):
