@@ -32,7 +32,7 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	def test_reference_argument(self):
 		self.args = self.setup_args()
-		self.assertEqual(self.args.ref, '../example_data/test_Skeletonema_marinoi_Ref.txt')
+		self.assertEqual(self.args.ref, '../example_data/reference.txt')
 
 	def tearDown(self):
 		# Remove an empty directory
