@@ -12,11 +12,11 @@ class TestClass:
 	def setup_args(self):
 #		print(vilmas_pipeline.args)
 		args = vilmas_pipeline.parser.parse_args(['-f', \
-					'../example_data/test_Skeletonema_marinoi_Ref.txt', \
+					'../example_data/reference.txt', \
 					'-F', \
-					'../P8352_102/P8352_102_S1_L001_R1_001.fastq.gz', \
+					'../data1_R1.fastq.gz', \
 					'-R', \
-					'../P8352_102/P8352_102_S1_L001_R2_001.fastq.gz'])
+					'../data1_R2.fastq.gz'])
 		return args
 		
 class TestProcess(TestClass, unittest.TestCase):
