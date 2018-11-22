@@ -26,7 +26,7 @@ import os
 
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--ref", help="Reference, (required)")
+parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
@@ -72,7 +72,7 @@ else:
 ##################################################################################
 
 # Running bowtie2-build to index reference genome and bowtie2 to align, makes new directory 'Bowtie2' if it doesn't exists
-def bowtie2():
+def bowtie2(args):
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
 		os.makedirs(bowtie2_directory)
@@ -232,7 +232,7 @@ def main():
 		input_files()
 		exit()	
 
-	bowtie2()
+	bowtie2(args)
 	samtools_view()
 	samtools_sort()
 	samtools_index()
