@@ -30,9 +30,10 @@ class TestProcess(TestClass, unittest.TestCase):
 	#	self.assertIsNone(vilmas_pipeline.bowtie2())
 		self.assertRaises(TypeError)
 
-	def test_dummy(self):
+	def test_reference_argument(self):
 		self.arguments = self.setup_args()
-		self.assertTrue(self.arguments, '../example_data/test_Skeletonema_marinoi_Ref.txt')
+#		self.assertTrue(self.arguments, '../example_data/test_Skeletonema_marinoi_Ref.txt')
+		self.assertEqual(self.arguments.ref, '../example_data/test_Skeletonema_marinoi_Ref.txt')
 
 	def tearDown(self):
 		# Remove an empty directory
