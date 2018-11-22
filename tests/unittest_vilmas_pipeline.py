@@ -6,6 +6,7 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import vilmas_pipeline  
 import subprocess 
 import os
+import shutil
 
 class TestClass:
 	# Select specific test-files for testing functions
@@ -14,9 +15,9 @@ class TestClass:
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt', \
 					'-F', \
-					'../data1_R1.fastq.gz', \
+					'../example_data/data1_R1.fastq.gz', \
 					'-R', \
-					'../data1_R2.fastq.gz'])
+					'../example_data/data1_R2.fastq.gz'])
 		return args
 		
 class TestProcess(TestClass, unittest.TestCase):
@@ -37,7 +38,7 @@ class TestProcess(TestClass, unittest.TestCase):
 	def tearDown(self):
 		# Remove an empty directory
 		if 'Bowtie2' in os.listdir():
-			os.rmdir('Bowtie2')
+			shutil.rmtree('Bowtie2')
 
 
 if __name__ == '__main__':
