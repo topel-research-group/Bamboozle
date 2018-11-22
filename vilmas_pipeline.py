@@ -26,7 +26,7 @@ import os
 
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--ref", help="Reference")
+parser.add_argument("-f", "--ref", help="Reference, (required)")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
