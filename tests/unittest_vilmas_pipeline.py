@@ -38,7 +38,7 @@ class TestProcess(TestClass, unittest.TestCase):
 	def tearDown(self):
 		# Remove an empty directory
 		if 'Bowtie2' in os.listdir():
-			shutil.rmtree('Bowtie2')
+			os.rmdir('Bowtie2')
 
 
 if __name__ == '__main__':
