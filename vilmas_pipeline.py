@@ -72,7 +72,7 @@ else:
 ##################################################################################
 
 # Running bowtie2-build to index reference genome and bowtie2 to align, makes new directory 'Bowtie2' if it doesn't exists
-def bowtie2(args):
+def bowtie2():
 	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
 	if not os.path.exists(bowtie2_directory):
 		os.makedirs(bowtie2_directory)
@@ -232,7 +232,7 @@ def main():
 		input_files()
 		exit()	
 
-	bowtie2(args)
+	bowtie2()
 	samtools_view()
 	samtools_sort()
 	samtools_index()
