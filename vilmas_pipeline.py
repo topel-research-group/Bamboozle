@@ -139,7 +139,7 @@ def clean():
 				os.remove(current_directory + '/Bowtie2/' + bamfile)
 
 # Variant calling using bcftools mpileup, makes new directory 'Bcftools' if it doesn't exists
-def bcftools():
+def bcftools(args):
 	bcftools_directory = os.path.join(current_directory, r'Bcftools')
 	if not os.path.exists(bcftools_directory):
 		os.makedirs(bcftools_directory)
@@ -199,7 +199,7 @@ def done():
 def input_files():
 	bam_input(args)
 	samtools_index()
-	bcftools()
+	bcftools(args)
 	annotation()
 	if args.snpsift:
 		snpsift()
@@ -225,7 +225,7 @@ def main():
 	samtools_view()
 	samtools_sort()
 	samtools_index()
-	bcftools()
+	bcftools(args)
 	annotation()
 
 	if args.snpsift:
