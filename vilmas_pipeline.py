@@ -52,25 +52,6 @@ annotated_table = name + '.snpsift_table.txt'
 add = '../'
 add2 = '../Bowtie2/'
 
-# Selected input files using forward and reverse flags, the flags can take several input files
-file1 = ''
-file2 = ''
-if args.forward:
-	f1 = [] 
-	for name in args.forward:
-		f1.append(add+name)
-	file1 += ','.join(map(str, f1)) 
-else:
-	pass
-
-if args.reverse:
-	f2 = [] 
-	for name2 in args.reverse:  
-		f2.append(add+name2)
-	file2 += ','.join(map(str, f2))
-else:
-	pass
-
 ##################################################################################
 # Makes new directory 'Bowtie2' if it doesn't exists
 bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
@@ -79,11 +60,32 @@ if not os.path.exists(bowtie2_directory):
 
 # Running bowtie2-build to index reference genome and bowtie2 to align 
 def bowtie2(args):
+	# Selected input files using forward and reverse flags, the flags can take several input files
+	file1 = ''
+	file2 = ''
+	if args.forward:
+		f1 = [] 
+		for name in args.forward:
+			f1.append(add+name)
+		file1 += ','.join(map(str, f1)) 
+	else:
+		pass
+
+	if args.reverse:
+		f2 = [] 
+		for name2 in args.reverse:  
+			f2.append(add+name2)
+		file2 += ','.join(map(str, f2))
+	else:
+		pass
+
+	# Bowtie2-build step
 	cmd1 = ['bowtie2-build', add+args.ref, base]
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
 
+	# Bowtie2 align step
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
 			cmd2 = ['bowtie2', '-p', threads, '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
