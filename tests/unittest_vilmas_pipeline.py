@@ -64,8 +64,8 @@ class TestProcess(TestClass, unittest.TestCase):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.bcftools(args))
 
-#	def test_annotation(self):
-#		self.assertIsNone(vilmas_pipeline.annotation())
+	def test_annotation(self):
+		self.assertIsNone(vilmas_pipeline.annotation())
 
 #	def test_snpsift(self):
 #		self.assertIsNone(vilmas_pipeline.snpsift())
