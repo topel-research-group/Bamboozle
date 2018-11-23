@@ -13,11 +13,11 @@ class TestClass:
 	def setup_args(self):
 #		print(vilmas_pipeline.args)
 		args = vilmas_pipeline.parser.parse_args(['-f', \
-					'/proj/data11/vilma/Pipeline_vilma/example_data/reference.txt', \
+					'../example_data/reference.txt', \
 					'-F', \
-					'../example_data/data1_R1.fastq.gz', \
+					'../example_data/data1_R1_00.fastq.gz', \
 					'-R', \
-					'../example_data/data1_R2.fastq.gz'])
+					'../example_data/data1_R2_00.fastq.gz'])
 		return args
 		
 class TestProcess(TestClass, unittest.TestCase):
@@ -31,14 +31,28 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.bowtie2(args))
 #		self.assertRaises(TypeError)
 
-#	def test_reference_argument(self):
-#		self.args = self.setup_args()
-#		self.assertEqual(self.args.ref, '../example_data/reference.txt')
+	def test_reference_argument(self):
+		self.args = self.setup_args()
+		self.assertEqual(self.args.ref, '../example_data/reference.txt')
 
-	def tearDown(self):
-		# Remove an empty directory
-		if 'Bowtie2' in os.listdir():
-			os.rmdir('Bowtie2')
+	def test_samtools_view(self):
+		self.assertIsNone(vilmas_pipeline.samtools_view())
+
+	def test_samtools_sort(self):
+		self.assertIsNone(vilmas_pipeline.samtools_sort())
+
+#	def test_bam_input(self):
+#		self.assertIsNone(vilmas_pipeline.bam_input())
+
+	def test_samtools_index(self):
+		self.assertIsNone(vilmas_pipeline.samtools_index())
+
+
+
+#	def tearDown(self):
+#		# Remove an empty directory
+#		if 'Bowtie2' in os.listdir():
+#			os.rmdir('Bowtie2')
 
 
 if __name__ == '__main__':
