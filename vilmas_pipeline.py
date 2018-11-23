@@ -39,6 +39,7 @@ args = parser.parse_args()
 
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
+threads = str(args.threads)
 base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam' 
@@ -85,7 +86,7 @@ def bowtie2(args):
 
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
-			cmd2 = ['bowtie2', '-p', str(args.threads), '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
+			cmd2 = ['bowtie2', '-p', threads, '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
 			process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process2.wait() is None:
 				pass
