@@ -55,6 +55,10 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test_samtools_index(self):
 		self.assertIsNone(vilmas_pipeline.samtools_index())
 
+	def test_bcftools(self):
+		args = self.setup_args2()
+		self.assertIsNone(vilmas_pipeline.bam_input(args))
+
 
 
 #	def tearDown(self):
