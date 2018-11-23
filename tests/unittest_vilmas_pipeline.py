@@ -8,6 +8,7 @@ import subprocess
 import os
 #import shutil
 
+
 class TestClass:
 	# Select specific test-files for testing functions
 	def setup_args(self):
@@ -32,10 +33,14 @@ class TestClass:
 					'../example_data/reference.txt'])
 		return args
 
+
 class TestProcess(TestClass, unittest.TestCase):
 
 	def setUp(self):
-		pass
+		current_directory = os.getcwd()
+		bcftools_directory = os.path.join(current_directory, r'Bcftools')
+		if not os.path.exists(bcftools_directory):
+                	os.makedirs(bcftools_directory)	
 
 	# Test the bowtie2 function in vilmas_pipeline
 	def test_bowtie2(self):
@@ -71,10 +76,11 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
 #	def tearDown(self):
-#		# Remove an empty directory
+#		# Remove an directory
 #		if 'Bowtie2' in os.listdir():
 #			os.rmdir('Bowtie2')
-
+#		if 'Bcftools' in os.listdir():
+#			os.rmdir('Bcftools')
 
 if __name__ == '__main__':
         unittest.main()
