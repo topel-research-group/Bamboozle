@@ -53,7 +53,7 @@ add = '../'
 # Selected input files using forward and reverse flags, the flags can take several input files
 file1 = ''
 file2 = ''
-##
+
 if args.forward:
 	f1 = [] 
 	for name in args.forward:
@@ -69,6 +69,7 @@ if args.reverse:
 	file2 += ','.join(map(str, f2))
 else:
 	pass
+
 ##################################################################################
 
 # Running bowtie2-build to index reference genome and bowtie2 to align, makes new directory 'Bowtie2' if it doesn't exists
