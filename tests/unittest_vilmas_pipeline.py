@@ -27,6 +27,11 @@ class TestClass:
 					'../example_data/data1.bam'])
 		return args
 		
+	def setup_args3(self):
+		args = vilmas_pipeline.parser.parse_args(['-f', \
+					'../example_data/reference.txt'])
+		return args
+
 class TestProcess(TestClass, unittest.TestCase):
 
 	def setUp(self):
@@ -56,10 +61,14 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.samtools_index())
 
 	def test_bcftools(self):
-		args = self.setup_args2()
-		self.assertIsNone(vilmas_pipeline.bam_input(args))
+		args = self.setup_args3()
+		self.assertIsNone(vilmas_pipeline.bcftools(args))
 
+#	def test_annotation(self):
+#		self.assertIsNone(vilmas_pipeline.annotation())
 
+#	def test_snpsift(self):
+#		self.assertIsNone(vilmas_pipeline.snpsift())
 
 #	def tearDown(self):
 #		# Remove an empty directory
