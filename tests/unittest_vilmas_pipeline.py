@@ -19,6 +19,13 @@ class TestClass:
 					'-R', \
 					'../example_data/data1_R2_00.fastq.gz'])
 		return args
+
+	def setup_args2(self):
+		args = vilmas_pipeline.parser.parse_args(['-f', \
+					'../example_data/reference.txt', \
+					'-b', \
+					'../example_data/data1.bam'])
+		return args
 		
 class TestProcess(TestClass, unittest.TestCase):
 
@@ -41,8 +48,9 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test_samtools_sort(self):
 		self.assertIsNone(vilmas_pipeline.samtools_sort())
 
-#	def test_bam_input(self):
-#		self.assertIsNone(vilmas_pipeline.bam_input())
+	def test_bam_input(self):
+		args = self.setup_args2()
+		self.assertIsNone(vilmas_pipeline.bam_input(args))
 
 	def test_samtools_index(self):
 		self.assertIsNone(vilmas_pipeline.samtools_index())
