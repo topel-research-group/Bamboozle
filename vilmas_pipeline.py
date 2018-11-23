@@ -26,7 +26,7 @@ import os
 
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--ref", required=True, help="Reference")
+parser.add_argument("-f", "--ref")#, required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
@@ -52,8 +52,9 @@ add = '../'
 add2 = '../Bowtie2/'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
+file1 = ''
+file2 = ''
 if args.forward:
-	file1 = ''
 	f1 = [] 
 	for name in args.forward:
 		f1.append(add+name)
@@ -62,7 +63,6 @@ else:
 	pass
 
 if args.reverse:
-	file2 = ''
 	f2 = [] 
 	for name2 in args.reverse:  
 		f2.append(add+name2)
