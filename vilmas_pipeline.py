@@ -112,7 +112,7 @@ def samtools_sort():
 				pass	
 		
 # BAM input file by using the '-b' flag
-def bam_input():
+def bam_input(args):
 	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, '-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='Bowtie2')
 	while process5.wait() is None:
@@ -197,7 +197,7 @@ def done():
 
 # If the '-b' flag is used this function will run, excluding the first steps of the program 
 def input_files():
-	bam_input()
+	bam_input(args)
 	samtools_index()
 	bcftools()
 	annotation()
