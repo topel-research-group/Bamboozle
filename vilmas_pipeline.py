@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #	Pipeline that performs bioinformatic analysis including SNP calling and effect prediction of fastq files or BAM file 
 #
