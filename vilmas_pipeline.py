@@ -48,6 +48,7 @@ bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_vcf_gz = name + '.snpeff_annotated.vcf.gz'
 annotated_table = name + '.snpsift_table.txt'
+add = '../'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
 file1 = ''
@@ -77,7 +78,7 @@ def bowtie2(args):
 	if not os.path.exists(bowtie2_directory):
 		os.makedirs(bowtie2_directory)
 	
-	cmd1 = ['bowtie2-build', args.ref, base]
+	cmd1 = ['bowtie2-build', add+args.ref, base]
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
@@ -111,8 +112,8 @@ def samtools_sort():
 		
 # BAM input file by using the '-b' flag
 def bam_input():
-	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', args.bamfile, '-o', sorted_bam_out]
-	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE)
+	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, '-o', sorted_bam_out]
+	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='Bowtie2')
 	while process5.wait() is None:
 		pass	
 
@@ -145,7 +146,7 @@ def bcftools():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
 			cmd9 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-			-e 'QUAL<20 || DP>100' -Oz -o %s") % (args.ref, sorted_bam_out, bcftools_out)
+			-e 'QUAL<20 || DP>100' -Oz -o %s") % (add+args.ref, sorted_bam_out, bcftools_out)
 			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process9.wait() is None:
 				pass
