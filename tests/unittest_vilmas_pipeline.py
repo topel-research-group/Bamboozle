@@ -6,7 +6,7 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import vilmas_pipeline  
 import subprocess 
 import os
-#import shutil
+import shutil
 
 
 class TestClass:
@@ -38,6 +38,10 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	def setUp(self):
 		current_directory = os.getcwd()
+		bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
+		if not os.path.exists(bowtie2_directory):
+			os.makedirs(bowtie2_directory)
+
 		bcftools_directory = os.path.join(current_directory, r'Bcftools')
 		if not os.path.exists(bcftools_directory):
                 	os.makedirs(bcftools_directory)	
@@ -75,12 +79,12 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test_snpsift(self):
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
-#	def tearDown(self):
-#		# Remove an directory
-#		if 'Bowtie2' in os.listdir():
-#			os.rmdir('Bowtie2')
-#		if 'Bcftools' in os.listdir():
-#			os.rmdir('Bcftools')
+	def tearDown(self):
+		# Remove an directory
+		if 'Bowtie2' in os.listdir():
+			shutil.rmtree('Bowtie2')
+		if 'Bcftools' in os.listdir():
+			shutil.rmtree('Bcftools')
 
 if __name__ == '__main__':
         unittest.main()
