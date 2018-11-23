@@ -68,16 +68,12 @@ def bowtie2(args):
 		for name in args.forward:
 			f1.append(add+name)
 		file1 += ','.join(map(str, f1)) 
-	else:
-		pass
 
 	if args.reverse:
 		f2 = [] 
 		for name2 in args.reverse:  
 			f2.append(add+name2)
 		file2 += ','.join(map(str, f2))
-	else:
-		pass
 
 	# Bowtie2-build step
 	cmd1 = ['bowtie2-build', add+args.ref, base]
