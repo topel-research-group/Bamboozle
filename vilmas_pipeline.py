@@ -36,22 +36,21 @@ parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM 
 parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
 args = parser.parse_args()
 ##################################################################################
-
+##
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
 base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam' 
-sorted_bam_out = current_directory + '/Bowtie2/' + name + '_sorted.bam'
+sorted_bam_out = name + '_sorted.bam'
 sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_vcf_gz = name + '.snpeff_annotated.vcf.gz'
 annotated_table = name + '.snpsift_table.txt'
 add = '../'
-
+add2 = '../Bowtie2/'
 # Selected input files using forward and reverse flags, the flags can take several input files
-
 if args.forward:
 	file1 = ''
 	f1 = [] 
@@ -71,13 +70,13 @@ else:
 	pass
 
 ##################################################################################
+# Makes new directory 'Bowtie2' if it doesn't exists
+bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
+if not os.path.exists(bowtie2_directory):
+	os.makedirs(bowtie2_directory)
 
-# Running bowtie2-build to index reference genome and bowtie2 to align, makes new directory 'Bowtie2' if it doesn't exists
+# Running bowtie2-build to index reference genome and bowtie2 to align 
 def bowtie2(args):
-	bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
-	if not os.path.exists(bowtie2_directory):
-		os.makedirs(bowtie2_directory)
-	
 	cmd1 = ['bowtie2-build', add+args.ref, base]
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
@@ -146,7 +145,7 @@ def bcftools():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
 			cmd9 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-			-e 'QUAL<20 || DP>100' -Oz -o %s") % (add+args.ref, sorted_bam_out, bcftools_out)
+			-e 'QUAL<20 || DP>100' -Oz -o %s") % (add+args.ref, add2+sorted_bam_out, bcftools_out)
 			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process9.wait() is None:
 				pass
