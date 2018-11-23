@@ -36,7 +36,7 @@ parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM 
 parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
 args = parser.parse_args()
 ##################################################################################
-##
+
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
 base = name + '.contigs'
@@ -50,6 +50,7 @@ annotated_vcf_gz = name + '.snpeff_annotated.vcf.gz'
 annotated_table = name + '.snpsift_table.txt'
 add = '../'
 add2 = '../Bowtie2/'
+
 # Selected input files using forward and reverse flags, the flags can take several input files
 if args.forward:
 	file1 = ''
@@ -97,8 +98,6 @@ def samtools_view():
 			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd='Bowtie2', shell=True)
 			while process3.wait() is None:
 				pass
-		else:
-			continue	
 
 # Sort BAM files
 def samtools_sort():
