@@ -67,8 +67,8 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test_annotation(self):
 		self.assertIsNone(vilmas_pipeline.annotation())
 
-#	def test_snpsift(self):
-#		self.assertIsNone(vilmas_pipeline.snpsift())
+	def test_snpsift(self):
+		self.assertIsNone(vilmas_pipeline.snpsift())
 
 #	def tearDown(self):
 #		# Remove an empty directory
