@@ -51,10 +51,9 @@ annotated_table = name + '.snpsift_table.txt'
 add = '../'
 
 # Selected input files using forward and reverse flags, the flags can take several input files
-file1 = ''
-file2 = ''
 
 if args.forward:
+	file1 = ''
 	f1 = [] 
 	for name in args.forward:
 		f1.append(add+name)
@@ -63,6 +62,7 @@ else:
 	pass
 
 if args.reverse:
+	file2 = ''
 	f2 = [] 
 	for name2 in args.reverse:  
 		f2.append(add+name2)
@@ -85,7 +85,7 @@ def bowtie2(args):
 
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
-			cmd2 = ['bowtie2', '-p', args.threads, '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
+			cmd2 = ['bowtie2', '-p', str(args.threads), '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
 			process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process2.wait() is None:
 				pass
