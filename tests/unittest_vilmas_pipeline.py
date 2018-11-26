@@ -80,12 +80,12 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
 	# Test output
-	def test091_sam_output(self):
+	def test100_sam_output(self):
 		test_sam = open('Bowtie2/tests.sam')
 		expected_sam = open('../example_data/data1.sam')
 		self.assertEqual(test_sam.readlines(), expected_sam.readlines())
 
-	def test092_output_bam(self):
+	def test110_output_bam(self):
 		myProcess = subprocess.check_call('diff Bowtie2/tests.bam ../example_data/data1.bam', shell=True)
 		self.assertIs(myProcess, 0)
 		
@@ -98,12 +98,17 @@ class TestProcess(TestClass, unittest.TestCase):
 #		self.assertEqual(myProcess.stdout.readlines(), myProcess2.stdout.readlines())
 
 
-	def z_remove(self):
-		# Remove an directory
+	def tearDown(self):
+		# Remove an empty directory
+		pass
+
+	@classmethod
+	def tearDownClass(cls):
 		if 'Bowtie2' in os.listdir():
 			shutil.rmtree('Bowtie2')
 		if 'Bcftools' in os.listdir():
 			shutil.rmtree('Bcftools')
+		
 
 if __name__ == '__main__':
         unittest.main()
