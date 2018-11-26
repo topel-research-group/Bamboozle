@@ -93,8 +93,8 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	def test_bam_output(self):
 #		myProcess2 = subprocess.Popen('md5sum -c Bowtie2/tests_bam_md5sum.txt ../example_data/data1_bam_md5sum.txt', stdout=subprocess.PIPE, shell=True)
-		myProcess2 = subprocess.getoutput('diff Bowtie2/tests.bam ../example_data/data1.bam')
-		self.assertIs(myProcess2, '')
+		myProcess2 = subprocess.check_call('diff Bowtie2/tests.bam ../example_data/data1.bam', shell=True)
+		self.assertIs(myProcess2, 0)
 		
 
 #	def test_bcftools_output(self):
