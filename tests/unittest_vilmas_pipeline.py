@@ -12,7 +12,6 @@ import shutil
 class TestClass:
 	# Select specific test-files for testing functions
 	def setup_args(self):
-#		print(vilmas_pipeline.args)
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt', \
 					'-F', \
@@ -50,7 +49,6 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test010_bowtie2(self):
 		args = self.setup_args()
 		self.assertIsNone(vilmas_pipeline.bowtie2(args))
-#		self.assertRaises(TypeError)
 
 	def test020_reference_argument(self):
 		self.args = self.setup_args()
@@ -89,26 +87,22 @@ class TestProcess(TestClass, unittest.TestCase):
 		myProcess = subprocess.check_call('diff Bowtie2/tests.bam ../example_data/data1.bam', shell=True)
 		self.assertIs(myProcess, 0)
 		
-
 	def test120_bcftools_output(self):
-#		myProcess = subprocess.run('gunzip ../example_data/data1.bcftools.vcf.gz > Bcftools/bcftools.vcf', shell=True, stdout=subprocess.PIPE)
-#		myProcess2 = subprocess.run('gunzip Bcftools/tests.bcftools_filtered.vcf.gz > Bcftools/tests_bcftools.vcf', shell=True, stdout=subprocess.PIPE)
 		test_snpeff= open('Bcftools/tests.snpsift_table.txt', 'r')
 		expected_snpeff = open('../example_data/data1.snpsift_table.txt', 'r')
 		self.assertEqual(test_snpeff.readlines(), expected_snpeff.readlines())
 
 
 	def tearDown(self):
-		# Remove an empty directory
 		pass
 
-#	@classmethod
-#	def tearDownClass(cls):
-#		# Remove the directories after the test is done
-#		if 'Bowtie2' in os.listdir():
-#			shutil.rmtree('Bowtie2')
-#		if 'Bcftools' in os.listdir():
-#			shutil.rmtree('Bcftools')
+	@classmethod
+	def tearDownClass(cls):
+		# Remove the directories after the test is done
+		if 'Bowtie2' in os.listdir():
+			shutil.rmtree('Bowtie2')
+		if 'Bcftools' in os.listdir():
+			shutil.rmtree('Bcftools')
 		
 
 if __name__ == '__main__':
