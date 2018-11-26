@@ -79,12 +79,17 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test_snpsift(self):
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
-	def tearDown(self):
-		# Remove an directory
-		if 'Bowtie2' in os.listdir():
-			shutil.rmtree('Bowtie2')
-		if 'Bcftools' in os.listdir():
-			shutil.rmtree('Bcftools')
+	def test_sam_output(self):
+		test_sam = open('Bowtie2/tests.sam')
+		expected_sam = open('../example_data/data1.sam')
+		self.assertEqual(test_sam.readlines(), expected_sam.readlines())
+
+#	def tearDown(self):
+#		# Remove an directory
+#		if 'Bowtie2' in os.listdir():
+#			shutil.rmtree('Bowtie2')
+#		if 'Bcftools' in os.listdir():
+#			shutil.rmtree('Bcftools')
 
 if __name__ == '__main__':
         unittest.main()
