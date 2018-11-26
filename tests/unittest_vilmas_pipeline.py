@@ -7,6 +7,7 @@ import vilmas_pipeline
 import subprocess 
 import os
 import shutil
+import gzip 
 import pickle
 
 class TestClass:
@@ -85,18 +86,23 @@ class TestProcess(TestClass, unittest.TestCase):
 		expected_sam = open('../example_data/data1.sam')
 		self.assertEqual(test_sam.readlines(), expected_sam.readlines())
 
-#	def test_bam_output(self):
-#		test_bam = ('Bowtie2/md5sum_bam2.txt')
-#		expected_bam = ('../example_data/md5sum_bam.txt')
-#		cmd=['md5sum', '-c', test_bam, expected_bam]
-#		myProcess = subprocess.check_output(cmd)
-#		self.assertIsNone(myProcess)
+	def setup_bam_output(self):
+		test_bam = ('Bowtie2/tests_bam_md5sum.txt')
+		expected_bam = ('../example_data/data1_bam_md5sum.txt')
+		myProcess = subprocess.Popen('md5sum -b Bowtie2/tests.bam > Bowtie2/tests_bam_md5sum.txt', stdout=subprocess.PIPE, shell=True)
 
-	def test_bcftools_output(self):
-		test_bcftools = open('Bcftools/tests.bcftools_filtered.vcf.gz')
-		expected_bcftools = open('../example_data/data1_bcftools.vcf.gz')
-		#myProcess = subprocess.Popen('zcat ../example_data/data1_bcftools.vcf.gz', shell=True, stdout=subprocess.PIPE)
-		self.assertEqual(pickle.load(test_bcftools).readlines(), pickle.load(expected_bcftools).readlines())
+	def test_bam_output(self):
+#		myProcess2 = subprocess.Popen('md5sum -c Bowtie2/tests_bam_md5sum.txt ../example_data/data1_bam_md5sum.txt', stdout=subprocess.PIPE, shell=True)
+		myProcess2 = subprocess.getoutput('diff Bowtie2/tests.bam ../example_data/data1.bam')
+		self.assertIs(myProcess2, '')
+		
+
+#	def test_bcftools_output(self):
+#		test_bcftools = ('Bcftools/tests.bcftools_filtered.vcf.gz')
+#		expected_bcftools = ('../example_data/data1.bcftools.vcf.gz')
+#		myProcess = subprocess.run('zcat ../example_data/data1.bcftools.vcf.gz', shell=True, stdout=subprocess.PIPE)
+#		myProcess2 = subprocess.run('zcat Bcftools/tests.bcftools_filtered.vcf.gz', shell=True, stdout=subprocess.PIPE)
+#		self.assertEqual(myProcess.stdout.readlines(), myProcess2.stdout.readlines())
 
 
 #	def tearDown(self):
