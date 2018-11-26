@@ -98,7 +98,7 @@ class TestProcess(TestClass, unittest.TestCase):
 #		self.assertEqual(myProcess.stdout.readlines(), myProcess2.stdout.readlines())
 
 
-	def tearDown(self):
+	def z_remove(self):
 		# Remove an directory
 		if 'Bowtie2' in os.listdir():
 			shutil.rmtree('Bowtie2')
