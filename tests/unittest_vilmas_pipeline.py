@@ -90,24 +90,25 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIs(myProcess, 0)
 		
 
-#	def test_bcftools_output(self):
-#		test_bcftools = ('Bcftools/tests.bcftools_filtered.vcf.gz')
-#		expected_bcftools = ('../example_data/data1.bcftools.vcf.gz')
-#		myProcess = subprocess.run('zcat ../example_data/data1.bcftools.vcf.gz', shell=True, stdout=subprocess.PIPE)
-#		myProcess2 = subprocess.run('zcat Bcftools/tests.bcftools_filtered.vcf.gz', shell=True, stdout=subprocess.PIPE)
-#		self.assertEqual(myProcess.stdout.readlines(), myProcess2.stdout.readlines())
+	def test120_bcftools_output(self):
+#		myProcess = subprocess.run('gunzip ../example_data/data1.bcftools.vcf.gz > Bcftools/bcftools.vcf', shell=True, stdout=subprocess.PIPE)
+#		myProcess2 = subprocess.run('gunzip Bcftools/tests.bcftools_filtered.vcf.gz > Bcftools/tests_bcftools.vcf', shell=True, stdout=subprocess.PIPE)
+		test_snpeff= open('Bcftools/tests.snpsift_table.txt', 'r')
+		expected_snpeff = open('../example_data/data1.snpsift_table.txt', 'r')
+		self.assertEqual(test_snpeff.readlines(), expected_snpeff.readlines())
 
 
 	def tearDown(self):
 		# Remove an empty directory
 		pass
 
-	@classmethod
-	def tearDownClass(cls):
-		if 'Bowtie2' in os.listdir():
-			shutil.rmtree('Bowtie2')
-		if 'Bcftools' in os.listdir():
-			shutil.rmtree('Bcftools')
+#	@classmethod
+#	def tearDownClass(cls):
+#		# Remove the directories after the test is done
+#		if 'Bowtie2' in os.listdir():
+#			shutil.rmtree('Bowtie2')
+#		if 'Bcftools' in os.listdir():
+#			shutil.rmtree('Bcftools')
 		
 
 if __name__ == '__main__':
