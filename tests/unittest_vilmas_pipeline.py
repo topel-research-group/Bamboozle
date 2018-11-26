@@ -34,7 +34,8 @@ class TestClass:
 
 
 class TestProcess(TestClass, unittest.TestCase):
-
+	
+	# Make directories
 	def setUp(self):
 		current_directory = os.getcwd()
 		bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
@@ -45,7 +46,7 @@ class TestProcess(TestClass, unittest.TestCase):
 		if not os.path.exists(bcftools_directory):
                 	os.makedirs(bcftools_directory)	
 
-	# Test the bowtie2 function in vilmas_pipeline
+	# Test that functions output None in pipeline 
 	def test010_bowtie2(self):
 		args = self.setup_args()
 		self.assertIsNone(vilmas_pipeline.bowtie2(args))
@@ -77,7 +78,7 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test090_snpsift(self):
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
-	# Test output
+	# Test output files
 	def test100_sam_output(self):
 		test_sam = open('Bowtie2/tests.sam')
 		expected_sam = open('../example_data/data1.sam')
@@ -87,7 +88,7 @@ class TestProcess(TestClass, unittest.TestCase):
 		myProcess = subprocess.check_call('diff Bowtie2/tests.bam ../example_data/data1.bam', shell=True)
 		self.assertIs(myProcess, 0)
 		
-	def test120_bcftools_output(self):
+	def test120_snpsift_output(self):
 		test_snpeff= open('Bcftools/tests.snpsift_table.txt', 'r')
 		expected_snpeff = open('../example_data/data1.snpsift_table.txt', 'r')
 		self.assertEqual(test_snpeff.readlines(), expected_snpeff.readlines())
