@@ -7,7 +7,7 @@ import vilmas_pipeline
 import subprocess 
 import os
 import shutil
-
+import pickle
 
 class TestClass:
 	# Select specific test-files for testing functions
@@ -79,10 +79,25 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test_snpsift(self):
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
+	# Test output
 	def test_sam_output(self):
 		test_sam = open('Bowtie2/tests.sam')
 		expected_sam = open('../example_data/data1.sam')
 		self.assertEqual(test_sam.readlines(), expected_sam.readlines())
+
+#	def test_bam_output(self):
+#		test_bam = ('Bowtie2/md5sum_bam2.txt')
+#		expected_bam = ('../example_data/md5sum_bam.txt')
+#		cmd=['md5sum', '-c', test_bam, expected_bam]
+#		myProcess = subprocess.check_output(cmd)
+#		self.assertIsNone(myProcess)
+
+	def test_bcftools_output(self):
+		test_bcftools = open('Bcftools/tests.bcftools_filtered.vcf.gz')
+		expected_bcftools = open('../example_data/data1_bcftools.vcf.gz')
+		#myProcess = subprocess.Popen('zcat ../example_data/data1_bcftools.vcf.gz', shell=True, stdout=subprocess.PIPE)
+		self.assertEqual(pickle.load(test_bcftools).readlines(), pickle.load(expected_bcftools).readlines())
+
 
 #	def tearDown(self):
 #		# Remove an directory
