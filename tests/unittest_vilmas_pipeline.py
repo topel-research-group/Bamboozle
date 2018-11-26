@@ -7,8 +7,7 @@ import vilmas_pipeline
 import subprocess 
 import os
 import shutil
-import gzip 
-import pickle
+
 
 class TestClass:
 	# Select specific test-files for testing functions
@@ -48,53 +47,47 @@ class TestProcess(TestClass, unittest.TestCase):
                 	os.makedirs(bcftools_directory)	
 
 	# Test the bowtie2 function in vilmas_pipeline
-	def test_bowtie2(self):
+	def test010_bowtie2(self):
 		args = self.setup_args()
 		self.assertIsNone(vilmas_pipeline.bowtie2(args))
 #		self.assertRaises(TypeError)
 
-	def test_reference_argument(self):
+	def test020_reference_argument(self):
 		self.args = self.setup_args()
 		self.assertEqual(self.args.ref, '../example_data/reference.txt')
 
-	def test_samtools_view(self):
+	def test030_samtools_view(self):
 		self.assertIsNone(vilmas_pipeline.samtools_view())
 
-	def test_samtools_sort(self):
+	def test040_samtools_sort(self):
 		self.assertIsNone(vilmas_pipeline.samtools_sort())
 
-	def test_bam_input(self):
+	def test050_bam_input(self):
 		args = self.setup_args2()
 		self.assertIsNone(vilmas_pipeline.bam_input(args))
 
-	def test_samtools_index(self):
+	def test060_samtools_index(self):
 		self.assertIsNone(vilmas_pipeline.samtools_index())
 
-	def test_bcftools(self):
+	def test070_bcftools(self):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.bcftools(args))
 		
-	def test_annotation(self):
+	def test080_annotation(self):
 		self.assertIsNone(vilmas_pipeline.annotation())
 
-	def test_snpsift(self):
+	def test090_snpsift(self):
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
 	# Test output
-	def test_sam_output(self):
+	def test091_sam_output(self):
 		test_sam = open('Bowtie2/tests.sam')
 		expected_sam = open('../example_data/data1.sam')
 		self.assertEqual(test_sam.readlines(), expected_sam.readlines())
 
-	def setup_bam_output(self):
-		test_bam = ('Bowtie2/tests_bam_md5sum.txt')
-		expected_bam = ('../example_data/data1_bam_md5sum.txt')
-		myProcess = subprocess.Popen('md5sum -b Bowtie2/tests.bam > Bowtie2/tests_bam_md5sum.txt', stdout=subprocess.PIPE, shell=True)
-
-	def test_bam_output(self):
-#		myProcess2 = subprocess.Popen('md5sum -c Bowtie2/tests_bam_md5sum.txt ../example_data/data1_bam_md5sum.txt', stdout=subprocess.PIPE, shell=True)
-		myProcess2 = subprocess.check_call('diff Bowtie2/tests.bam ../example_data/data1.bam', shell=True)
-		self.assertIs(myProcess2, 0)
+	def test092_output_bam(self):
+		myProcess = subprocess.check_call('diff Bowtie2/tests.bam ../example_data/data1.bam', shell=True)
+		self.assertIs(myProcess, 0)
 		
 
 #	def test_bcftools_output(self):
@@ -105,12 +98,12 @@ class TestProcess(TestClass, unittest.TestCase):
 #		self.assertEqual(myProcess.stdout.readlines(), myProcess2.stdout.readlines())
 
 
-#	def tearDown(self):
-#		# Remove an directory
-#		if 'Bowtie2' in os.listdir():
-#			shutil.rmtree('Bowtie2')
-#		if 'Bcftools' in os.listdir():
-#			shutil.rmtree('Bcftools')
+	def tearDown(self):
+		# Remove an directory
+		if 'Bowtie2' in os.listdir():
+			shutil.rmtree('Bowtie2')
+		if 'Bcftools' in os.listdir():
+			shutil.rmtree('Bcftools')
 
 if __name__ == '__main__':
         unittest.main()
