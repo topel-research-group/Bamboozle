@@ -90,7 +90,7 @@ def bowtie2(args):
 				pass
 
 # Converting SAM to BAM using samtools view
-def samtools_view():
+def samtools_view(args):
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
 			cmd3 = ('samtools view -@ %s -Sb %s > %s') % (args.threads, sam, bam)
@@ -99,7 +99,7 @@ def samtools_view():
 				pass
 
 # Sort BAM files
-def samtools_sort():
+def samtools_sort(args):
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
@@ -115,7 +115,7 @@ def bam_input(args):
 		pass	
 
 # Index sorted BAM files
-def samtools_index():
+def samtools_index(args):
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
 			cmd7 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
@@ -162,7 +162,7 @@ def snpEff_test():
 
 # Annotating variant calling output using snpEff, output is a vcf, the vcf file is bgzipped to work as an input file to the Fst analysis,
 # the original vcf file is kept by using the -c flag 
-def annotation():					
+def annotation(args):					
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
 			cmd11 = ("snpEff -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
@@ -177,7 +177,7 @@ def annotation():
 				pass
 
 # Filtering and making a summary of annotated files using the vcf (not bgzipped) output file from snpEff, the summary will be in table format
-def snpsift():
+def snpsift(args):
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*_annotated.vcf'):
 			cmd13 = ('java -jar /usr/local/packages/snpEff/SnpSift.jar extractFields -e "." -s "," %s \
@@ -194,11 +194,11 @@ def done():
 # If the '-b' flag is used this function will run, excluding the first steps of the program 
 def input_files():
 	bam_input(args)
-	samtools_index()
+	samtools_index(args)
 	bcftools(args)
-	annotation()
+	annotation(args)
 	if args.snpsift:
-		snpsift()
+		snpsift(args)
 
 	if args.clean:
 		clean()
@@ -218,14 +218,14 @@ def main():
 		exit()	
 
 	bowtie2(args)
-	samtools_view()
-	samtools_sort()
-	samtools_index()
+	samtools_view(args)
+	samtools_sort(args)
+	samtools_index(args)
 	bcftools(args)
-	annotation()
+	annotation(args)
 
 	if args.snpsift:
-		snpsift()
+		snpsift(args)
 	
 	if args.clean:
 		clean()
