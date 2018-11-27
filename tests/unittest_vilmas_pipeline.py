@@ -46,7 +46,7 @@ class TestProcess(TestClass, unittest.TestCase):
 		if not os.path.exists(bcftools_directory):
                 	os.makedirs(bcftools_directory)	
 
-	# Test that functions output None in pipeline 
+	# Test that functions output is None in pipeline 
 	def test010_bowtie2(self):
 		args = self.setup_args()
 		self.assertIsNone(vilmas_pipeline.bowtie2(args))
@@ -89,7 +89,7 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIs(myProcess, 0)
 		
 	def test120_snpsift_output(self):
-		test_snpeff= open('Bcftools/tests.snpsift_table.txt', 'r')
+		test_snpeff = open('Bcftools/tests.snpsift_table.txt', 'r')
 		expected_snpeff = open('../example_data/data1.snpsift_table.txt', 'r')
 		self.assertEqual(test_snpeff.readlines(), expected_snpeff.readlines())
 
