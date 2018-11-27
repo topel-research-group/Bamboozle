@@ -10,6 +10,7 @@ import shutil
 
 
 class TestClass:
+
 	# Select specific test-files for testing functions
 	def setup_args(self):
 		args = vilmas_pipeline.parser.parse_args(['-f', \
@@ -32,7 +33,6 @@ class TestClass:
 					'../example_data/reference.txt'])
 		return args
 
-
 class TestProcess(TestClass, unittest.TestCase):
 	
 	# Make directories
@@ -46,14 +46,15 @@ class TestProcess(TestClass, unittest.TestCase):
 		if not os.path.exists(bcftools_directory):
                 	os.makedirs(bcftools_directory)	
 
-	# Test that functions output is None in pipeline 
-	def test010_bowtie2(self):
-		args = self.setup_args()
-		self.assertIsNone(vilmas_pipeline.bowtie2(args))
-
-	def test020_reference_argument(self):
+	# Test reference input
+	def test010_reference_argument(self):
 		self.args = self.setup_args()
 		self.assertEqual(self.args.ref, '../example_data/reference.txt')
+
+	# Test that functions output is None in pipeline 
+	def test020_bowtie2(self):
+		args = self.setup_args()
+		self.assertIsNone(vilmas_pipeline.bowtie2(args))
 
 	def test030_samtools_view(self):
 		self.assertIsNone(vilmas_pipeline.samtools_view())
@@ -85,7 +86,8 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertEqual(test_sam.readlines(), expected_sam.readlines())
 
 	def test110_output_bam(self):
-		myProcess = subprocess.check_call('diff Bowtie2/tests.bam ../example_data/data1.bam', shell=True)
+		myProcess = subprocess.check_call('diff Bowtie2/tests.bam \
+		../example_data/data1.bam', shell=True)
 		self.assertIs(myProcess, 0)
 		
 	def test120_snpsift_output(self):
@@ -107,5 +109,4 @@ class TestProcess(TestClass, unittest.TestCase):
 		
 
 if __name__ == '__main__':
-        unittest.main()
-
+	unittest.main()
