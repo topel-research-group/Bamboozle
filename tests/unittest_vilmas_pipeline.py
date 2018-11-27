@@ -8,10 +8,6 @@ import subprocess
 import os
 import shutil
 
-def setup_args3(self):
-	args = vilmas_pipeline.parser.parse_args(['-f', \
-				'../example_data/reference.txt'])
-	return args
 
 class TestClass:
 
@@ -31,6 +27,11 @@ class TestClass:
 					'../example_data/reference.txt', \
 					'-b', \
 					'../example_data/data1.bam'])
+		return args
+
+	def setup_args3(self):
+		args = vilmas_pipeline.parser.parse_args(['-f', \
+					'../example_data/reference.txt'])
 		return args
 
 class TestProcess(TestClass, unittest.TestCase):
@@ -109,4 +110,4 @@ class TestProcess(TestClass, unittest.TestCase):
 		
 
 if __name__ == '__main__':
-	unittest.main()
+	unittest.main(argv=vilmas_pipeline.parser.parse_args(['-f', '../example_data/reference.txt']))
