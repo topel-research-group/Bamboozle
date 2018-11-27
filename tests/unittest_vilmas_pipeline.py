@@ -39,7 +39,7 @@ class TestClass:
 class TestProcess(TestClass, unittest.TestCase):
 	
 	def setUp(self):
-		self.setup_args3()	
+		pass
 
 	# Test reference input
 	def test010_reference_argument(self):
