@@ -123,11 +123,11 @@ def bam_input(args):
 def samtools_index(args):
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd7 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
-			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, cwd='Bowtie2')
-			while process7.wait() is None:
+			cmd6 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
+			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, cwd='Bowtie2')
+			while process6.wait() is None:
 				pass
-			process7.stdout.close()
+			process6.stdout.close()
 
 # Remove SAM and BAM files
 def clean():
@@ -148,12 +148,12 @@ def bcftools(args):
 
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd9 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
+			cmd7 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
 			-e 'QUAL<20 || DP>100' -Oz -o %s") % (add+args.ref, add2+sorted_bam_out, bcftools_out)
-			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-			while process9.wait() is None:
+			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			while process7.wait() is None:
 				pass
-			process9.stdout.close()
+			process7.stdout.close()
 
 # Variant annotation and effect prediction, the snpEff_test checks if there is a Skeletonema database, 
 # if it doesn't exists the program will exit and you have to create it by using 'snpEff build'
@@ -172,29 +172,29 @@ def snpEff_test():
 def annotation(args):					
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
-			cmd11 = ("snpEff -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
+			cmd8 = ("snpEff -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
 			-stats snpEff_summary.html %s > %s") % (bcftools_out, annotated_vcf)
-			process11 = subprocess.Popen(cmd11, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-			while process11.wait() is None:
+			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			while process8.wait() is None:
 				pass
-			process11.stdout.close()
+			process8.stdout.close()
 
-			cmd12 = ('bgzip -c %s > %s') % (annotated_vcf, annotated_vcf_gz)
-			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-			while process12.wait() is None:
+			cmd9 = ('bgzip -c %s > %s') % (annotated_vcf, annotated_vcf_gz)
+			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			while process9.wait() is None:
 				pass
-			process12.stdout.close()
+			process9.stdout.close()
 
 # Filtering and making a summary of annotated files using the vcf (not bgzipped) output file from snpEff, the summary will be in table format
 def snpsift(args):
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*_annotated.vcf'):
-			cmd13 = ('java -jar /usr/local/packages/snpEff/SnpSift.jar extractFields -e "." -s "," %s \
+			cmd10 = ('java -jar /usr/local/packages/snpEff/SnpSift.jar extractFields -e "." -s "," %s \
 			CHROM POS "EFF[*].GENE" REF ALT QUAL DP AF "EFF[*].EFFECT" "EFF[*].AA" "EFF[*].FUNCLASS" > %s') % (annotated_vcf, annotated_table) 
-			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
-			while process13.wait() is None:
+			process10 = subprocess.Popen(cmd10, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			while process10.wait() is None:
 				pass
-			process13.stdout.close()
+			process10.stdout.close()
 # Add empty file when the pipeline is done
 def done():
 	open("pipeline.done", 'a').close()
