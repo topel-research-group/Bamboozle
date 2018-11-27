@@ -49,7 +49,7 @@ class TestProcess(TestClass, unittest.TestCase):
 	# Test reference input
 	def test010_reference_argument(self):
 		self.args = self.setup_args()
-		self.assertEqual(self.args.ref, '../example_data/reference.txt')
+		self.assertEqual(self.args.ref, '../example_data/reference.tx')
 
 	# Test that functions output is None in pipeline 
 	def test020_bowtie2(self):
@@ -57,27 +57,32 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.bowtie2(args))
 
 	def test030_samtools_view(self):
-		self.assertIsNone(vilmas_pipeline.samtools_view())
+		args = self.setup_args3()
+		self.assertIsNone(vilmas_pipeline.samtools_view(args))
 
 	def test040_samtools_sort(self):
-		self.assertIsNone(vilmas_pipeline.samtools_sort())
+		args = self.setup_args3()
+		self.assertIsNone(vilmas_pipeline.samtools_sort(args))
 
 	def test050_bam_input(self):
 		args = self.setup_args2()
 		self.assertIsNone(vilmas_pipeline.bam_input(args))
 
 	def test060_samtools_index(self):
-		self.assertIsNone(vilmas_pipeline.samtools_index())
+		args = self.setup_args3()
+		self.assertIsNone(vilmas_pipeline.samtools_index(args))
 
 	def test070_bcftools(self):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.bcftools(args))
 		
 	def test080_annotation(self):
-		self.assertIsNone(vilmas_pipeline.annotation())
+		args = self.setup_args3()
+		self.assertIsNone(vilmas_pipeline.annotation(args))
 
 	def test090_snpsift(self):
-		self.assertIsNone(vilmas_pipeline.snpsift())
+		args = self.setup_args3()
+		self.assertIsNone(vilmas_pipeline.snpsift(args))
 
 	# Test output files
 	def test100_sam_output(self):
