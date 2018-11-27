@@ -112,4 +112,5 @@ class TestProcess(TestClass, unittest.TestCase):
 		
 
 if __name__ == '__main__':
+	vilma.parser.parse_args(['-f', '../example_data/reference.txt'])
 	unittest.main()
