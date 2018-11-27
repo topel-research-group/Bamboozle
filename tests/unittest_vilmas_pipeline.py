@@ -37,19 +37,12 @@ class TestProcess(TestClass, unittest.TestCase):
 	
 	# Make directories
 	def setUp(self):
-		current_directory = os.getcwd()
-		bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
-		if not os.path.exists(bowtie2_directory):
-			os.makedirs(bowtie2_directory)
-
-		bcftools_directory = os.path.join(current_directory, r'Bcftools')
-		if not os.path.exists(bcftools_directory):
-                	os.makedirs(bcftools_directory)	
+		pass
 
 	# Test reference input
 	def test010_reference_argument(self):
 		self.args = self.setup_args()
-		self.assertEqual(self.args.ref, '../example_data/reference.tx')
+		self.assertEqual(self.args.ref, '../example_data/reference.txt')
 
 	# Test that functions output is None in pipeline 
 	def test020_bowtie2(self):
