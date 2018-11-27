@@ -33,10 +33,15 @@ class TestClass:
 					'../example_data/reference.txt'])
 		return args
 
+
 class TestProcess(TestClass, unittest.TestCase):
 	
-	# Make directories
+	@classmethod
+	def setUpClass(cls):
+		setup_args3()
+
 	def setUp(self):
+#		self.setup_args3()	
 		pass
 
 	# Test reference input
@@ -68,7 +73,7 @@ class TestProcess(TestClass, unittest.TestCase):
 	def test070_bcftools(self):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.bcftools(args))
-		
+
 	def test080_annotation(self):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.annotation(args))
