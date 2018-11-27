@@ -26,7 +26,7 @@ import os
 
 ##################################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--ref", required=True, help="Reference")
+parser.add_argument("-f", "--ref")#, required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
@@ -80,6 +80,7 @@ def bowtie2(args):
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
+	process1.stdout.close()
 
 	# Bowtie2 align step
 	for file in os.listdir('Bowtie2'):
@@ -88,6 +89,7 @@ def bowtie2(args):
 			process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process2.wait() is None:
 				pass
+			process2.stdout.close()
 
 # Converting SAM to BAM using samtools view
 def samtools_view(args):
@@ -97,6 +99,7 @@ def samtools_view(args):
 			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd='Bowtie2', shell=True)
 			while process3.wait() is None:
 				pass
+			process3.stdout.close()
 
 # Sort BAM files
 def samtools_sort(args):
@@ -106,6 +109,7 @@ def samtools_sort(args):
 			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process4.wait() is None:
 				pass	
+			process4.stdout.close()
 		
 # BAM input file by using the '-b' flag
 def bam_input(args):
@@ -113,6 +117,7 @@ def bam_input(args):
 	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='Bowtie2')
 	while process5.wait() is None:
 		pass	
+	process5.stdout.close()
 
 # Index sorted BAM files
 def samtools_index(args):
@@ -122,6 +127,7 @@ def samtools_index(args):
 			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process7.wait() is None:
 				pass
+			process7.stdout.close()
 
 # Remove SAM and BAM files
 def clean():
@@ -147,6 +153,7 @@ def bcftools(args):
 			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process9.wait() is None:
 				pass
+			process9.stdout.close()
 
 # Variant annotation and effect prediction, the snpEff_test checks if there is a Skeletonema database, 
 # if it doesn't exists the program will exit and you have to create it by using 'snpEff build'
@@ -170,11 +177,13 @@ def annotation(args):
 			process11 = subprocess.Popen(cmd11, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process11.wait() is None:
 				pass
+			process11.stdout.close()
 
 			cmd12 = ('bgzip -c %s > %s') % (annotated_vcf, annotated_vcf_gz)
 			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process12.wait() is None:
 				pass
+			process12.stdout.close()
 
 # Filtering and making a summary of annotated files using the vcf (not bgzipped) output file from snpEff, the summary will be in table format
 def snpsift(args):
@@ -185,7 +194,7 @@ def snpsift(args):
 			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process13.wait() is None:
 				pass
-
+			process13.stdout.close()
 # Add empty file when the pipeline is done
 def done():
 	open("pipeline.done", 'a').close()
