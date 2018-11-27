@@ -9,7 +9,6 @@ import os
 import shutil
 
 
-
 class TestClass:
 
 	# Select specific test-files for testing functions
@@ -22,13 +21,15 @@ class TestClass:
 					'../example_data/data1_R2_00.fastq.gz'])
 		return args
 
+
 	def setup_args2(self):
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt', \
 					'-b', \
 					'../example_data/data1.bam'])
 		return args
-		
+
+
 	def setup_args3(self):
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt'])
@@ -38,7 +39,7 @@ class TestClass:
 class TestProcess(TestClass, unittest.TestCase):
 	
 	def setUp(self):
-		pass
+		self.setup_args3()	
 
 	# Test reference input
 	def test010_reference_argument(self):
