@@ -37,10 +37,6 @@ class TestClass:
 
 class TestProcess(TestClass, unittest.TestCase):
 	
-	@classmethod
-	def setUpClass(cls):
-		pass
-
 	def setUp(self):
 		pass
 
