@@ -82,6 +82,8 @@ class TestProcess(TestClass, unittest.TestCase):
 		test_sam = open('Bowtie2/tests.sam')
 		expected_sam = open('../example_data/data1.sam')
 		self.assertEqual(test_sam.readlines(), expected_sam.readlines())
+		test_sam.close()
+		expected_sam.close()
 
 	def test110_output_bam(self):
 		myProcess = subprocess.check_call('diff Bowtie2/tests.bam \
@@ -89,10 +91,11 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIs(myProcess, 0)
 		
 	def test120_snpsift_output(self):
-		test_snpeff = open('Bcftools/tests.snpsift_table.txt', 'r')
-		expected_snpeff = open('../example_data/data1.snpsift_table.txt', 'r')
-		self.assertEqual(test_snpeff.readlines(), expected_snpeff.readlines())
-
+		test_snpsift = open('Bcftools/tests.snpsift_table.txt', 'r')
+		expected_snpsift = open('../example_data/data1.snpsift_table.txt', 'r')
+		self.assertEqual(test_snpsift.readlines(), expected_snpsift.readlines())
+		test_snpsift.close()
+		expected_snpsift.close()
 
 	def tearDown(self):
 		pass
