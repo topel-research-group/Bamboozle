@@ -9,6 +9,7 @@ import os
 import shutil
 
 
+
 class TestClass:
 
 	# Select specific test-files for testing functions
@@ -32,16 +33,15 @@ class TestClass:
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt'])
 		return args
-
+		
 
 class TestProcess(TestClass, unittest.TestCase):
 	
 	@classmethod
 	def setUpClass(cls):
-		setup_args3()
+		pass
 
 	def setUp(self):
-#		self.setup_args3()	
 		pass
 
 	# Test reference input
