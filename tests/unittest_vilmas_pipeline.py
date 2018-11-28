@@ -111,11 +111,5 @@ class TestProcess(TestClass, unittest.TestCase):
 		
 
 if __name__ == '__main__':
-	runner = unittest.TextTestRunner()
-	itersuite = unittest.TestLoader().loadTestsFromTestCase(TestProcess)
-	runner.run(itersuite)
-	#import vilmas_pipeline
-	#args = vilmas_pipeline.parser.parse_args(['-f', '../example_data/reference.txt'])
-	#options =['vilmas_pipeline.py', '-f', args.ref] 
-	#print(options)
-	#unittest.main(options)
+	options = [sys.argv[0]] + [a for a in sys.argv if a.startswith("-")]
+	unittest.main(argv=options)
