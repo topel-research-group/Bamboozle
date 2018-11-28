@@ -6,3 +6,4 @@ bcftools/
 Bowtie2/
 Fst_stats/
 Populations/
+*.pyc
