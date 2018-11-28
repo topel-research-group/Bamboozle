@@ -111,8 +111,11 @@ class TestProcess(TestClass, unittest.TestCase):
 		
 
 if __name__ == '__main__':
-	import vilmas_pipeline
-	args = vilmas_pipeline.parser.parse_args(['-f', '../example_data/reference.txt'])
-	options =['-f', args.ref] 
-	print(options)
-	unittest.main(module=vilmas_pipeline, argv=options)
+	runner = unittest.TextTestRunner()
+	itersuite = unittest.TestLoader().loadTestsFromTestCase(TestProcess)
+	runner.run(itersuite)
+	#import vilmas_pipeline
+	#args = vilmas_pipeline.parser.parse_args(['-f', '../example_data/reference.txt'])
+	#options =['vilmas_pipeline.py', '-f', args.ref] 
+	#print(options)
+	#unittest.main(options)
