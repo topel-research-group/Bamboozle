@@ -28,6 +28,7 @@ class TestClass:
 					'../example_data/data1.bam'])
 		return args
 
+
 	def setup_args3(self):
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt'])
@@ -50,11 +51,11 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.bowtie2(args))
 
 	def test030_samtools_view(self):
-#		args = self.setup_args3()
+		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.samtools_view())
 
 	def test040_samtools_sort(self):
-#		args = self.setup_args3()
+		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.samtools_sort())
 
 	def test050_bam_input(self):
@@ -62,7 +63,7 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.bam_input(args))
 
 	def test060_samtools_index(self):
-#		args = self.setup_args3()
+		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.samtools_index())
 
 	def test070_bcftools(self):
@@ -70,11 +71,11 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.bcftools(args))
 
 	def test080_annotation(self):
-#		args = self.setup_args3()
+		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.annotation())
 
 	def test090_snpsift(self):
-#		args = self.setup_args3()
+		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
 	# Test output files
@@ -110,4 +111,6 @@ class TestProcess(TestClass, unittest.TestCase):
 		
 
 if __name__ == '__main__':
-	unittest.main()
+	import vilmas_pipeline
+	args = vilmas_pipeline.parser.parse_args(['-f', '../example_data/reference.txt'])
+	unittest.main(module=vilmas_pipeline, argv=args)
