@@ -111,5 +111,6 @@ class TestProcess(TestClass, unittest.TestCase):
 		
 
 if __name__ == '__main__':
+	# usage: unittest_vilmas_pipeline.py -f REFERENCE
 	options = [sys.argv[0]] + [a for a in sys.argv if a.startswith("-")]
 	unittest.main(argv=options)
