@@ -59,13 +59,13 @@ def main():
 		cmd1 = ['bcftools', 'index', '-c', '-f', f]
 		process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
 		while process1.wait() is None:
-                	pass
+			pass
 		process1.stdout.close()
 
 	# Make directory for the merged vcf-files for population1 and population2
 	population_directory = os.path.join(current_directory, r'Populations')
 	if not os.path.exists(population_directory):
-       		os.makedirs(population_directory)
+		os.makedirs(population_directory)
 
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population1
 	directories2 = current_directory + '/*_1/*/Bcftools/*.snpeff_annotated.vcf'
@@ -98,17 +98,17 @@ def main():
 	# Making a txt file of the names of the individuals in the populations that is needed for vcftools --wei-fst-pop
 	# and indexing the merged files for population1 and population2
 	for file in os.listdir('Populations'):
-        	if fnmatch.fnmatch(file, '*_merged_pop1.vcf.gz'):
+		if fnmatch.fnmatch(file, '*_merged_pop1.vcf.gz'):
 			cmd5 = ['bcftools', 'index', '-c', '-f', merged_vcf_pop1]
 			process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='Populations')
 			while process5.wait() is None:
 				pass
 			process5.stdout.close()
 
-        		cmd6 = ('bcftools query -l %s > %s') % (merged_vcf_pop1, indv_txt_pop1) 
-        		process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Populations')
+			cmd6 = ('bcftools query -l %s > %s') % (merged_vcf_pop1, indv_txt_pop1) 
+			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True, cwd='Populations')
 			while process6.wait() is None:
-        			pass
+				pass
 			process6.stdout.close()
 
 		elif fnmatch.fnmatch(file, '*_merged_pop2.vcf.gz'):
@@ -254,4 +254,4 @@ Highcharts.merge(true, options, {
 		
 
 if __name__ == "__main__":
-        main()
+	main()
