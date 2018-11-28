@@ -1,0 +1,11 @@
+#$ -cwd
+#$ -q Annotation-3
+#$ -pe mpich 40
+#$ -S /bin/bash
+
+module load Bowtie2/v2.3.3.1
+module load samtools/v1.9
+module load bcftools/v1.9
+module load snpEff/v.4.3t
+
+./vilmas_pipeline.py -t $NSLOTS -s -l -p 
