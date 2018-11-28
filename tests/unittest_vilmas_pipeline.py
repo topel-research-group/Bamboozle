@@ -51,11 +51,11 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	def test030_samtools_view(self):
 #		args = self.setup_args3()
-		self.assertIsNone(vilmas_pipeline.samtools_view(args))
+		self.assertIsNone(vilmas_pipeline.samtools_view())
 
 	def test040_samtools_sort(self):
 #		args = self.setup_args3()
-		self.assertIsNone(vilmas_pipeline.samtools_sort(args))
+		self.assertIsNone(vilmas_pipeline.samtools_sort())
 
 	def test050_bam_input(self):
 		args = self.setup_args2()
@@ -63,7 +63,7 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	def test060_samtools_index(self):
 #		args = self.setup_args3()
-		self.assertIsNone(vilmas_pipeline.samtools_index(args))
+		self.assertIsNone(vilmas_pipeline.samtools_index())
 
 	def test070_bcftools(self):
 		args = self.setup_args3()
@@ -71,11 +71,11 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	def test080_annotation(self):
 #		args = self.setup_args3()
-		self.assertIsNone(vilmas_pipeline.annotation(args))
+		self.assertIsNone(vilmas_pipeline.annotation())
 
 	def test090_snpsift(self):
 #		args = self.setup_args3()
-		self.assertIsNone(vilmas_pipeline.snpsift(args))
+		self.assertIsNone(vilmas_pipeline.snpsift())
 
 	# Test output files
 	def test100_sam_output(self):
