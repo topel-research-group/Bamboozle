@@ -1,9 +1,1 @@
-P8352_*
-*.fst
-*.f*q
-Bcftools/
-bcftools/
-Bowtie2/
-Fst_stats/
-Populations/
-*.pyc
+dev/*
