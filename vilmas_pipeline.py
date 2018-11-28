@@ -244,6 +244,5 @@ def main():
 		done()
 
 if __name__ == "__main__":
-	parser.add_argument("-f", "--ref", required=True, help="Reference")
 	main()
 
