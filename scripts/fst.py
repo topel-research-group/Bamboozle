@@ -27,8 +27,7 @@ import glob
 import csv
 
 ##################################################################################
-parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
+parser = argparse.ArgumentParser(prog="fst.py")
 parser.add_argument("-c", "--clean", action="store_true", help="Remove some files")
 args = parser.parse_args()
 ##################################################################################
