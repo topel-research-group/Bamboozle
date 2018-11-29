@@ -26,6 +26,7 @@ def main():
 			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, cwd='.')
 			while process.wait() is None:
 				pass
+			process.stdout.close()
 
 	with open(filtered) as i:
 		csv_filtered = csv.reader(i)
