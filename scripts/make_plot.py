@@ -20,7 +20,7 @@ output_name = args.grep + "_results.html"
 
 def main():
 	for f in os.listdir('.'):
-		if fnmatch.fnmatch(f, 'pop1_pop2_flt_results_sorted.csv'):
+		if fnmatch.fnmatch(f, 'pop1_pop2_flt_results_sorted.*'):
 			infile = f
 			cmd = ("cat %s | grep %s, > %s") % (infile, args.grep, filtered)
 			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
