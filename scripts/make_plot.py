@@ -23,7 +23,7 @@ def main():
 		if fnmatch.fnmatch(f, 'pop1_pop2_flt_results_sorted.csv'):
 			infile = f
 			cmd = ("cat %s | grep %s, > %s") % (infile, args.grep, filtered)
-			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, cwd='.')
+			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 			while process.wait() is None:
 				pass
 			process.stdout.close()
