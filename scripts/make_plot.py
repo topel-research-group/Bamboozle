@@ -20,18 +20,18 @@ output_name = args.grep + "_results.html"
 
 def main():
 	for f in os.listdir('.'):
-                if fnmatch.fnmatch(f, 'pop1_pop2_flt_results_sorted.csv'):
+		if fnmatch.fnmatch(f, 'pop1_pop2_flt_results_sorted.csv'):
 			infile = f
-  		      	cmd = ("cat %s | grep %s, > %s") % (infile, args.grep, filtered)
+			cmd = ("cat %s | grep %s, > %s") % (infile, args.grep, filtered)
 			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, cwd='.')
 			while process.wait() is None:
 				pass
 
 	with open(filtered) as i:
 		csv_filtered = csv.reader(i)
-        	csv_list = []
-        	for line in csv_filtered:
-                	csv_list.append('\\n\\"' +line[0]+ '\\"' + ";" + line[1] + ";" + line[2])
+		csv_list = []
+		for line in csv_filtered:
+			csv_list.append('\\n\\"' +line[0]+ '\\"' + ";" + line[1] + ";" + line[2])
 
 	file=open(output_name, 'w')
 
@@ -72,4 +72,4 @@ Highcharts.merge(true, options, {
 			os.remove(fstfile)
 
 if __name__ == "__main__":
-        main()
+	main()
