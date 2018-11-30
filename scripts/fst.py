@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #	Input from pipeline -> this script -> output Fst statistics table and graph
 #
