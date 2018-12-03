@@ -56,7 +56,7 @@ add = '../'
 
 # Perform Fst-statistics on gziped vcf-files
 def main():
-	directories = current_directory + '/*/*/Bcftools/*.snpeff_annotated.vcf.gz'
+	directories = args.pop1 + '/*/*/Bcftools/*.snpeff_annotated.vcf.gz'
 	file_list = glob.glob(directories)
 	for f in file_list:
 		cmd1 = ['bcftools', 'index', '-c', '-f', f]
@@ -71,7 +71,7 @@ def main():
 		os.makedirs(population_directory)
 
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population1
-	directories2 = current_directory + '/*_1/*/Bcftools/*.snpeff_annotated.vcf.gz'
+	directories2 = args.pop2 + '/*_1/*/Bcftools/*.snpeff_annotated.vcf.gz'
 	name_list1 = glob.glob(directories2)
 	myfile = open("name_1_list.txt","w")
 	for n1 in name_list1:
