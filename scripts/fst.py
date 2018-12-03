@@ -49,6 +49,7 @@ fst_out_flt2_results = 'tmp.pop1_pop2_flt2_results.table'
 fst_results_sorted = 'pop1_pop2_flt_results_sorted.table'
 fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
 path_for_plot = 'Fst_stats/'#
+add = '../'
 ##################################################################################
 
 # Perform Fst-statistics on gziped vcf-files
@@ -75,7 +76,7 @@ def main():
 		myfile.write("%s\n" % n1)
 
 	myfile.close()
-	cmd2 = ['bcftools', 'merge', '-l', names1, '-Oz', '-o', merged_vcf_pop1]   
+	cmd2 = ['bcftools', 'merge', '-l', add+names1, '-Oz', '-o', merged_vcf_pop1]   
 	process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Populations')
 	while process2.wait() is None:
 		pass
@@ -89,7 +90,7 @@ def main():
 		myfile2.write("%s\n" % n2)
 
 	myfile2.close()
-	cmd3 = ['bcftools', 'merge', '-l', names2, '-Oz', '-o', merged_vcf_pop2]   
+	cmd3 = ['bcftools', 'merge', '-l', add+names2, '-Oz', '-o', merged_vcf_pop2]   
 	process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd='Populations')
 	while process3.wait() is None:
 		pass
@@ -134,7 +135,7 @@ def main():
 		myfile3.write("%s\n" % p)
 
 	myfile3.close()
-	cmd8 = ['bcftools', 'merge', '-l', population_list, '-Oz', '-o', all_pop_merged] 
+	cmd8 = ['bcftools', 'merge', '-l', add+population_list, '-Oz', '-o', all_pop_merged] 
 	process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, cwd='Populations')
 	while process8.wait() is None:
 		pass
