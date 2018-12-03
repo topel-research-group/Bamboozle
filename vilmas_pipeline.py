@@ -54,9 +54,8 @@ add2 = '../Bowtie2/'
 
 ##################################################################################
 # Makes new directory 'Bowtie2' if it doesn't exists
-bowtie2_directory = os.path.join(current_directory, r'Bowtie2')
-if not os.path.exists(bowtie2_directory):
-	os.makedirs(bowtie2_directory)
+if not os.path.exists('Bowtie2'):
+	os.makedirs('Bowtie2')
 
 # Running bowtie2-build to index reference genome and bowtie2 to align 
 def bowtie2(args):
