@@ -37,20 +37,20 @@ current_directory = os.getcwd()
 name = os.path.basename(current_directory)
 merged_vcf_pop1 = name + '_merged_pop1.vcf.gz'
 merged_vcf_pop2 = name + '_merged_pop2.vcf.gz'
-names1 = 'name_1_list.txt'#
-names2 =  'name_2_list.txt'#
+names1 = 'name_1_list.txt'
+names2 =  'name_2_list.txt'
 indv_txt_pop1 = name + '_indv_names_pop1.txt'
 indv_txt_pop2 = name + '_indv_names_pop2.txt'
-population_list = 'pop_list.txt'#
+population_list = 'pop_list.txt'
 all_pop_merged = 'all_pop_merged.vcf.gz'
 fst_out = 'pop1_pop2'
-fst_out_in = '../Populations/pop1_pop2.weir.fst'# 
+fst_out_in = '../Populations/pop1_pop2.weir.fst' 
 fst_out_flt = 'tmp.pop1_pop2_flt.table'
 fst_out_flt_results = 'tmp.pop1_pop2_flt_results.table'
 fst_out_flt2_results = 'tmp.pop1_pop2_flt2_results.table'
 fst_results_sorted = 'pop1_pop2_flt_results_sorted.table'
 fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
-path_for_plot = 'Fst_stats/'#
+path_for_plot = 'Fst_stats/'
 add = '../'
 ##################################################################################
 
