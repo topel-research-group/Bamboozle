@@ -253,7 +253,7 @@ Highcharts.merge(true, options, {
 		
 		for fstfile in os.listdir('Fst_stats'):
 			if fnmatch.fnmatch(fstfile, 'tmp.*'):
-				os.remove(current_directory + '/Fst_stats/' + fstfile)
+				os.remove('Fst_stats/' + fstfile)
 		
 
 if __name__ == "__main__":
