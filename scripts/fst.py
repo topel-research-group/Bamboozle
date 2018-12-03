@@ -28,11 +28,12 @@ import csv
 
 ##################################################################################
 parser = argparse.ArgumentParser(prog="fst.py")
-parser.add_argument("-c", "--clean", action="store_true", help="Remove some files")
+parser.add_argument("-c", "--clean", action="store_true", help="Remove tmp files")
 parser.add_argument("-1", "--pop1", required=True, help="Population 1 input directory")
 parser.add_argument("-2", "--pop2", required=True, help="Population 2 input directory")
 args = parser.parse_args()
 ##################################################################################
+
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
 merged_vcf_pop1 = name + '_merged_pop1.vcf.gz'
@@ -52,6 +53,7 @@ fst_results_sorted = 'pop1_pop2_flt_results_sorted.table'
 fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
 path_for_plot = 'Fst_stats/'
 add = '../'
+
 ##################################################################################
 
 # Perform Fst-statistics on gziped vcf-files
@@ -66,9 +68,8 @@ def main():
 		process1.stdout.close()
 
 	# Make directory for the merged vcf-files for population1 and population2
-	population_directory = os.path.join(current_directory, r'Populations')
-	if not os.path.exists(population_directory):
-		os.makedirs(population_directory)
+	if not os.path.exists('Populations'):
+		os.makedirs('Populations')
 
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population1
 	directories2 = args.pop1 + '/*/Bcftools/*.snpeff_annotated.vcf.gz'
@@ -144,9 +145,8 @@ def main():
 	process8.stdout.close()
 
 	# Making directory for Fst-results, input-files to highcharts
-	fst_directory = os.path.join(current_directory, r'Fst_stats')
-	if not os.path.exists(fst_directory):
-		os.makedirs(fst_directory)
+	if not os.path.exists('Fst_stats'):
+		os.makedirs('Fst_stats')
 
 	# Fst_statistics 
 	for file in os.listdir('Populations'):
