@@ -11,11 +11,13 @@ Where INPUTFILE is the resulting csv file from the `fst.py` script and "NAME" is
   
 #### Example:  
 `fst.py --pop1 Pop_1/ --pop2 Pop_2/`   
-ouput: a table and a csv file with the names, positions and Fst value and a summary of the results in a pdf.  
+
+Ouput: a table and a csv file with the names, positions and Fst value and a summary of the results in a pdf.  
 
 
 `make_plot.py --inputfile pop1_pop2_results.csv --grep "contig_name"`   
-ouput: a html file with an interactive plot of the selected contig.   
+
+Ouput: a html file with an interactive plot of the selected contig.   
 
 
 ### Dependencies  
