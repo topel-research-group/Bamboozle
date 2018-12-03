@@ -8,6 +8,7 @@ import fnmatch
 
 ##################################################################################
 parser = argparse.ArgumentParser(prog="make_plot.py")
+parser.add_argument("-i", "--inputfile", help="input file, must be csv file", required=True)
 parser.add_argument("-g", "--grep", help="grep the contig you want to make a plot of, the name should be in quotation marks", required=True)
 args = parser.parse_args()
 ##################################################################################
@@ -19,14 +20,12 @@ output_name = args.grep + "_results.html"
 # where [NAME] is the name of the contig in quotation marks
 
 def main():
-	for f in os.listdir('.'):
-		if fnmatch.fnmatch(f, 'pop1_pop2_flt_results_sorted.csv'):
-			infile = f
-			cmd = ("cat %s | grep %s, > %s") % (infile, args.grep, filtered)
-			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-			while process.wait() is None:
-				pass
-			process.stdout.close()
+	infile = args.inputfile 
+	cmd = ("cat %s | grep %s, > %s") % (infile, args.grep, filtered)
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	while process.wait() is None:
+		pass
+	process.stdout.close()
 
 	with open(filtered) as i:
 		csv_filtered = csv.reader(i)
