@@ -26,6 +26,12 @@ import os
 import glob
 import csv
 
+import pandas as pd
+import numpy as np
+from scipy.stats import uniform
+from scipy.stats import randint
+import matplotlib.pyplot as plt
+
 ##################################################################################
 parser = argparse.ArgumentParser(prog="fst.py")
 parser.add_argument("-c", "--clean", action="store_true", help="Remove tmp files")
@@ -50,7 +56,7 @@ fst_out_flt = 'tmp.pop1_pop2_flt.table'
 fst_out_flt_results = 'tmp.pop1_pop2_flt_results.table'
 fst_out_flt2_results = 'tmp.pop1_pop2_flt2_results.table'
 fst_results_sorted = 'pop1_pop2_flt_results_sorted.table'
-fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
+fst_results_sorted_csv = '1_pop1_pop2_flt_results_sorted.csv'
 path_for_plot = 'Fst_stats/'
 add = '../'
 
@@ -200,48 +206,72 @@ def main():
 	# Making a plot of the Fst results using highcharts, the output is a html file
 	for file in os.listdir('Fst_stats'):
 		if fnmatch.fnmatch(file, 'pop1_pop2_flt_results_sorted.csv'):
-			with open(path_for_plot + 'pop1_pop2_flt_results_sorted.csv') as infile: 
-				csv_infile = csv.reader(infile)
-				next(csv_infile)
-				csv_list = [] 
+			# Import csv from Fst statstics with vcftools
+			gl = pd.read_csv('Fst_stats/pop1_pop2_flt_results_sorted.csv')
 
-				for line in csv_infile:
-					csv_list.append('\\n\\"' +line[0]+ '\\"' + ";" + line[1] + ";" + line[2])  
+			# Optimize memory usage
+			gl_int = gl.select_dtypes(include=['int'])
+			converted_int = gl_int.apply(pd.to_numeric,downcast='unsigned')
+			gl_float = gl.select_dtypes(include=['float'])
+			converted_float = gl_float.apply(pd.to_numeric,downcast='float')
+			optimized_gl = gl.copy()
+			optimized_gl[converted_int.columns] = converted_int
+			optimized_gl[converted_float.columns] = converted_float
+			gl_obj = gl.select_dtypes(include=['object']).copy()
 
-			file=open(path_for_plot + 'Fst_results.html', 'w')
+			# Convert CHROM column from object to category
+			chrom = gl_obj.CHROM
+			chrom_cat = chrom.astype('category')
+			converted_obj = pd.DataFrame()
 
-			string_prefix = '''"\\"CHROM\\";\\"POS\\";\\"WEIR_AND_COCKERHAM_FST\\"''' 
- 
-			html_part1= '''<div id="highcharts-aac96e77-0ad0-4715-a815-b427470cf979"></div><script>
-					(function(){ var files = ["https://code.highcharts.com/stock/highstock.js","https://code.highcharts.com/highcharts-more.js","https://code.highcharts.com/highcharts-3d.js","https://code.highcharts.com/modules/data.js","https://code.highcharts.com/modules/exporting.js","http://code.highcharts.com/modules/funnel.js","http://code.highcharts.com/modules/solid-gauge.js"],loaded = 0; if (typeof window["HighchartsEditor"] === "undefined") {window.HighchartsEditor = {ondone: [cl],hasWrapped: false,hasLoaded: false};include(files[0]);} else {if (window.HighchartsEditor.hasLoaded) {cl();} else {window.HighchartsEditor.ondone.push(cl);}}function isScriptAlreadyIncluded(src){var scripts = document.getElementsByTagName("script");for (var i = 0; i < scripts.length; i++) {if (scripts[i].hasAttribute("src")) {if ((scripts[i].getAttribute("src") || "").indexOf(src) >= 0 || (scripts[i].getAttribute("src") === "http://code.highcharts.com/highcharts.js" && src === "https://code.highcharts.com/stock/highstock.js")) {return true;}}}return false;}function check() {if (loaded === files.length) {for (var i = 0; i < window.HighchartsEditor.ondone.length; i++) {try {window.HighchartsEditor.ondone[i]();} catch(e) {console.error(e);}}window.HighchartsEditor.hasLoaded = true;}}function include(script) {function next() {++loaded;if (loaded < files.length) {include(files[loaded]);}check();}if (isScriptAlreadyIncluded(script)) {return next();}var sc=document.createElement("script");sc.src = script;sc.type="text/javascript";sc.onload=function() { next(); };document.head.appendChild(sc);}function each(a, fn){if (typeof a.forEach !== "undefined"){a.forEach(fn);}else{for (var i = 0; i < a.length; i++){if (fn) {fn(a[i]);}}}}var inc = {},incl=[]; each(document.querySelectorAll("script"), function(t) {inc[t.src.substr(0, t.src.indexOf("?"))] = 1; }); function cl() {if(typeof window["Highcharts"] !== "undefined"){var options={"chart":{"type":"column","zoomType":"x"},"series[0]":{"type":"column"},"title":{"text":"Weir and Cockerham Fst"},"subtitle":{"text":"VCFtools - v0.1.13"},"series":[{"turboThreshold":0,"_colorIndex":0,"_symbolIndex":0,"type":"line","marker":{"enabled":false},"colorByPoint":false}],"data":{"csv":'''
+			# If unique values are more than 50% of the data don't convert to category, 
+			# it will not optimize memory usage
+			for col in gl_obj.columns:
+				num_unique_values = len(gl_obj[col].unique())
+				num_total_values = len(gl_obj[col])
+				if num_unique_values / num_total_values < 0.5:
+					converted_obj.loc[:,col] = gl_obj[col].astype('category')
+				else:
+					converted_obj.loc[:,col] = gl_obj[col]
 
-			html_part2 = '''","googleSpreadsheetKey":false,"googleSpreadsheetWorksheet":false},"pane":{"background":[]},"responsive":{"rules":[]},"legend":{"enabled":true,"floating":false},"xAxis":[{}],"yAxis":[{"max":1}],"tooltip":{"shared":true},"mapNavigation":{"enableMouseWheelZoom":true,"enableButtons":true,"enabled":true},"plotOptions":{"series":{"animation":false}}};/*
-// Sample of extending options:
-Highcharts.merge(true, options, {
-    chart: {
-        backgroundColor: "#bada55"
-    },
-    plotOptions: {
-        series: {
-            cursor: "pointer",
-            events: {
-                click: function(event) {
-                    alert(this.name + " clicked\n" +
-                          "Alt: " + event.altKey + "\n" +
-                          "Control: " + event.ctrlKey + "\n" +
-                          "Shift: " + event.shiftKey + "\n");
-                }
-            }
-        }
-    }
-});
-*/new Highcharts.Chart("highcharts-aac96e77-0ad0-4715-a815-b427470cf979", options);}}})();
-</script> '''
-			csv_string = html_part1 + string_prefix + ''.join(csv_list) + html_part2
+			# Apply on the csv file        
+			optimized_gl[converted_obj.columns] = converted_obj
+			dtypes_col = optimized_gl.dtypes.index
+			dtypes_type = [i.name for i in optimized_gl.dtypes.values]
 
-			file.write(csv_string)
-			file.close()
-				
+			column_types = dict(zip(dtypes_col, dtypes_type))
+			read_and_optimized = pd.read_csv('Fst_stats/pop1_pop2_flt_results_sorted.csv', \
+							 dtype=column_types)
+
+			# Rename read and optimized csv file from the Fst analysis to "df"
+			df = read_and_optimized
+			df['code'] = chrom_cat.cat.codes
+
+			# Make plot of data
+			df['ind'] = range(len(df))
+			df_grouped = df.groupby(('code'))
+
+			fig = plt.figure(figsize=(80,20))
+			ax = fig.add_subplot(111)
+			colors = ['green','turquoise', 'blue','purple','red','orange', 'yellow']
+			x_labels = []
+			x_labels_pos = []
+			for num, (name, group) in enumerate(df_grouped):
+				group.plot(kind='scatter', x='ind', y='WEIR_AND_COCKERHAM_FST', color=colors[num % len(colors)], ax=ax)
+				x_labels.append(name)
+				x_labels_pos.append((group['ind'].iloc[-1] - (group['ind'].iloc[-1] - group['ind'].iloc[0])/2))
+				ax.set_xticks(x_labels_pos)
+				ax.set_xticklabels(x_labels, rotation='vertical', fontsize=10)
+				ax.set_xlim([0, len(df)])
+				ax.set_ylim([0, 1])
+				ax.set_xlabel('contigs', fontsize=24)
+				ax.set_ylabel('Fst value', fontsize=24)
+				ax.set_title('Weir and Cockerham Fst', fontsize=40)
+				plt.tick_params(axis='x', length=0.01)
+
+			# Save plot as image
+			plt.savefig("Fst_stats/Fst_plot.pdf")
+	
 
 	# Removing tmp-files
 	if args.clean:
