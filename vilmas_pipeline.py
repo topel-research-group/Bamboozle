@@ -141,9 +141,8 @@ def clean():
 
 # Variant calling using bcftools mpileup, makes new directory 'Bcftools' if it doesn't exists
 def bcftools(args):
-	bcftools_directory = os.path.join(current_directory, r'Bcftools')
-	if not os.path.exists(bcftools_directory):
-		os.makedirs(bcftools_directory)
+	if not os.path.exists('Bcftools'):
+		os.makedirs('Bcftools')
 
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
