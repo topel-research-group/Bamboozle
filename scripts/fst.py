@@ -216,9 +216,9 @@ def main():
 			optimized_gl = gl.copy()
 			optimized_gl[converted_int.columns] = converted_int
 			optimized_gl[converted_float.columns] = converted_float
-			gl_obj = gl.select_dtypes(include=['object']).copy()
 
 			# Convert CHROM column from object to category
+			gl_obj = gl.select_dtypes(include=['object']).copy()
 			chrom = gl_obj.CHROM
 			chrom_cat = chrom.astype('category')
 			converted_obj = pd.DataFrame()
