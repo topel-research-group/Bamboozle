@@ -131,11 +131,11 @@ def main():
 	
 	# Making a list of vcf-files that will be input to bcftools merge and then merge population1 and population2
 	# to a "all_merged" vcf file, which will be the input file to vcftools --weir-fst-pop 
-	directories4 = current_directory + '/Populations/*_merged_*.vcf.gz'
+	directories4 = 'Populations/*_merged_*.vcf.gz'
 	pop_list = glob.glob(directories4)
 	myfile3 = open("pop_list.txt","w")
 	for p in pop_list:
-		myfile3.write("%s\n" % p)
+		myfile3.write(add+"%s\n" % p)
 
 	myfile3.close()
 	cmd8 = ['bcftools', 'merge', '-l', add+population_list, '-Oz', '-o', all_pop_merged] 
