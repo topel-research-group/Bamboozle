@@ -133,11 +133,11 @@ def clean():
 	if args.clean:
 		for samfile in os.listdir('Bowtie2'):
 			if fnmatch.fnmatch(samfile, '*.sam'):
-				os.remove(current_directory + '/Bowtie2/' + samfile)
+				os.remove('Bowtie2/' + samfile)
 
 		for bamfile in os.listdir('Bowtie2'):
 			if fnmatch.fnmatch(bamfile, name + '.bam'):
-				os.remove(current_directory + '/Bowtie2/' + bamfile)
+				os.remove('Bowtie2/' + bamfile)
 
 # Variant calling using bcftools mpileup, makes new directory 'Bcftools' if it doesn't exists
 def bcftools(args):
