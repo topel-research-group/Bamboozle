@@ -9,7 +9,7 @@ Where INPUT is a directory with subdirectories corresponding to the samples.
 Where INPUTFILE is the resulting csv file from the `fst.py` script and "NAME" is the name of the contig you want to plot.  
 
   
-####Example:  
+#### Example:  
 `fst.py --pop1 Pop_1/ --pop2 Pop_2/`   
 ouput: a table and a csv file with the names, positions and Fst value and a summary of the results in a pdf.  
 
