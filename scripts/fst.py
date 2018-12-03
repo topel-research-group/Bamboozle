@@ -29,6 +29,8 @@ import csv
 ##################################################################################
 parser = argparse.ArgumentParser(prog="fst.py")
 parser.add_argument("-c", "--clean", action="store_true", help="Remove some files")
+parser.add_argument("-1", "--pop1", help="Population 1 input directory")
+parser.add_argument("-2", "--pop2", help="Population 2 input directory")
 args = parser.parse_args()
 ##################################################################################
 current_directory = os.getcwd()
