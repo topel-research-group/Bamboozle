@@ -55,7 +55,7 @@ fst_out_flt = 'tmp.pop1_pop2_flt.table'
 fst_out_flt_results = 'tmp.pop1_pop2_flt_results.table'
 fst_out_flt2_results = 'tmp.pop1_pop2_flt2_results.table'
 fst_results_sorted = 'pop1_pop2_flt_results_sorted.table'
-fst_results_sorted_csv = '1_pop1_pop2_flt_results_sorted.csv'
+fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
 path_for_plot = 'Fst_stats/'
 add = '../'
 
