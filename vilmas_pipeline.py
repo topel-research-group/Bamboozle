@@ -146,8 +146,8 @@ def bcftools(args):
 
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd7 = ("bcftools mpileup -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-			-e 'QUAL<20 || DP>100' -Oz -o %s") % (add+args.ref, add2+sorted_bam_out, bcftools_out)
+			cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
+			-e 'QUAL<20 || DP>100' -Oz -o %s") % (threads, add+args.ref, add2+sorted_bam_out, bcftools_out)
 			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process7.wait() is None:
 				pass
