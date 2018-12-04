@@ -202,7 +202,7 @@ def main():
 				pass
 			process14.stdout.close()
 
-	# Making a plot of the Fst results using highcharts, the output is a html file
+	# Making a plot of the Fst results using pandas and matplotlib, the output is a pdf file
 	for file in os.listdir('Fst_stats'):
 		if fnmatch.fnmatch(file, 'pop1_pop2_flt_results_sorted.csv'):
 			# Import csv from Fst statstics with vcftools
