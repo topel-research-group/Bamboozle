@@ -37,6 +37,8 @@ parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
 parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
 parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
 args = parser.parse_args()
+if args.feature and args.gff is None:
+	parser.error("--feature requires --gff")
 ##################################################################################
 
 current_directory = os.getcwd()
