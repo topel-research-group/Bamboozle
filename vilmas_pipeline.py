@@ -167,11 +167,11 @@ def snpEff_test():
 
 	# Try to import gffutils	
 	try:
-		import xxxgffutils
+		import gffutils
 
 	except ImportError:
-		sys.stderr.write("[Error] The python module \"gffutils\" is not installed\n")
-		sys.stderr.write("[--] Would you like to install it now using 'pip install gffutils' [Y/N]? ")
+		sys.stderr.write("[Error] The python module \"gffutils\" is not installed\n") 
+		sys.stderr.write("[--] Would you like to install it now using 'pip install gffutils' [Y/N]?\n")
 		answer = sys.stdin.readline()
 		if answer[0].lower() == "y":
 			sys.stderr.write("[--] Running \"pip install gffutils\"\n")
