@@ -165,20 +165,20 @@ def snpEff_test():
 			print('snpEff: Skeletonema database not found, exit program...')
 			exit()
 
-§	# Try to import gffutils	
+	# Try to import gffutils	
 	try:
-		import gffutils
+		import xxxgffutils
 
 	except ImportError:
 		sys.stderr.write("[Error] The python module \"gffutils\" is not installed\n")
-		sys.stderr.write("[--] Would you like to install it now using 'pop install gffutils' [Y/N]?")
+		sys.stderr.write("[--] Would you like to install it now using 'pip install gffutils' [Y/N]? ")
 		answer = sys.stdin.readline()
 		if answer[0].lower() == "y":
-			sys.stderr.write("[--]Running\"pip install gffutils\"\n")
+			sys.stderr.write("[--] Running \"pip install gffutils\"\n")
 			from subprocess import call
 			call(["pip", "install", "gffutils"])
 		else:
-			sys.exit("[Error] Exiting due to missing depending \"gffutils\"")
+			sys.exit("[Error] Exiting due to missing dependency \"gffutils\"")
 
 # Annotating variant calling output using snpEff, output is a vcf, the vcf file is bgzipped to work as an input file to the Fst analysis,
 # the original vcf file is kept by using the -c flag 
