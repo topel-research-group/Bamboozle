@@ -2,7 +2,6 @@
 
 import gffutils
 import os
-import pybedtools
 
 def main(gff, feature=''):
 	for file in os.listdir('.'):
@@ -11,11 +10,11 @@ def main(gff, feature=''):
 			db = gffutils.create_db(fn, dbfn='gff.db', force=False, keep_order=True,\
 						merge_strategy='merge', sort_attribute_values=True)
 			for i in db.features_of_type(feature, order_by='start'):
-				return gffutils.helpers.asinterval(i)
+				return i
 
 	db = gffutils.FeatureDB('gff.db')
 	for i in db.features_of_type(feature, order_by='start'):
-		return gffutils.helpers.asinterval(i)
+		return i
 
 
 
