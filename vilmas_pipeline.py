@@ -193,11 +193,11 @@ def annotation():
 			my_interval = ""
 			if args.gff and args.feature:
 				from modules.parse_gff import main as parse
-				out = parse(args.gff, args.feature)
+				parse(args.gff, args.feature)
+				out = open('out.gff', 'r').readlines()	
 				my_interval = "-interval %s" % out
-			my_args = my_interval + "-no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
-                        -stats snpEff_summary.html"
-	
+			my_args = my_interval + " -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 -stats snpEff_summary.html"
+			print(my_args)		
 			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, annotated_vcf)
 			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process8.wait() is None:
