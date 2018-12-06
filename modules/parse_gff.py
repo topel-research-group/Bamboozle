@@ -9,13 +9,16 @@ def main(gff, feature=''):
 			fn = gffutils.example_filename(gff)
 			db = gffutils.create_db(fn, dbfn='gff.db', force=False, keep_order=True,\
 						merge_strategy='merge', sort_attribute_values=True)
-			for i in db.features_of_type(feature, order_by='start'):
-				return i
+			with open('out.gff', 'w') as fout:
+				for i in db.features_of_type(feature, order_by='start'):
+					fout.write(str(i) + '\n')
+			fout.close()
 
 	db = gffutils.FeatureDB('gff.db')
-	for i in db.features_of_type(feature, order_by='start'):
-		return i
-
+	with open('out.gff', 'w') as fout:
+		for i in db.features_of_type(feature, order_by='start'):
+			fout.write(str(i) + '\n')
+	fout.close()
 
 
 if __name__ == "__main__":
