@@ -16,12 +16,12 @@ def main(gff, feature=''):
 				for i in db.features_of_type(feature, order_by='ID'):
 					fout.write(str(i) + '\n')
 			fout.close()
-
-	db = gffutils.FeatureDB(os.path.dirname(gff)+'/gff.db')
-	with open('out.gff', 'w') as fout:
-		for i in db.features_of_type(feature, order_by='ID'):
-			fout.write(str(i) + '\n')
-	fout.close()
+		else:
+			db = gffutils.FeatureDB(os.path.dirname(gff)+'/gff.db')
+			with open('out.gff', 'w') as fout:
+				for i in db.features_of_type(feature, order_by='ID'):
+					fout.write(str(i) + '\n')
+			fout.close()
 
 
 if __name__ == "__main__":
