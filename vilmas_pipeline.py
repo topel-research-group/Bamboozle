@@ -194,7 +194,7 @@ def annotation():
 			if args.gff and args.feature:
 				from modules.parse_gff import main as parse
 				out = parse(args.gff, args.feature)
-				my_interval = "--interval %s" % out
+				my_interval = "-interval %s" % out
 			my_args = my_interval + "-no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
                         -stats snpEff_summary.html"
 	
