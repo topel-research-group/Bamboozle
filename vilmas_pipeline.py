@@ -170,7 +170,7 @@ def snpEff_test():
 			exit()
 
 	# Try to import gffutils if gff and feature flag is used	
-	if args.gff and args.features:
+	if args.gff and args.feature:
 		try:
 			import gffutils
 
@@ -190,8 +190,15 @@ def snpEff_test():
 def annotation():					
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
-			cmd8 = ("snpEff -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
-			-stats snpEff_summary.html %s > %s") % (bcftools_out, annotated_vcf)
+			my_interval = ""
+			if args.gff and args.feature:
+				from modules.parse_gff import main as parse
+				out = parse(args.gff, args.feature)
+				my_interval = "--interval %s" % out
+			my_args = my_interval + "-no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 \
+                        -stats snpEff_summary.html"
+	
+			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, annotated_vcf)
 			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process8.wait() is None:
 				pass
