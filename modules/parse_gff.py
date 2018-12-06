@@ -16,7 +16,7 @@ def main(gff, feature=''):
 
 	db = gffutils.FeatureDB('gff.db')
 	with open('out.gff', 'w') as fout:
-		for i in db.features_of_type(feature, order_by='start'):
+		for i in db.features_of_type(feature, order_by='ID'):
 			fout.write(str(i) + '\n')
 	fout.close()
 
