@@ -191,14 +191,16 @@ def annotation():
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
 			my_interval = ""
+			my_output = ""
 			if args.gff and args.feature:
 				from modules.parse_gff import main as parse
 				parse(args.gff, args.feature)
 				out = add+'out.gff'	
 				my_interval = "-interval %s" % out
+				my_output = args.feature + name + '.snpeff_annotated.vcf'
 			my_args = my_interval + " -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 -stats snpEff_summary.html"
-			print(my_args)		
-			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, annotated_vcf)
+			my_output = annotated_vcf
+			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, my_output)
 			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process8.wait() is None:
 				pass
