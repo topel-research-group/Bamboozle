@@ -16,7 +16,6 @@ def main(gff, feature=''):
 					fout.write(str(i) + '\n')
 			fout.close()
 		else:
-#			fn = gffutils.example_filename(gff)
 			db = gffutils.create_db(gff, dbfn='gff.db', force=False, keep_order=True,\
 						merge_strategy='merge', sort_attribute_values=True)
 
