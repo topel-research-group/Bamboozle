@@ -10,7 +10,7 @@ def main(gff, feature=''):
 #	gff_path = '../' + os.path.dirname(gff) 
 	for file in os.listdir('.'):
 		if fnmatch.fnmatch(file, "gff.db"):
-			db = gffutils.FeatureDB('gff.db')
+			db = gffutils.FeatureDB(file)
 			with open('out.gff', 'w') as fout:
 				for i in db.features_of_type(feature, order_by='ID'):
 					fout.write(str(i) + '\n')
