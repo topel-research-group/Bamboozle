@@ -20,7 +20,7 @@ def main(gff, feature=''):
 		db = gffutils.create_db(gff, dbfn=gff_path+'/gff.db', force=False, keep_order=True,\
 					merge_strategy='merge', sort_attribute_values=True)
 
-		db = gffutils.FeatureDB('gff.db')
+		db = gffutils.FeatureDB(gff_path+'/gff.db')
 		with open('out.gff', 'w') as fout:
 			for i in db.features_of_type(feature, order_by='ID'):
 				fout.write(str(i) + '\n')
