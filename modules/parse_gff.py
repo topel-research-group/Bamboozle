@@ -7,10 +7,10 @@ import fnmatch
 # Extracts feature from given gff file, output is a gff file that is input in annoation function 
 # (snpEff -interval out.gff ...) in the pipeline if args.gff and args.feature
 def main(gff, feature=''):
-#	gff_path = '../' + os.path.dirname(gff) 
-	for file in os.listdir('.'):
+	gff_path = '../../' + os.path.dirname(gff) 
+	for file in os.listdir(gff_path):
 		if fnmatch.fnmatch(file, "gff.db"):
-			db = gffutils.FeatureDB(file)
+			db = gffutils.FeatureDB(gff_path + '/gff.db')
 			with open('out.gff', 'w') as fout:
 				for i in db.features_of_type(feature, order_by='ID'):
 					fout.write(str(i) + '\n')
