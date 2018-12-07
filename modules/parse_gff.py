@@ -16,6 +16,7 @@ def main(gff, feature=''):
 				for i in db.features_of_type(feature, order_by='ID'):
 					fout.write(str(i) + '\n')
 			fout.close()
+			break
 	else:
 		db = gffutils.create_db(gff, dbfn=gff_path+'/gff.db', force=False, keep_order=True,\
 					merge_strategy='merge', sort_attribute_values=True)
