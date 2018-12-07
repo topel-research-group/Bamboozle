@@ -29,6 +29,7 @@ Bowtie2/v2.3.3.1
 samtools/v1.9  
 bcftools/v1.9  
 snpEff/v.4.3t
+gffutils/v0.9  
 
 Versions used in `fst.py` and `make_plot.py`:  
 VCFtools/v0.1.13  
