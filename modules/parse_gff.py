@@ -11,12 +11,11 @@ def main(gff, feature=''):
 	file_list = os.listdir(gff_path)
 	for f in file_list:
 		if fnmatch.fnmatch(f, 'gff.db'):
-			print(f)
-#			db = gffutils.FeatureDB(os.path.abspath(file))
-#			with open('out.gff', 'w') as fout:
-#				for i in db.features_of_type(feature, order_by='ID'):
-#					fout.write(str(i) + '\n')
-#			fout.close()
+			db = gffutils.FeatureDB(gff_path+'/gff.db')
+			with open('out.gff', 'w') as fout:
+				for i in db.features_of_type(feature, order_by='ID'):
+					fout.write(str(i) + '\n')
+			fout.close()
 #		else:
 #			db = gffutils.create_db(gff, dbfn='gff.db', force=False, keep_order=True,\
 #						merge_strategy='merge', sort_attribute_values=True)
