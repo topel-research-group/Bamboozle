@@ -10,6 +10,7 @@ def main(gff, feature=''):
 	gff_path = os.path.dirname(gff)  
 	file_list = os.listdir(gff_path)
 	for f in file_list:
+		# Open db if it exists, looks for it in the same dir as the gff file
 		if fnmatch.fnmatch(f, 'gff.db'):
 			db = gffutils.FeatureDB(gff_path+'/gff.db')
 			with open('out.gff', 'w') as fout:
@@ -18,6 +19,7 @@ def main(gff, feature=''):
 			fout.close()
 			break
 	else:
+		# If db doesn't exists it creates new and then open db
 		db = gffutils.create_db(gff, dbfn=gff_path+'/gff.db', force=False, keep_order=True,\
 					merge_strategy='merge', sort_attribute_values=True)
 
