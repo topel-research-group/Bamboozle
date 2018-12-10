@@ -20,7 +20,6 @@ class TestClass:
 					'../example_data/data1_R2_00.fastq.gz'])
 		return args
 
-
 	def setup_args2(self):
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt', \
@@ -28,11 +27,20 @@ class TestClass:
 					'../example_data/data1.bam'])
 		return args
 
-
 	def setup_args3(self):
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt'])
 		return args
+
+#	def setup_args4(self):
+#		args = vilmas_pipeline.parser.parse_args(['-f', \
+#					'../example_data/reference.txt', \
+#					'-b', \
+#					'../example_data/data1.bam', \
+#					'--gff', \
+#					'..example_data/data1.gff', \
+#					'--feature', \
+#					'exon'])
 
 
 class TestProcess(TestClass, unittest.TestCase):
@@ -79,7 +87,6 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
 	# Test output files
-
 	def test100_output_bam(self):
 		myProcess = subprocess.check_call('diff Bowtie2/tests.bam \
 		../example_data/data1.bam', shell=True)
