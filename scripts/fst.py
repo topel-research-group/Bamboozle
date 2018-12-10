@@ -61,7 +61,7 @@ add = '../'
 
 #######################################################################
 
-# Perform Fst-statistics on gzipped vcf-files.
+# Perform Fst-statistics on snpEff results (gzipped vcf-files).
 def main():
 	directories = '*/*/Bcftools/*.snpeff_annotated.vcf.gz'
 	file_list = glob.glob(directories)
@@ -164,15 +164,17 @@ def main():
 	# output is a table of Fst values and a log file of the results. 
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
-			cmd9 = ['vcftools', '--gzvcf', all_pop_merged, '--weir-fst-pop', indv_txt_pop1, '--weir-fst-pop', indv_txt_pop2, '--out', fst_out]
+			cmd9 = ['vcftools', '--gzvcf', all_pop_merged, '--weir-fst-pop', indv_txt_pop1, \
+			'--weir-fst-pop', indv_txt_pop2, '--out', fst_out]
 			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, cwd='Populations')
 			while process9.wait() is None:
 				pass
 			process9.stdout.close()
 
-	# Filtering the resulting files from vcftools and making a new directory 
-	# called 'Fst_stats' with the resulting files, output is a csv file and a tab separated table,  
-	# the csv file will be the input file to pandas, matplotlib and highcharts. 
+	# Filtering the resulting files from vcftools and making a new 
+	# directory called 'Fst_stats' with the resulting files, 
+	# output is a csv file and a tab separated table, the csv file 
+	# will be the input file to pandas, matplotlib and highcharts. 
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, '*.weir.fst'):
 			cmd10 = ('cat %s | grep -v "nan" > %s') % (fst_out_in, fst_out_flt)
@@ -191,7 +193,8 @@ def main():
 			process11.stdout.close()
 
 			# Rearrange columns (if needed).
-			cmd12 = ('''awk '{print $1 "\\t" $2 "\\t" $3}' %s > %s''') % (fst_out_flt_results, fst_out_flt2_results)
+			cmd12 = ('''awk '{print $1 "\\t" $2 "\\t" $3}' %s > %s''') \
+			% (fst_out_flt_results, fst_out_flt2_results)
 			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process12.wait() is None:
 				pass
@@ -264,9 +267,11 @@ def main():
 			x_labels = []
 			x_labels_pos = []
 			for num, (name, group) in enumerate(df_grouped):
-				group.plot(kind='scatter', x='ind', y='WEIR_AND_COCKERHAM_FST', color=colors[num % len(colors)], ax=ax)
+				group.plot(kind='scatter', x='ind', y='WEIR_AND_COCKERHAM_FST', \
+				color=colors[num % len(colors)], ax=ax)
 				x_labels.append(name)
-				x_labels_pos.append((group['ind'].iloc[-1] - (group['ind'].iloc[-1] - group['ind'].iloc[0])/2))
+				x_labels_pos.append((group['ind'].iloc[-1] \
+				- (group['ind'].iloc[-1] - group['ind'].iloc[0])/2))
 				ax.set_xticks(x_labels_pos)
 				ax.set_xticklabels(x_labels, rotation='vertical', fontsize=10)
 				ax.set_xlim([0, len(df)])
