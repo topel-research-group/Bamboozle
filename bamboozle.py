@@ -443,11 +443,7 @@ def median_percontig_coverage():
 				cov_stats[position] = coverage
 
 		# Print stats for the final contig
-
-		median_cov = median(cov_stats.values())
-		low_threshold = median_cov * 0.5
-		high_threshold = median_cov * 1.5
-		make_bed(cov_stats,current_contig,low_threshold,high_threshold)
+		print(current_contig,median(cov_stats.values()),sep="\t")
 
 
 def make_bed(contig_lib,this_contig,lower,upper):
