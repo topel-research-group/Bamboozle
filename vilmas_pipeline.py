@@ -211,7 +211,7 @@ def annotation():
 			if args.gff and args.feature:
 				from modules.parse_gff import main as parse
 				parse(args.gff, args.feature)
-				out = add+'out.gff'	
+				out = add + 'out.gff'	
 				my_interval = "-interval %s" % out
 				my_output = name + '_' + args.feature + '.snpeff_annotated.vcf'
 			my_args = my_interval + " -no-downstream -no-upstream -no-intron -no-intergenic \
@@ -222,7 +222,7 @@ def annotation():
 				pass
 			process8.stdout.close()
 
-			cmd9 = ('bgzip -c %s > %s') % (my_output, my_output +'.gz')
+			cmd9 = ('bgzip -c %s > %s') % (my_output, my_output + '.gz')
 			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process9.wait() is None:
 				pass
