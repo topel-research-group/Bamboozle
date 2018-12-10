@@ -31,13 +31,13 @@ from scipy.stats import uniform
 from scipy.stats import randint
 import matplotlib.pyplot as plt
 
-##################################################################################
+#######################################################################
 parser = argparse.ArgumentParser(prog="fst.py")
 parser.add_argument("-c", "--clean", action="store_true", help="Remove tmp files")
 parser.add_argument("-1", "--pop1", required=True, help="Population 1 input directory")
 parser.add_argument("-2", "--pop2", required=True, help="Population 2 input directory")
 args = parser.parse_args()
-##################################################################################
+#######################################################################
 
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
@@ -59,9 +59,9 @@ fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
 path_for_plot = 'Fst_stats/'
 add = '../'
 
-##################################################################################
+#######################################################################
 
-# Perform Fst-statistics on gziped vcf-files
+# Perform Fst-statistics on gzipped vcf-files.
 def main():
 	directories = '*/*/Bcftools/*.snpeff_annotated.vcf.gz'
 	file_list = glob.glob(directories)
@@ -72,11 +72,12 @@ def main():
 			pass
 		process1.stdout.close()
 
-	# Make directory for the merged vcf-files for population1 and population2
+	# Make directory for the merged vcf-files for population1 and population2.
 	if not os.path.exists('Populations'):
 		os.makedirs('Populations')
 
-	# Making a list of vcf-files that will be input to bcftools merge and then merge population1
+	# Making a list of vcf-files that will be input to bcftools merge 
+	# and then merge population1.
 	directories2 = args.pop1 + '/*/Bcftools/*.snpeff_annotated.vcf.gz'
 	name_list1 = glob.glob(directories2)
 	myfile = open("name_1_list.txt","w")
@@ -90,7 +91,8 @@ def main():
 		pass
 	process2.stdout.close()
 
-	# Making a list of vcf-files that will be input to bcftools merge and then merge population2
+	# Making a list of vcf-files that will be input to bcftools merge 
+	# and then merge population2.
 	directories3 = args.pop2 + '/*/Bcftools/*.snpeff_annotated.vcf.gz'
 	name_list2 = glob.glob(directories3)
 	myfile2 = open("name_2_list.txt","w")
@@ -104,8 +106,9 @@ def main():
 		pass
 	process3.stdout.close()
 
-	# Making a txt file of the names of the individuals in the populations that is needed for vcftools --wei-fst-pop
-	# and indexing the merged files for population1 and population2
+	# Making a txt file of the names of the individuals in the populations 
+	# that is needed for vcftools --wei-fst-pop and indexing 
+	# the merged files for population1 and population2.
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, '*_merged_pop1.vcf.gz'):
 			cmd4 = ['bcftools', 'index', '-c', '-f', merged_vcf_pop1]
@@ -134,8 +137,9 @@ def main():
 			process7.stdout.close()
 
 	
-	# Making a list of vcf-files that will be input to bcftools merge and then merge population1 and population2
-	# to a "all_merged" vcf file, which will be the input file to vcftools --weir-fst-pop 
+	# Making a list of vcf-files that will be input to bcftools merge 
+	# and then merge population1 and population2 to an "all_merged" vcf file, 
+	# this file will be the input file to vcftools --weir-fst-pop. 
 	directories4 = 'Populations/*_merged_*.vcf.gz'
 	pop_list = glob.glob(directories4)
 	myfile3 = open("pop_list.txt","w")
@@ -149,11 +153,15 @@ def main():
 		pass
 	process8.stdout.close()
 
-	# Making directory for Fst-results, input-files to highcharts
+	# Making directory for Fst-results, 
+	# input-files to pandas and matplotlib.
 	if not os.path.exists('Fst_stats'):
 		os.makedirs('Fst_stats')
 
-	# Fst_statistics 
+	# Fst_statistics using vcftools --weir-fst-pop, input files are a
+	# vcf file with all merged populations one txt file with names of the individuals
+	# from population1 and one txt file with names of the individulas from population2,
+	# output is a table of Fst values and a log file of the results. 
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
 			cmd9 = ['vcftools', '--gzvcf', all_pop_merged, '--weir-fst-pop', indv_txt_pop1, '--weir-fst-pop', indv_txt_pop2, '--out', fst_out]
@@ -162,8 +170,9 @@ def main():
 				pass
 			process9.stdout.close()
 
-	# Filtering the resulting files from vcftools and making a new directory called Fst_stats with the resulting files,  
-	# the csv-file will be the input file to high charts 
+	# Filtering the resulting files from vcftools and making a new directory 
+	# called 'Fst_stats' with the resulting files, output is a csv file and a tab separated table,  
+	# the csv file will be the input file to pandas, matplotlib and highcharts. 
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, '*.weir.fst'):
 			cmd10 = ('cat %s | grep -v "nan" > %s') % (fst_out_in, fst_out_flt)
@@ -172,7 +181,7 @@ def main():
 				pass
 			process10.stdout.close()
 
-	# Removing the results below zero
+	# Removing the results below zero.
 	for file in os.listdir('Fst_stats'):
 		if fnmatch.fnmatch(file, '*flt.table'):
 			cmd11 = ("awk '{if ($3 >0) print}' %s > %s") % (fst_out_flt, fst_out_flt_results)
@@ -181,34 +190,35 @@ def main():
 				pass
 			process11.stdout.close()
 
-			# Rearrange columns (if needed)
+			# Rearrange columns (if needed).
 			cmd12 = ('''awk '{print $1 "\\t" $2 "\\t" $3}' %s > %s''') % (fst_out_flt_results, fst_out_flt2_results)
 			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process12.wait() is None:
 				pass
 			process12.stdout.close()
 
-			# Sorting the POS column (needed for x-axis in highcharts)
+			# Sorting the POS column (needed for x-axis in highcharts).
 			cmd13 = ("cat %s | sort -n > %s") % (fst_out_flt2_results, fst_results_sorted)
 			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process13.wait() is None:
 				pass
 			process13.stdout.close()
 
-			# Making a csv-file
+			# Making a csv file.
 			cmd14 = ('cat %s | tr "\\t" ","  > %s') % (fst_results_sorted, fst_results_sorted_csv)
 			process14 = subprocess.Popen(cmd14, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
 			while process14.wait() is None:
 				pass
 			process14.stdout.close()
 
-	# Making a plot of the Fst results using pandas and matplotlib, the output is a pdf file
+	# Making a plot of the Fst results using pandas and matplotlib, 
+	# input is the csv file and the output is a pdf file with the plot.
 	for file in os.listdir('Fst_stats'):
 		if fnmatch.fnmatch(file, 'pop1_pop2_flt_results_sorted.csv'):
-			# Import csv from Fst statstics with vcftools
+			# Import csv file with Fst results.
 			gl = pd.read_csv('Fst_stats/pop1_pop2_flt_results_sorted.csv')
 
-			# Optimize memory usage
+			# Optimize memory usage.
 			gl_int = gl.select_dtypes(include=['int'])
 			converted_int = gl_int.apply(pd.to_numeric,downcast='unsigned')
 			gl_float = gl.select_dtypes(include=['float'])
@@ -217,14 +227,14 @@ def main():
 			optimized_gl[converted_int.columns] = converted_int
 			optimized_gl[converted_float.columns] = converted_float
 
-			# Convert CHROM column from object to category
+			# Convert CHROM column from object to category.
 			gl_obj = gl.select_dtypes(include=['object']).copy()
 			chrom = gl_obj.CHROM
 			chrom_cat = chrom.astype('category')
 			converted_obj = pd.DataFrame()
 
-			# If unique values are more than 50% of the data don't convert to category, 
-			# it will not optimize memory usage
+			# If unique values are more than 50% of the data do not 
+			# convert to category, it will not optimize memory usage.
 			for col in gl_obj.columns:
 				num_unique_values = len(gl_obj[col].unique())
 				num_total_values = len(gl_obj[col])
@@ -233,23 +243,21 @@ def main():
 				else:
 					converted_obj.loc[:,col] = gl_obj[col]
 
-			# Apply on the csv file        
+			# Apply on the csv file.     
 			optimized_gl[converted_obj.columns] = converted_obj
 			dtypes_col = optimized_gl.dtypes.index
 			dtypes_type = [i.name for i in optimized_gl.dtypes.values]
-
 			column_types = dict(zip(dtypes_col, dtypes_type))
 			read_and_optimized = pd.read_csv('Fst_stats/pop1_pop2_flt_results_sorted.csv', \
 							 dtype=column_types)
 
-			# Rename read and optimized csv file from the Fst analysis to "df"
+			# Rename the read and optimized csv file from the Fst analysis to "df".
 			df = read_and_optimized
 			df['code'] = chrom_cat.cat.codes
 
-			# Make plot of data
+			# Make plot of data.
 			df['ind'] = range(len(df))
 			df_grouped = df.groupby(('code'))
-
 			fig = plt.figure(figsize=(80,20))
 			ax = fig.add_subplot(111)
 			colors = ['green','turquoise', 'blue','purple','red','orange', 'yellow']
@@ -268,11 +276,11 @@ def main():
 				ax.set_title('Weir and Cockerham Fst', fontsize=40)
 				plt.tick_params(axis='x', length=0.01)
 
-			# Save plot as image
+			# Save plot as pdf. 
 			plt.savefig("Fst_stats/Fst_plot.pdf")
 	
 
-	# Removing tmp-files
+	# Removing tmp-files.
 	if args.clean:
 		for textfile in os.listdir('.'):
 			if fnmatch.fnmatch(textfile, 'name_*_list.txt'):
