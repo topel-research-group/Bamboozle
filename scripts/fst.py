@@ -24,7 +24,6 @@ import argparse
 import fnmatch
 import os
 import glob
-
 import pandas as pd
 import numpy as np
 from scipy.stats import uniform
