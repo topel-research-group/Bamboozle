@@ -7,6 +7,7 @@ import os
 import fnmatch
 
 #######################################################################
+
 parser = argparse.ArgumentParser(prog="make_plot.py")
 parser.add_argument("-i", "--inputfile", \
 		help="input file, must be csv file", required=True)
@@ -15,9 +16,12 @@ parser.add_argument("-g", "--grep", \
 		the name should be in quotation marks", \
 		required=True)
 args = parser.parse_args()
+
 #######################################################################
+
 filtered = 'tmp_filtered.csv'
 output_name = args.grep + "_results.html"
+
 #######################################################################
 
 # This script makes a highcharts plot of a selected contig 
