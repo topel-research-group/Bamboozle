@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-#	Pipeline that performs bioinformatic analysis including SNP calling and effect prediction of fastq files or BAM file 
+#	Pipeline that performs bioinformatic analysis including SNP calling 
+#	and effect prediction of fastq files or BAM file. 
 #
 #	Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
 #
@@ -24,7 +25,7 @@ import argparse
 import fnmatch
 import os 
 
-##################################################################################
+#######################################################################
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
@@ -33,14 +34,17 @@ parser.add_argument("-b", "--bamfile", help="BAM infile")
 parser.add_argument("--gff", help="gff infile")  
 parser.add_argument("--feature", help="Feature for gff parser")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
-parser.add_argument("-s", "--snpsift", action="store_true", help="Run snpSift")
-parser.add_argument("-r", "--clean", action="store_true", help="Removes the SAM and BAM files")
-parser.add_argument("-p", "--done", action="store_true", help="Add an empty file to mark the directory as done")
+parser.add_argument("-s", "--snpsift", action="store_true", \
+			help="Run snpSift")
+parser.add_argument("-r", "--clean", action="store_true", \
+			help="Removes the SAM and BAM files")
+parser.add_argument("-p", "--done", action="store_true", \
+			help="Add an empty file to mark the directory as done")
 args = parser.parse_args()
 
 if args.feature and args.gff is None:
 	parser.error("--feature requires --gff")
-##################################################################################
+#######################################################################
 
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
@@ -56,7 +60,7 @@ annotated_table = name + '.snpsift_table.txt'
 add = '../'
 add2 = '../Bowtie2/'
 
-##################################################################################
+#######################################################################
 # Makes new directory 'Bowtie2' if it doesn't exists
 if not os.path.exists('Bowtie2'):
 	os.makedirs('Bowtie2')
