@@ -31,11 +31,13 @@ from scipy.stats import randint
 import matplotlib.pyplot as plt
 
 #######################################################################
+
 parser = argparse.ArgumentParser(prog="fst.py")
 parser.add_argument("-c", "--clean", action="store_true", help="Remove tmp files")
 parser.add_argument("-1", "--pop1", required=True, help="Population 1 input directory")
 parser.add_argument("-2", "--pop2", required=True, help="Population 2 input directory")
 args = parser.parse_args()
+
 #######################################################################
 
 current_directory = os.getcwd()
