@@ -96,7 +96,7 @@ def main():
 	name_list2 = glob.glob(directories3)
 	myfile2 = open("name_2_list.txt","w")
 	for n2 in name_list2:
-		myfile2.write(add+"%s\n" % n2)
+		myfile2.write(add + "%s\n" % n2)
 
 	myfile2.close()
 	cmd3 = ['bcftools', 'merge', '-l', add+names2, '-Oz', '-o', merged_vcf_pop2]   
@@ -143,7 +143,7 @@ def main():
 	pop_list = glob.glob(directories4)
 	myfile3 = open("pop_list.txt","w")
 	for p in pop_list:
-		myfile3.write(add+"%s\n" % p)
+		myfile3.write(add + "%s\n" % p)
 
 	myfile3.close()
 	cmd8 = ['bcftools', 'merge', '-l', add+population_list, '-Oz', '-o', all_pop_merged] 
@@ -260,9 +260,9 @@ def main():
 			# Make plot of data.
 			df['ind'] = range(len(df))
 			df_grouped = df.groupby(('code'))
-			fig = plt.figure(figsize=(80,20))
+			fig = plt.figure(figsize=(80, 20))
 			ax = fig.add_subplot(111)
-			colors = ['green','turquoise', 'blue','purple','red','orange', 'yellow']
+			colors = ['green', 'turquoise', 'blue', 'purple', 'red', 'orange', 'yellow']
 			x_labels = []
 			x_labels_pos = []
 			for num, (name, group) in enumerate(df_grouped):
