@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Obtain statistics regarding percen
 The script gives percentage of positions in an assembly/contig,\nwith coverage greater than or equal to a given \
 threshold', formatter_class=RawTextHelpFormatter)
 parser.add_argument('--mode', choices=['coverage','consensus','zero','deletion-1','deletion-2','deletion-3',\
-'deletion-x','homohetero','median-one','median-all'],help="Specify the desired mode of Bamboozle, where:\n\
+'deletion-x','homohetero','median-one','median-all','median-pc-coverage'],help="Specify the desired mode of Bamboozle, where:\n\
 * coverage = Print a statistic for what percentage of bases in an assembly have >=Nx coverage\n\
 * consensus = Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)\n\
 * zero = Find areas of zero coverage and print the reference sequence, along with a GC percentage\n\
@@ -22,7 +22,8 @@ parser.add_argument('--mode', choices=['coverage','consensus','zero','deletion-1
 * deletion-x = Find deletions occurring within exons\n\
 * homohetero = Attempt to determine whether a deletion is homozygous or heterozygous\n\
 * median-one = Find regions differing from the contig median  by +/- 50%%\n\
-* median-all = Find regions differing from the contig median  by +/- 50%%, for each contig")
+* median-all = Find regions differing from the contig median  by +/- 50%%, for each contig\n\
+* median-pc-coverage = Find the median coverage for each contig in an assembly")
 
 parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
@@ -401,6 +402,39 @@ def median_deviation_all():
 				current_contig = ctg
 				cov_stats[position] = coverage
 
+
+def median_percontig_coverage():
+	# Obtain a per-contig median average coverage
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
+	cmd = ["samtools depth -aa %s" % args.bam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+	cov_stats = {}
+	current_contig = "None"
+	print("Contig","Median coverage",sep="\t")
+
+	with process.stdout as result:
+		rows = (line.decode().split('\t') for line in result)
+		for row in rows:
+			ctg = str(row[0])
+			position = int(row[1])
+			coverage = int(row[2])
+			if current_contig == "None":
+				current_contig = ctg
+			if ctg == current_contig:
+				cov_stats[position] = coverage
+			elif ctg != current_contig:
+				print(current_contig,median(cov_stats.values()),sep="\t")
+
+				cov_stats = {}
+				current_contig = ctg
+				cov_stats[position] = coverage
+
 def make_bed(contig_lib,this_contig,lower,upper):
 	FirstHigh = 0
 	LastHigh = 0
@@ -474,6 +508,8 @@ def main():
 		median_deviation()
 	elif args.mode == "median-all":
 		median_deviation_all()
+	elif args.mode == "median-pc-coverage":
+		median_percontig_coverage()
 	elif args.mode == "coverage":
 		coverage_stats()
 	else:

@@ -100,6 +100,11 @@ and the previous base
 ./bamboozle.py --mode median-all -b <BAMFILE> > <output.bed>
 ```
 
+## Obtain a median per-contig coverage for the assembly
+
+```bash
+./bamboozle.py --mode median_pc_coverage -b <BAMFILE> > <output.txt>
+
 
 ## Features to add
 
@@ -115,8 +120,6 @@ and the previous base
   exon_mutations, rather than requiring an intermediate file
 * In HomoDel_or_Hetero function, find a way to pass the results of deletion function directly into
   HomoDel_or_Hetero, rather than requiring two intermediate files
-
-* Would it be useful to have an 'average' function, to report the median of each contig?
 
 * Any way to speed things up when searching a contig later in the .bam file?
   * Is speed also an issue when reading through the output of bedtools?
