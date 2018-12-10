@@ -402,6 +402,13 @@ def median_deviation_all():
 				current_contig = ctg
 				cov_stats[position] = coverage
 
+		# Print stats for the final contig
+
+		median_cov = median(cov_stats.values())
+		low_threshold = median_cov * 0.5
+		high_threshold = median_cov * 1.5
+		make_bed(cov_stats,current_contig,low_threshold,high_threshold)
+
 
 def median_percontig_coverage():
 	# Obtain a per-contig median average coverage
@@ -434,6 +441,14 @@ def median_percontig_coverage():
 				cov_stats = {}
 				current_contig = ctg
 				cov_stats[position] = coverage
+
+		# Print stats for the final contig
+
+		median_cov = median(cov_stats.values())
+		low_threshold = median_cov * 0.5
+		high_threshold = median_cov * 1.5
+		make_bed(cov_stats,current_contig,low_threshold,high_threshold)
+
 
 def make_bed(contig_lib,this_contig,lower,upper):
 	FirstHigh = 0

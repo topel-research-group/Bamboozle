@@ -102,6 +102,8 @@ and the previous base
 
 ## Obtain a median per-contig coverage for the assembly
 
+This is a stripped-down version of the `median-all` function, providing a simplified list of only the contig medians
+
 ```bash
 ./bamboozle.py --mode median_pc_coverage -b <BAMFILE> > <output.txt>
 
