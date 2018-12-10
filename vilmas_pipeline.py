@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 #	Pipeline that performs bioinformatic analysis including SNP calling 
 #	and effect prediction of fastq files or BAM file. 
 #
@@ -20,12 +21,13 @@
 
 
 import sys
-import subprocess
-import argparse
-import fnmatch
 import os 
+import argparse
+import subprocess
+import fnmatch
 
 #######################################################################
+
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
@@ -44,6 +46,7 @@ args = parser.parse_args()
 
 if args.feature and args.gff is None:
 	parser.error("--feature requires --gff")
+
 #######################################################################
 
 current_directory = os.getcwd()
@@ -229,7 +232,7 @@ def annotation():
 			if args.gff and args.feature:
 				for outfile in os.listdir('.'):
 					if fnmatch.fnmatch(outfile, 'out.gff'):
-					os.remove(outfile) 
+						os.remove(outfile) 
 
 # Filtering and making a summary of annotated files using 
 # the vcf (not bgzipped) output file from snpEff, 
