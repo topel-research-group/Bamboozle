@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+
+# Usage: unittest_vilmas_pipeline.py -f REFERENCE
+
+
 import unittest
 from os import sys, path 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
@@ -10,7 +14,7 @@ import shutil
 
 
 class TestClass:
-	# Select specific test-files for testing functions
+	# Select specific test files for testing functions.
 	def setup_args(self):
 		args = vilmas_pipeline.parser.parse_args(['-f', \
 					'../example_data/reference.txt', \
@@ -48,12 +52,12 @@ class TestProcess(TestClass, unittest.TestCase):
 	def setUp(self):
 		pass
 
-	# Test reference input
+	# Test reference input.
 	def test010_reference_argument(self):
 		self.args = self.setup_args()
 		self.assertEqual(self.args.ref, '../example_data/reference.txt')
 
-	# Test that functions output is None in pipeline 
+	# Test that functions output is None in pipeline. 
 	def test020_bowtie2(self):
 		args = self.setup_args()
 		self.assertIsNone(vilmas_pipeline.bowtie2(args))
@@ -86,7 +90,7 @@ class TestProcess(TestClass, unittest.TestCase):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
-	# Test output files
+	# Test output files.
 	def test100_output_bam(self):
 		myProcess = subprocess.check_call('diff Bowtie2/tests.bam \
 		../example_data/data1.bam', shell=True)
@@ -104,7 +108,7 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	@classmethod
 	def tearDownClass(cls):
-		# Remove the directories after the test is done
+		# Remove the directories after the test is done.
 		if 'Bowtie2' in os.listdir():
 			shutil.rmtree('Bowtie2')
 		if 'Bcftools' in os.listdir():
@@ -112,6 +116,5 @@ class TestProcess(TestClass, unittest.TestCase):
 		
 
 if __name__ == '__main__':
-	# usage: unittest_vilmas_pipeline.py -f REFERENCE
 	options = [sys.argv[0]] + [a for a in sys.argv if a.startswith("-")]
 	unittest.main(argv=options)
