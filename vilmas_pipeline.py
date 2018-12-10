@@ -61,13 +61,14 @@ add = '../'
 add2 = '../Bowtie2/'
 
 #######################################################################
-# Makes new directory 'Bowtie2' if it doesn't exists
+# Makes new directory 'Bowtie2' if it doesn't exists.
 if not os.path.exists('Bowtie2'):
 	os.makedirs('Bowtie2')
 
-# Running bowtie2-build to index reference genome and bowtie2 to align 
+# Running bowtie2-build to index reference genome and bowtie2 to align. 
 def bowtie2(args):
-	# Selected input files using forward and reverse flags, the flags can take several input files
+	# Selected input files using forward and reverse flags, 
+	# the flags can take several input files.
 	file1 = ''
 	file2 = ''
 	if args.forward:
@@ -82,23 +83,26 @@ def bowtie2(args):
 			f2.append(add+name2)
 		file2 += ','.join(map(str, f2))
 
-	# Bowtie2-build step
+	# Bowtie2-build, inputs are reference in fasta format and base name for index files,
+	# the output are the index files. 
 	cmd1 = ['bowtie2-build', add+args.ref, base]
 	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
 	process1.stdout.close()
 
-	# Bowtie2 align step
+	# Bowtie2 align step, input are the index files from Bowtie2-build, 
+	# fastq files (forward and reverse) the output is a SAM file.
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
-			cmd2 = ['bowtie2', '-p', threads, '--no-unal', '--very-sensitive', '-x', base, '-1', file1, '-2', file2, '-S', sam]	
+			cmd2 = ['bowtie2', '-p', threads, '--no-unal', '--very-sensitive', \
+			'-x', base, '-1', file1, '-2', file2, '-S', sam]	
 			process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Bowtie2')
 			while process2.wait() is None:
 				pass
 			process2.stdout.close()
 
-# Converting SAM to BAM using samtools view
+# Converting SAM to BAM using samtools view.
 def samtools_view():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
@@ -108,7 +112,7 @@ def samtools_view():
 				pass
 			process3.stdout.close()
 
-# Sort BAM files
+# Sort BAM files.
 def samtools_sort():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
@@ -118,7 +122,7 @@ def samtools_sort():
 				pass	
 			process4.stdout.close()
 		
-# BAM input file by using the '-b' flag
+# BAM input file by using the '-b' flag.
 def bam_input(args):
 	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, '-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='Bowtie2')
@@ -126,7 +130,7 @@ def bam_input(args):
 		pass	
 	process5.stdout.close()
 
-# Index sorted BAM files
+# Index sorted BAM files.
 def samtools_index():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
@@ -136,7 +140,7 @@ def samtools_index():
 				pass
 			process6.stdout.close()
 
-# Remove SAM and BAM files
+# Remove SAM and BAM files.
 def clean():
 	if args.clean:
 		for samfile in os.listdir('Bowtie2'):
@@ -147,23 +151,25 @@ def clean():
 			if fnmatch.fnmatch(bamfile, name + '.bam'):
 				os.remove('Bowtie2/' + bamfile)
 
-# Variant calling using bcftools mpileup, makes new directory 'Bcftools' if it doesn't exists
+# Variant calling using bcftools mpileup, input is sorted BAM file, 
+# output file is a gzipped vcf file, makes new directory 'Bcftools' if it doesn't exists.
 def bcftools(args):
 	if not os.path.exists('Bcftools'):
 		os.makedirs('Bcftools')
 
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter -s LowQual \
-			-e 'QUAL<20 || DP>100' -Oz -o %s") % (threads, add+args.ref, add2+sorted_bam_out, bcftools_out)
+			cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s | bcftools call -Ou -mv | bcftools filter \
+			-s LowQual -e 'QUAL<20 || DP>100' -Oz -o %s") % (threads, add+args.ref, add2+sorted_bam_out, bcftools_out)
 			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process7.wait() is None:
 				pass
 			process7.stdout.close()
 
-# Variant annotation and effect prediction, the snpEff_test checks if there is a Skeletonema database, 
-# if it doesn't exists the program will exit and you have to create it by using 'snpEff build'
+# Checks for dependencies required for snpEff 
 def snpEff_test():
+	# Checks if there is a Skeletonema database, if it doesn't exists the program 
+	# will exit and it has to be created using 'snpEff build'.
 	try:
 		cmdx = ('snpEff databases | grep "Skeletonema"')
 		processx = subprocess.check_output(cmdx, shell=True)
@@ -189,8 +195,9 @@ def snpEff_test():
 			else:
 				sys.exit("[Error] Exiting due to missing dependency \"gffutils\"")
 
-# Annotating variant calling output using snpEff, output is a vcf, the vcf file is bgzipped to work as an input file to the Fst analysis,
-# the original vcf file is kept by using the -c flag 
+# Annotating variant calling output using snpEff, output is a vcf, 
+# the vcf file is bgzipped to work as an input file to the Fst analysis,
+# the original vcf file is kept by using the -c flag. 
 def annotation():					
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
@@ -202,7 +209,8 @@ def annotation():
 				out = add+'out.gff'	
 				my_interval = "-interval %s" % out
 				my_output = name + '_' + args.feature + '.snpeff_annotated.vcf'
-			my_args = my_interval + " -no-downstream -no-upstream -no-intron -no-intergenic -classic Skeletonema_marinoi_v1.1.1.1 -stats snpEff_summary.html"
+			my_args = my_interval + " -no-downstream -no-upstream -no-intron -no-intergenic -classic \
+			Skeletonema_marinoi_v1.1.1.1 -stats snpEff_summary.html"
 			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, my_output)
 			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process8.wait() is None:
@@ -215,23 +223,25 @@ def annotation():
 				pass
 			process9.stdout.close()
 
-# Filtering and making a summary of annotated files using the vcf (not bgzipped) output file from snpEff, the summary will be in table format
+# Filtering and making a summary of annotated files using the vcf (not bgzipped) output file from snpEff, 
+# the summary will be in table format, tab separated.
 def snpsift():
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*_annotated.vcf'):
 			cmd10 = ('java -jar /usr/local/packages/snpEff/SnpSift.jar extractFields -e "." -s "," %s \
-			CHROM POS "EFF[*].GENE" REF ALT QUAL DP AF "EFF[*].EFFECT" "EFF[*].AA" "EFF[*].FUNCLASS" > %s') % (annotated_vcf, annotated_table) 
+			CHROM POS "EFF[*].GENE" REF ALT QUAL DP AF "EFF[*].EFFECT" "EFF[*].AA" "EFF[*].FUNCLASS" > %s') \
+			% (annotated_vcf, annotated_table) 
 			process10 = subprocess.Popen(cmd10, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
 			while process10.wait() is None:
 				pass
 			process10.stdout.close()
 
-# Add empty file when the pipeline is done
+# Add empty file when the pipeline is done.
 def done():
 	open("pipeline.done", 'a').close()
 	
 
-# If the '-b' flag is used this function will run, excluding the first steps of the program 
+# If the '-b' flag is used this function will run, excluding the first steps of the program. 
 def input_files():
 	bam_input(args)
 	samtools_index()
