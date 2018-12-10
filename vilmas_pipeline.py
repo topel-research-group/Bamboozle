@@ -226,9 +226,10 @@ def annotation():
 			process9.stdout.close()
 
 			# Remove out.gff, output from module parse_gff.
-			for outfile in os.listdir('.'):
-				if fnmatch.fnmatch(outfile, 'out.gff'):
-                                os.remove(outfile) 
+			if args.gff and args.feature:
+				for outfile in os.listdir('.'):
+					if fnmatch.fnmatch(outfile, 'out.gff'):
+					os.remove(outfile) 
 
 # Filtering and making a summary of annotated files using 
 # the vcf (not bgzipped) output file from snpEff, 
