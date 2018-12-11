@@ -97,8 +97,10 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	# Test output files.
 	def test100_output_bam(self):
-		myProcess = subprocess.check_call('diff Bowtie2/tests.bam \
-		../example_data/data1.bam', shell=True)
+		myProcess = subprocess.check_call('diff \
+			Bowtie2/tests.bam \
+			../example_data/data1.bam', \
+			shell=True)
 		self.assertIs(myProcess, 0)
 		
 	def test110_snpsift_output(self):
@@ -109,8 +111,10 @@ class TestProcess(TestClass, unittest.TestCase):
 		expected_snpsift.close()
 
 	def test120_gff_parser_output(self):
-		myProcess = subprocess.check_call('diff out.gff \
-		../example_data/out.gff', shell=True)
+		myProcess = subprocess.check_call('diff \
+			out.gff \
+			../example_data/out.gff', \
+			shell=True)
 		self.assertIs(myProcess, 0)
 
 	def tearDown(self):
