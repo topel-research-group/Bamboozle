@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-#	Input from pipeline -> this script -> output Fst statistics table and graph
+#	Input from pipeline -> this script 
+#	-> output Fst statistics table and graph
 #
 #	Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
 #
@@ -33,9 +34,15 @@ import matplotlib.pyplot as plt
 #######################################################################
 
 parser = argparse.ArgumentParser(prog="fst.py")
-parser.add_argument("-c", "--clean", action="store_true", help="Remove tmp files")
-parser.add_argument("-1", "--pop1", required=True, help="Population 1 input directory")
-parser.add_argument("-2", "--pop2", required=True, help="Population 2 input directory")
+parser.add_argument("-c", "--clean", \
+		action="store_true", \
+		help="Remove tmp files")
+parser.add_argument("-1", "--pop1", \
+		required=True, \
+		help="Population 1 input directory")
+parser.add_argument("-2", "--pop2", \
+		required=True, \
+		help="Population 2 input directory")
 args = parser.parse_args()
 
 #######################################################################
@@ -68,12 +75,14 @@ def main():
 	file_list = glob.glob(directories)
 	for f in file_list:
 		cmd1 = ['bcftools', 'index', '-c', '-f', f]
-		process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
+		process1 = subprocess.Popen(cmd1, \
+			stdout=subprocess.PIPE)
 		while process1.wait() is None:
 			pass
 		process1.stdout.close()
 
-	# Make directory for the merged vcf-files for population1 and population2.
+	# Make directory for the merged vcf-files 
+	# for population1 and population2.
 	if not os.path.exists('Populations'):
 		os.makedirs('Populations')
 
@@ -86,8 +95,12 @@ def main():
 		myfile.write(add + "%s\n" % n1)
 
 	myfile.close()
-	cmd2 = ['bcftools', 'merge', '-l', add+names1, '-Oz', '-o', merged_vcf_pop1]   
-	process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Populations')
+	cmd2 = ['bcftools', 'merge', \
+		'-l', add+names1, \
+		'-Oz', '-o', merged_vcf_pop1]   
+	process2 = subprocess.Popen(cmd2, \
+		stdout=subprocess.PIPE, \
+		cwd='Populations')
 	while process2.wait() is None:
 		pass
 	process2.stdout.close()
@@ -101,8 +114,12 @@ def main():
 		myfile2.write(add + "%s\n" % n2)
 
 	myfile2.close()
-	cmd3 = ['bcftools', 'merge', '-l', add+names2, '-Oz', '-o', merged_vcf_pop2]   
-	process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd='Populations')
+	cmd3 = ['bcftools', 'merge', \
+		'-l', add+names2, \
+		'-Oz', '-o', merged_vcf_pop2]   
+	process3 = subprocess.Popen(cmd3, \
+		stdout=subprocess.PIPE, \
+		cwd='Populations')
 	while process3.wait() is None:
 		pass
 	process3.stdout.close()
@@ -113,34 +130,47 @@ def main():
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, '*_merged_pop1.vcf.gz'):
 			cmd4 = ['bcftools', 'index', '-c', '-f', merged_vcf_pop1]
-			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='Populations')
+			process4 = subprocess.Popen(cmd4, \
+				stdout=subprocess.PIPE, \
+				cwd='Populations')
 			while process4.wait() is None:
 				pass
 			process4.stdout.close()
 
-			cmd5 = ('bcftools query -l %s > %s') % (merged_vcf_pop1, indv_txt_pop1) 
-			process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True, cwd='Populations')
+			cmd5 = ('bcftools query -l %s > %s') \
+				% (merged_vcf_pop1, indv_txt_pop1) 
+			process5 = subprocess.Popen(cmd5, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Populations')
 			while process5.wait() is None:
 				pass
 			process5.stdout.close()
 
 		elif fnmatch.fnmatch(file, '*_merged_pop2.vcf.gz'):
 			cmd6 = ['bcftools', 'index', '-c', '-f', merged_vcf_pop2]
-			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, cwd='Populations')
+			process6 = subprocess.Popen(cmd6, \
+				stdout=subprocess.PIPE, \
+				cwd='Populations')
 			while process6.wait() is None:
 				pass
 			process6.stdout.close()
 
-			cmd7 = ('bcftools query -l %s > %s') % (merged_vcf_pop2, indv_txt_pop2)
-			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Populations')
+			cmd7 = ('bcftools query -l %s > %s') \
+				% (merged_vcf_pop2, indv_txt_pop2)
+			process7 = subprocess.Popen(cmd7, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Populations')
 			while process7.wait() is None:
 				pass
 			process7.stdout.close()
 
 	
 	# Making a list of vcf-files that will be input to bcftools merge 
-	# and then merge population1 and population2 to an "all_merged" vcf file, 
-	# this file will be the input file to vcftools --weir-fst-pop. 
+	# and then merge population1 and population2 to an "all_merged" 
+	# vcf file, this file will be the input file to 
+	# vcftools --weir-fst-pop. 
 	directories4 = 'Populations/*_merged_*.vcf.gz'
 	pop_list = glob.glob(directories4)
 	myfile3 = open("pop_list.txt","w")
@@ -148,8 +178,12 @@ def main():
 		myfile3.write(add + "%s\n" % p)
 
 	myfile3.close()
-	cmd8 = ['bcftools', 'merge', '-l', add+population_list, '-Oz', '-o', all_pop_merged] 
-	process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, cwd='Populations')
+	cmd8 = ['bcftools', 'merge', \
+		'-l', add+population_list, \
+		'-Oz', '-o', all_pop_merged] 
+	process8 = subprocess.Popen(cmd8, \
+		stdout=subprocess.PIPE, \
+		cwd='Populations')
 	while process8.wait() is None:
 		pass
 	process8.stdout.close()
@@ -160,14 +194,20 @@ def main():
 		os.makedirs('Fst_stats')
 
 	# Fst_statistics using vcftools --weir-fst-pop, input files are a
-	# vcf file with all merged populations one txt file with names of the individuals
-	# from population1 and one txt file with names of the individulas from population2,
-	# output is a table of Fst values and a log file of the results. 
+	# vcf file with all merged populations one txt file with names 
+	# of the individuals from population1 and one txt file with 
+	# names of the individulas from population2, output is a table 
+	# of Fst values and a log file of the results. 
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
-			cmd9 = ['vcftools', '--gzvcf', all_pop_merged, '--weir-fst-pop', indv_txt_pop1, \
-			'--weir-fst-pop', indv_txt_pop2, '--out', fst_out]
-			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, cwd='Populations')
+			cmd9 = ['vcftools', \
+				'--gzvcf', all_pop_merged, \
+				'--weir-fst-pop', indv_txt_pop1, \
+				'--weir-fst-pop', indv_txt_pop2, \
+				'--out', fst_out]
+			process9 = subprocess.Popen(cmd9, \
+				stdout=subprocess.PIPE, \
+				cwd='Populations')
 			while process9.wait() is None:
 				pass
 			process9.stdout.close()
@@ -178,8 +218,12 @@ def main():
 	# will be the input file to pandas, matplotlib and highcharts. 
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, '*.weir.fst'):
-			cmd10 = ('cat %s | grep -v "nan" > %s') % (fst_out_in, fst_out_flt)
-			process10 = subprocess.Popen(cmd10, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
+			cmd10 = ('cat %s | grep -v "nan" > %s') \
+				% (fst_out_in, fst_out_flt)
+			process10 = subprocess.Popen(cmd10, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
 			while process10.wait() is None:
 				pass
 			process10.stdout.close()
@@ -187,8 +231,12 @@ def main():
 	# Removing the results below zero.
 	for file in os.listdir('Fst_stats'):
 		if fnmatch.fnmatch(file, '*flt.table'):
-			cmd11 = ("awk '{if ($3 >0) print}' %s > %s") % (fst_out_flt, fst_out_flt_results)
-			process11 = subprocess.Popen(cmd11, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
+			cmd11 = ("awk '{if ($3 >0) print}' %s > %s") \
+				% (fst_out_flt, fst_out_flt_results)
+			process11 = subprocess.Popen(cmd11, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
 			while process11.wait() is None:
 				pass
 			process11.stdout.close()
@@ -196,21 +244,32 @@ def main():
 			# Rearrange columns (if needed).
 			cmd12 = ('''awk '{print $1 "\\t" $2 "\\t" $3}' %s > %s''') \
 			% (fst_out_flt_results, fst_out_flt2_results)
-			process12 = subprocess.Popen(cmd12, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
+			process12 = subprocess.Popen(cmd12, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
 			while process12.wait() is None:
 				pass
 			process12.stdout.close()
 
 			# Sorting the POS column (needed for x-axis in highcharts).
-			cmd13 = ("cat %s | sort -n > %s") % (fst_out_flt2_results, fst_results_sorted)
-			process13 = subprocess.Popen(cmd13, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
+			cmd13 = ("cat %s | sort -n > %s") \
+				% (fst_out_flt2_results, fst_results_sorted)
+			process13 = subprocess.Popen(cmd13, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
 			while process13.wait() is None:
 				pass
 			process13.stdout.close()
 
 			# Making a csv file.
-			cmd14 = ('cat %s | tr "\\t" ","  > %s') % (fst_results_sorted, fst_results_sorted_csv)
-			process14 = subprocess.Popen(cmd14, stdout=subprocess.PIPE, shell=True, cwd='Fst_stats')
+			cmd14 = ('cat %s | tr "\\t" ","  > %s') \
+				% (fst_results_sorted, fst_results_sorted_csv)
+			process14 = subprocess.Popen(cmd14, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
 			while process14.wait() is None:
 				pass
 			process14.stdout.close()
@@ -255,7 +314,8 @@ def main():
 			read_and_optimized = pd.read_csv('Fst_stats/pop1_pop2_flt_results_sorted.csv', \
 							 dtype=column_types)
 
-			# Rename the read and optimized csv file from the Fst analysis to "df".
+			# Rename the read and optimized csv file 
+			# from the Fst analysis to "df".
 			df = read_and_optimized
 			df['code'] = chrom_cat.cat.codes
 
