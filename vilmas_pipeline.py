@@ -89,7 +89,9 @@ def bowtie2(args):
 	# Bowtie2-build, inputs are reference in fasta format and 
 	# base name for index files, the output are the index files. 
 	cmd1 = ['bowtie2-build', add+args.ref, base]
-	process1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, cwd='Bowtie2')	
+	process1 = subprocess.Popen(cmd1, \
+		stdout=subprocess.PIPE, \
+		cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
 	process1.stdout.close()
@@ -100,7 +102,9 @@ def bowtie2(args):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
 			cmd2 = ['bowtie2', '-p', threads, '--no-unal', '--very-sensitive', \
 			'-x', base, '-1', file1, '-2', file2, '-S', sam]	
-			process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, cwd='Bowtie2')
+			process2 = subprocess.Popen(cmd2, \
+				stdout=subprocess.PIPE, \
+				cwd='Bowtie2')
 			while process2.wait() is None:
 				pass
 			process2.stdout.close()
@@ -110,7 +114,10 @@ def samtools_view():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
 			cmd3 = ('samtools view -@ %s -Sb %s > %s') % (args.threads, sam, bam)
-			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, cwd='Bowtie2', shell=True)
+			process3 = subprocess.Popen(cmd3, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Bowtie2')
 			while process3.wait() is None:
 				pass
 			process3.stdout.close()
@@ -120,7 +127,9 @@ def samtools_sort():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
-			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, cwd='Bowtie2')
+			process4 = subprocess.Popen(cmd4, \
+				stdout=subprocess.PIPE, \
+				cwd='Bowtie2')
 			while process4.wait() is None:
 				pass	
 			process4.stdout.close()
@@ -128,7 +137,9 @@ def samtools_sort():
 # BAM input file by using the '-b' flag.
 def bam_input(args):
 	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, '-o', sorted_bam_out]
-	process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, cwd='Bowtie2')
+	process5 = subprocess.Popen(cmd5, \
+		stdout=subprocess.PIPE, \
+		cwd='Bowtie2')
 	while process5.wait() is None:
 		pass	
 	process5.stdout.close()
@@ -138,7 +149,9 @@ def samtools_index():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
 			cmd6 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
-			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, cwd='Bowtie2')
+			process6 = subprocess.Popen(cmd6, \
+				stdout=subprocess.PIPE, \
+				cwd='Bowtie2')
 			while process6.wait() is None:
 				pass
 			process6.stdout.close()
@@ -166,7 +179,10 @@ def bcftools(args):
 			cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s | bcftools call -Ou -mv \
 	 		| bcftools filter -s LowQual -e 'QUAL<20 || DP>100' -Oz -o %s") \
 			% (threads, add+args.ref, add2+sorted_bam_out, bcftools_out)
-			process7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			process7 = subprocess.Popen(cmd7, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Bcftools')
 			while process7.wait() is None:
 				pass
 			process7.stdout.close()
@@ -217,13 +233,19 @@ def annotation(args):
 			my_args = my_interval + " -no-downstream -no-upstream -no-intron -no-intergenic \
 			-classic Skeletonema_marinoi_v1.1.1.1 -stats snpEff_summary.html"
 			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, my_output)
-			process8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			process8 = subprocess.Popen(cmd8, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Bcftools')
 			while process8.wait() is None:
 				pass
 			process8.stdout.close()
 
 			cmd9 = ('bgzip -c %s > %s') % (my_output, my_output + '.gz')
-			process9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			process9 = subprocess.Popen(cmd9, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Bcftools')
 			while process9.wait() is None:
 				pass
 			process9.stdout.close()
@@ -244,7 +266,10 @@ def snpsift():
 			extractFields -e "." -s "," %s CHROM POS "EFF[*].GENE" REF ALT QUAL DP AF \
 			"EFF[*].EFFECT" "EFF[*].AA" "EFF[*].FUNCLASS" > %s') \
 			% (annotated_vcf, annotated_table) 
-			process10 = subprocess.Popen(cmd10, stdout=subprocess.PIPE, shell=True, cwd='Bcftools')
+			process10 = subprocess.Popen(cmd10, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Bcftools')
 			while process10.wait() is None:
 				pass
 			process10.stdout.close()
