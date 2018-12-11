@@ -229,7 +229,7 @@ def annotation(args):
 			process9.stdout.close()
 
 			# Remove out.gff, output from module parse_gff.
-			if args.gff and args.feature:
+			if args.gff and args.feature and args.clean:
 				for outfile in os.listdir('.'):
 					if fnmatch.fnmatch(outfile, 'out.gff'):
 						os.remove(outfile) 
