@@ -29,8 +29,11 @@ output_name = args.grep + "_results.html"
 # the contig in quotation marks.
 def main():
 	infile = args.inputfile 
-	cmd = ("cat %s | grep %s, > %s") % (infile, args.grep, filtered)
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	cmd = ("cat %s | grep %s, > %s") \
+		% (infile, args.grep, filtered)
+	process = subprocess.Popen(cmd, \
+		stdout=subprocess.PIPE, \
+		shell=True)
 	while process.wait() is None:
 		pass
 	process.stdout.close()
@@ -39,7 +42,7 @@ def main():
 		csv_filtered = csv.reader(i)
 		csv_list = []
 		for line in csv_filtered:
-			csv_list.append('\\n\\"' +line[0]+ '\\"' + ";" + line[1] + ";" + line[2])
+			csv_list.append('\\n\\"' + line[0] + '\\"' + ";" + line[1] + ";" + line[2])
 
 	file=open(output_name, 'w')
 	html_part1= '''<div id="highcharts-aac96e77-0ad0-4715-a815-b427470cf979"></div><script>
