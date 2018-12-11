@@ -42,9 +42,10 @@ class TestClass:
 					'-b', \
 					'../example_data/data1.bam', \
 					'--gff', \
-					'..example_data/data1.gff', \
+					'../example_data/data1.gff', \
 					'--feature', \
 					'exon'])
+		return args
 
 
 class TestProcess(TestClass, unittest.TestCase):
@@ -84,15 +85,15 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	def test080_annotation(self):
 		args = self.setup_args3()
-		self.assertIsNone(vilmas_pipeline.annotation())
+		self.assertIsNone(vilmas_pipeline.annotation(args))
 
 	def test090_snpsift(self):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.snpsift())
 
-	def test091_snpsift(self):
+	def test091_annotation(self):
 		args = self.setup_args4()
-		self.assertIsNone(vilmas_pipeline.annotation())
+		self.assertIsNone(vilmas_pipeline.annotation(args))
 
 	# Test output files.
 	def test100_output_bam(self):
@@ -108,13 +109,9 @@ class TestProcess(TestClass, unittest.TestCase):
 		expected_snpsift.close()
 
 #	def test120_gff_parser_output(self):
-#		cmd = ['../vilmas_pipeline.py', '-f', '../../example_data/reference.txt', '-b', '../../example_data/data1.bam', '--gff', '../../example_data/data1.gff', '--feature', 'exon']
-#		myProcess = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-#		test_gff = open('Bcftools/tests_exon.snpeff_annotated.vcf', 'r')
-#		expected_gff = open('../example_data/gff.db', 'r')
-#		self.assertEqual(test_gff.readlines(), expected_gff.readlines())
-#		test_gff.close()
-#		expected_gff.close()
+#		myProcess = subprocess.check_call('diff Bcftools/tests_exon.snpeff_annotated.vcf \
+#		../example_data/data1_exon.snpeff_annotated.vcf', shell=True)
+#		self.assertIs(myProcess, 0)
 
 	def tearDown(self):
 		pass
