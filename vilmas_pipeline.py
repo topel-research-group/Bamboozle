@@ -203,7 +203,7 @@ def snpEff_test():
 # Annotating variant calling output using snpEff, output is a vcf, 
 # the vcf file is bgzipped to work as an input file to the Fst analysis,
 # the original vcf file is kept by using the -c flag. 
-def annotation():					
+def annotation(args):					
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
 			my_output = annotated_vcf
@@ -260,7 +260,7 @@ def input_files():
 	bam_input(args)
 	samtools_index()
 	bcftools(args)
-	annotation()
+	annotation(args)
 	if args.snpsift:
 		snpsift()
 
@@ -286,7 +286,7 @@ def main():
 	samtools_sort()
 	samtools_index()
 	bcftools(args)
-	annotation()
+	annotation(args)
 
 	if args.snpsift:
 		snpsift()
