@@ -87,13 +87,13 @@ class TestProcess(TestClass, unittest.TestCase):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.annotation(args))
 
+	def test081_annotation(self):
+		args = self.setup_args4()
+		self.assertIsNone(vilmas_pipeline.annotation(args))
+
 	def test090_snpsift(self):
 		args = self.setup_args3()
 		self.assertIsNone(vilmas_pipeline.snpsift())
-
-	def test091_annotation(self):
-		args = self.setup_args4()
-		self.assertIsNone(vilmas_pipeline.annotation(args))
 
 	# Test output files.
 	def test100_output_bam(self):
@@ -108,10 +108,10 @@ class TestProcess(TestClass, unittest.TestCase):
 		test_snpsift.close()
 		expected_snpsift.close()
 
-#	def test120_gff_parser_output(self):
-#		myProcess = subprocess.check_call('diff Bcftools/tests_exon.snpeff_annotated.vcf \
-#		../example_data/data1_exon.snpeff_annotated.vcf', shell=True)
-#		self.assertIs(myProcess, 0)
+	def test120_gff_parser_output(self):
+		myProcess = subprocess.check_call('diff out.gff \
+		../example_data/out.gff', shell=True)
+		self.assertIs(myProcess, 0)
 
 	def tearDown(self):
 		pass
@@ -123,7 +123,8 @@ class TestProcess(TestClass, unittest.TestCase):
 			shutil.rmtree('Bowtie2')
 		if 'Bcftools' in os.listdir():
 			shutil.rmtree('Bcftools')
-		
+		if 'out.gff' in os.listdir():
+			os.remove('out.gff')		
 
 if __name__ == '__main__':
 	options = [sys.argv[0]] + [a for a in sys.argv if a.startswith("-")]
