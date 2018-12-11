@@ -21,8 +21,12 @@ def main(gff, feature=''):
 			break
 	else:
 		# If db does not exists a new is created.
-		db = gffutils.create_db(gff, dbfn=gff_path+'/gff.db', force=False, keep_order=True,\
-					merge_strategy='merge', sort_attribute_values=True)
+		db = gffutils.create_db(gff, \
+					dbfn=gff_path+'/gff.db', \
+					force=False, \
+					keep_order=True, \
+					merge_strategy='merge', \
+					sort_attribute_values=True)
 
 		db = gffutils.FeatureDB(gff_path+'/gff.db')
 		with open('out.gff', 'w') as fout:
