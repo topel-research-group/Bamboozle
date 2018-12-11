@@ -136,7 +136,8 @@ def samtools_sort():
 		
 # BAM input file by using the '-b' flag.
 def bam_input(args):
-	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, '-o', sorted_bam_out]
+	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, \
+		'-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
 		cwd='Bowtie2')
@@ -176,8 +177,9 @@ def bcftools(args):
 
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s | bcftools call -Ou -mv \
-	 		| bcftools filter -s LowQual -e 'QUAL<20 || DP>100' -Oz -o %s") \
+			cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s \
+				| bcftools call -Ou -mv \
+	 			| bcftools filter -s LowQual -e 'QUAL<20 || DP>100' -Oz -o %s") \
 			% (threads, add+args.ref, add2+sorted_bam_out, bcftools_out)
 			process7 = subprocess.Popen(cmd7, \
 				stdout=subprocess.PIPE, \
@@ -189,8 +191,9 @@ def bcftools(args):
 
 # Checks for dependencies required for snpEff 
 def snpEff_test():
-	# Checks if there is a Skeletonema database, if it doesn't exists the program 
-	# will exit and it has to be created using 'snpEff build'.
+	# Checks if there is a Skeletonema database, 
+	# if it doesn't exists the program will exit 
+	# and it has to be created using 'snpEff build'.
 	try:
 		cmdx = ('snpEff databases | grep "Skeletonema"')
 		processx = subprocess.check_output(cmdx, shell=True)
@@ -206,8 +209,10 @@ def snpEff_test():
 			import gffutils
 
 		except ImportError:
-			sys.stderr.write("[Error] The python module \"gffutils\" is not installed\n") 
-			sys.stderr.write("[--] Would you like to install it now using 'pip install gffutils' [Y/N]?\n")
+			sys.stderr.write("[Error] The python module \"gffutils\" \
+					is not installed\n") 
+			sys.stderr.write("[--] Would you like to install it now using \
+					'pip install gffutils' [Y/N]?\n")
 			answer = sys.stdin.readline()
 			if answer[0].lower() == "y":
 				sys.stderr.write("[--] Running \"pip install gffutils\"\n")
@@ -230,8 +235,10 @@ def annotation(args):
 				out = add + 'out.gff'	
 				my_interval = "-interval %s" % out
 				my_output = name + '_' + args.feature + '.snpeff_annotated.vcf'
-			my_args = my_interval + " -no-downstream -no-upstream -no-intron -no-intergenic \
-			-classic Skeletonema_marinoi_v1.1.1.1 -stats snpEff_summary.html"
+			my_args = my_interval + " -no-downstream -no-upstream \
+				-no-intron -no-intergenic \
+				-classic Skeletonema_marinoi_v1.1.1.1 \
+				-stats snpEff_summary.html"
 			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, my_output)
 			process8 = subprocess.Popen(cmd8, \
 				stdout=subprocess.PIPE, \
