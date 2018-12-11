@@ -104,6 +104,8 @@ class TestProcess(TestClass, unittest.TestCase):
 		expected_snpsift.close()
 
 	def test120_gff_parser_output(self):
+		cmd = ['vilmas_pipeline.py', '-f', '../../example_data/reference.txt', '-b', '../../example_data/data1.bam', '--gff', '../../example_data/data1.gff', '--feature', 'exon']
+		myProcess = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 		test_gff = open('Bcftools/tests_exon.snpeff_annotated.vcf', 'r')
 		expected_gff = open('../example_data/gff.db', 'r')
 		self.assertEqual(test_gff.readlines(), expected_gff.readlines())
