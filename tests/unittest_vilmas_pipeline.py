@@ -36,15 +36,15 @@ class TestClass:
 					'../example_data/reference.txt'])
 		return args
 
-#	def setup_args4(self):
-#		args = vilmas_pipeline.parser.parse_args(['-f', \
-#					'../example_data/reference.txt', \
-#					'-b', \
-#					'../example_data/data1.bam', \
-#					'--gff', \
-#					'..example_data/data1.gff', \
-#					'--feature', \
-#					'exon'])
+	def setup_args4(self):
+		args = vilmas_pipeline.parser.parse_args(['-f', \
+					'../example_data/reference.txt', \
+					'-b', \
+					'../example_data/data1.bam', \
+					'--gff', \
+					'..example_data/data1.gff', \
+					'--feature', \
+					'exon'])
 
 
 class TestProcess(TestClass, unittest.TestCase):
@@ -102,6 +102,13 @@ class TestProcess(TestClass, unittest.TestCase):
 		self.assertEqual(test_snpsift.readlines(), expected_snpsift.readlines())
 		test_snpsift.close()
 		expected_snpsift.close()
+
+	def test120_gff_parser_output(self):
+		test_gff = open('Bcftools/tests_exon.snpeff_annotated.vcf', 'r')
+		expected_gff = open('../example_data/gff.db', 'r')
+		self.assertEqual(test_gff.readlines(), expected_gff.readlines())
+		test_gff.close()
+		expected_gff.close()
 
 	def tearDown(self):
 		pass
