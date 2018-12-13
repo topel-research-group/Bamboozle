@@ -23,5 +23,5 @@ for DIR in `find Pop_*/* -maxdepth 0 -type d`; do
 done
 
 # Do Fst statistics
-/proj/data11/vilma/Pipeline_vilma/fst.py --pop1 Pop_1/ --pop2 Pop_2/ --clean
+/proj/data11/vilma/Pipeline_vilma/scripts/fst.py --pop1 Pop_1/ --pop2 Pop_2/ --clean
 
