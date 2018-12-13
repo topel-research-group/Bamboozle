@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-# Usage: unittest_vilmas_pipeline.py -f REFERENCE
+# Usage: unittest_vilmas_pipeline.py -f <any key> 
 
 
 import unittest
@@ -122,7 +122,7 @@ class TestProcess(TestClass, unittest.TestCase):
 
 	@classmethod
 	def tearDownClass(cls):
-		# Remove the directories after the test is done.
+		# Remove the directories and files after the test is done.
 		if 'Bowtie2' in os.listdir():
 			shutil.rmtree('Bowtie2')
 		if 'Bcftools' in os.listdir():
