@@ -1,6 +1,6 @@
 #$ -cwd
-#$ -q Annotation-3 
-#$ -pe mpich 40
+#$ -q sandbox 
+#$ -pe mpich 16 
 #$ -S /bin/bash
 
 module load Bowtie2/v2.3.3.1
@@ -23,5 +23,5 @@ for DIR in `find Pop_*/* -maxdepth 0 -type d`; do
 done
 
 # Do Fst statistics
-/proj/data11/vilma/Pipeline_vilma/fst.py -c
+/proj/data11/vilma/Pipeline_vilma/fst.py --pop1 Pop_1/ --pop2 Pop_2/ --clean
 
