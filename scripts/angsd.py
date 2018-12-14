@@ -54,12 +54,28 @@ def main():
 	myfile2.close()
 	
 	cmd1 = ['angsd', '-b', 'bam_list1.txt', '-anc', add+ref, '-out', 'pop1', '-dosaf', '1', '-gl', '1']	
-	process1 = subprocess.Popen(cmd, \
+	process1 = subprocess.Popen(cmd1, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
 
-	cmd1 = ['angsd', '-b', 'bam_list2.txt', '-anc', add+ref, '-out', 'pop2', '-dosaf', '1', '-gl', '1']	
-	process1 = subprocess.Popen(cmd, \
+	cmd2 = ['angsd', '-b', 'bam_list2.txt', '-anc', add+ref, '-out', 'pop2', '-dosaf', '1', '-gl', '1']	
+	process2 = subprocess.Popen(cmd2, \
+		stdout=subprocess.PIPE, \
+		cwd='ANGSD')
+
+	cmd3 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS pop1.saf.idx pop2.saf.idx > pop1.pop2.ml') 
+	process3 = subprocess.Popen(cmd3, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+
+	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', 'pop1.saf.idx', 'pop2.saf.idx', '-sfs', 'pop1.pop2.ml', '-fstout', 'here']
+	process4 = subprocess.Popen(cmd4, \
+		stdout=subprocess.PIPE, \
+		cwd='ANGSD')
+
+	cmd5 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', 'fst', 'stats', 'here.fst.idx']
+	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
 
