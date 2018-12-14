@@ -34,16 +34,16 @@ add = '../'
 
 def main():
 	# Make directory for angsd output. 
-        if not os.path.exists('ANGSD'):
-                os.makedirs('ANGSD')
+	if not os.path.exists('ANGSD'):
+		os.makedirs('ANGSD')
 
-        directories1 = args.pop1 + '/*/Bowtie2/*.bam'
-        bam_list1 = glob.glob(directories1)
-        myfile = open("bam_list1.txt","w")
-        for n1 in bam_list1:
-                myfile.write("%s\n" % n1)
+	directories1 = args.pop1 + '/*/Bowtie2/*.bam'
+	bam_list1 = glob.glob(directories1)
+	myfile = open("bam_list1.txt","w")
+	for n1 in bam_list1:
+		myfile.write("%s\n" % n1)
 
-        myfile.close()
+	myfile.close()
 	
 	directories2 = args.pop2 + '/*/Bowtie2/*.bam'
 	bam_list2 = glob.glob(directories2)
