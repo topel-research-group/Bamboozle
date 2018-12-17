@@ -49,7 +49,7 @@ def main():
 	bam_list2 = glob.glob(directories2)
 	myfile2 = open("bam_list2.txt","w")
 	for n2 in bam_list2:
-		myfile.write("%s\n" % n2)
+		myfile2.write("%s\n" % n2)
 
 	myfile2.close()
 	
