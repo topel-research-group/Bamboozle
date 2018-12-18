@@ -16,7 +16,7 @@ parser.add_argument("-g", "--grep", \
 		the name should be in quotation marks", \
 		required=True)
 parser.add_argument("-l", "--length", \
-		help="the contig length", \
+		help="the length of selected contig", \
 		required=True)
 args = parser.parse_args()
 
