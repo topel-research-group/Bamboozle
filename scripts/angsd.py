@@ -41,7 +41,7 @@ def main():
 	bam_list1 = glob.glob(directories1)
 	myfile = open("bam_list1.txt","w")
 	for n1 in bam_list1:
-		myfile.write("%s\n" % n1)
+		myfile.write(add+"%s\n" % n1)
 
 	myfile.close()
 	
@@ -49,16 +49,16 @@ def main():
 	bam_list2 = glob.glob(directories2)
 	myfile2 = open("bam_list2.txt","w")
 	for n2 in bam_list2:
-		myfile2.write("%s\n" % n2)
+		myfile2.write(add+"%s\n" % n2)
 
 	myfile2.close()
 	
-	cmd1 = ['angsd', '-b', 'bam_list1.txt', '-anc', add+ref, '-out', 'pop1', '-dosaf', '1', '-gl', '1']	
+	cmd1 = ['angsd', '-b', '../bam_list1.txt', '-anc', add+ref, '-out', 'pop1', '-dosaf', '1', '-gl', '1']	
 	process1 = subprocess.Popen(cmd1, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
 
-	cmd2 = ['angsd', '-b', 'bam_list2.txt', '-anc', add+ref, '-out', 'pop2', '-dosaf', '1', '-gl', '1']	
+	cmd2 = ['angsd', '-b', '../bam_list2.txt', '-anc', add+ref, '-out', 'pop2', '-dosaf', '1', '-gl', '1']	
 	process2 = subprocess.Popen(cmd2, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
