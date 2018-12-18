@@ -95,6 +95,33 @@ def main():
 		pass
 	process5.stdout.close()
 
+	cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS fst print here.fst.idx > angsd_results.txt')
+	process6 = subprocess.Popen(cmd6, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while process6.wait() is None:
+		pass
+	process6.stdout.close()
+
+	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "UND"}1' angsd_result.txt > angsd_fst_results.txt''')
+	process7 = subprocess.Popen(cmd7, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while process7.wait() is None:
+		pass
+	process7.stdout.close()
+	
+	cmd8 = ('''awk '{print $1 "\\t" $2 "\\t" $5}' angsd_fst_results.txt > angsd_fst_results_flt.txt''') 
+	process8 = subprocess.Popen(cmd8, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while process8.wait() is None:
+		pass
+	process8.stdout.close()
+
 if __name__ == "__main__":
 	main()
 
