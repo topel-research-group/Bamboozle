@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-# Uses ANGSD for Fst analysis.
+# Uses ANGSD for Fst analysis. 
+# Version: angsd/v0.918
 
 import sys
 import subprocess
@@ -29,6 +30,7 @@ args = parser.parse_args()
 #######################################################################
 
 ref = args.ref
+#fstout = 'angsd_fst'
 add = '../'
 
 #######################################################################
