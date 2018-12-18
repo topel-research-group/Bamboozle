@@ -57,27 +57,32 @@ def main():
 	process1 = subprocess.Popen(cmd1, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
+	process1.stdout.close()
 
 	cmd2 = ['angsd', '-b', '../bam_list2.txt', '-anc', add+ref, '-out', 'pop2', '-dosaf', '1', '-gl', '1']	
 	process2 = subprocess.Popen(cmd2, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
+	process2.stdout.close()
 
 	cmd3 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS pop1.saf.idx pop2.saf.idx > pop1.pop2.ml') 
 	process3 = subprocess.Popen(cmd3, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
 		cwd='ANGSD')
+	process3.stdout.close()
 
 	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', 'pop1.saf.idx', 'pop2.saf.idx', '-sfs', 'pop1.pop2.ml', '-fstout', 'here']
 	process4 = subprocess.Popen(cmd4, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
+	process4.stdout.close()
 
 	cmd5 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', 'fst', 'stats', 'here.fst.idx']
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
+	process5.stdout.close()
 
 if __name__ == "__main__":
 	main()
