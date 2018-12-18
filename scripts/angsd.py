@@ -122,6 +122,27 @@ def main():
 		pass
 	process8.stdout.close()
 
+	cmd9 = ('''cat %s | grep -v "nan" | "awk '{if ($3 >0) print}' | sort -n > %s''') \
+		% ('angsd_fst_results_flt.txt', 'angsd_fst.table')
+	process9 = subprocess.Popen(cmd9, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while process9.wait() is None:
+		pass
+	process9.stdout.close()
+
+	cmd10 = ('cat %s | tr "\\t" "," > %s') \
+		% ('angsd_fst.table', 'angsd_fst.csv')
+	process10 = subprocess.Popen(cmd10, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while process10.wait() is None:
+		pass
+	process10.stdout.close()
+
+
 if __name__ == "__main__":
 	main()
 
