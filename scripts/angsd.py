@@ -54,7 +54,11 @@ def main():
 
 	myfile2.close()
 	
-	cmd1 = ['angsd', '-b', '../bam_list1.txt', '-anc', add+ref, '-out', 'pop1', '-dosaf', '1', '-gl', '1']	
+	cmd1 = ['angsd', '-b', '../bam_list1.txt', \
+		'-anc', add+ref, \
+		'-out', 'pop1', \
+		'-dosaf', '1', '-gl', \
+		'1']	
 	process1 = subprocess.Popen(cmd1, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
@@ -62,7 +66,11 @@ def main():
 		pass
 	process1.stdout.close()
 
-	cmd2 = ['angsd', '-b', '../bam_list2.txt', '-anc', add+ref, '-out', 'pop2', '-dosaf', '1', '-gl', '1']	
+	cmd2 = ['angsd', '-b', '../bam_list2.txt', \
+		'-anc', add+ref, \
+		'-out', 'pop2', \
+		'-dosaf', '1', \
+		'-gl', '1']	
 	process2 = subprocess.Popen(cmd2, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
@@ -70,7 +78,8 @@ def main():
 		pass	
 	process2.stdout.close()
 
-	cmd3 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS pop1.saf.idx pop2.saf.idx > pop1.pop2.ml') 
+	cmd3 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
+		pop1.saf.idx pop2.saf.idx > pop1.pop2.ml') 
 	process3 = subprocess.Popen(cmd3, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -79,7 +88,10 @@ def main():
 		pass
 	process3.stdout.close()
 
-	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', 'pop1.saf.idx', 'pop2.saf.idx', '-sfs', 'pop1.pop2.ml', '-fstout', 'here']
+	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
+		'pop1.saf.idx', 'pop2.saf.idx', \
+		'-sfs', 'pop1.pop2.ml', \
+		'-fstout', 'here']
 	process4 = subprocess.Popen(cmd4, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
@@ -87,7 +99,8 @@ def main():
 		pass
 	process4.stdout.close()
 
-	cmd5 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', 'fst', 'stats', 'here.fst.idx']
+	cmd5 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
+		'fst', 'stats', 'here.fst.idx']
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
@@ -95,7 +108,8 @@ def main():
 		pass
 	process5.stdout.close()
 
-	cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS fst print here.fst.idx > angsd_results.txt')
+	cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
+		fst print here.fst.idx > angsd_results.txt')
 	process6 = subprocess.Popen(cmd6, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -104,7 +118,8 @@ def main():
 		pass
 	process6.stdout.close()
 
-	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "UND"}1' angsd_result.txt > angsd_fst_results.txt''')
+	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "UND"}1' \
+		angsd_result.txt > angsd_fst_results.txt''')
 	process7 = subprocess.Popen(cmd7, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -113,7 +128,8 @@ def main():
 		pass
 	process7.stdout.close()
 	
-	cmd8 = ('''awk '{print $1 "\\t" $2 "\\t" $5}' angsd_fst_results.txt > angsd_fst_results_flt.txt''') 
+	cmd8 = ('''awk '{print $1 "\\t" $2 "\\t" $5}' \
+		angsd_fst_results.txt > angsd_fst_results_flt.txt''') 
 	process8 = subprocess.Popen(cmd8, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -122,7 +138,10 @@ def main():
 		pass
 	process8.stdout.close()
 
-	cmd9 = ('''cat %s | grep -v "nan" | "awk '{if ($3 >0) print}' | sort -n > %s''') \
+	cmd9 = ('''cat %s \
+		| grep -v "nan" \
+		| "awk '{if ($3 >0) print}' \
+		| sort -n > %s''') \
 		% ('angsd_fst_results_flt.txt', 'angsd_fst.table')
 	process9 = subprocess.Popen(cmd9, \
 		stdout=subprocess.PIPE, \
