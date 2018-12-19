@@ -129,7 +129,7 @@ def main():
 
 	# Divide col 3 and 4 (a/(a+b)) and print in col 5 (=Fst value).
 	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "UND"}1' \
-		angsd_result.txt > angsd_fst_results.txt''')
+		angsd_results.txt > angsd_fst_results.txt''')
 	process7 = subprocess.Popen(cmd7, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -151,8 +151,8 @@ def main():
 
 	cmd9 = ('''cat %s \
 		| grep -v "nan" \
-		| "awk '{if ($3 >0) print}' \
-		| sort -n > %s''') \
+		| awk '{if ($3 >0) print}' \
+		> %s''') \
 		% ('angsd_fst_results_flt.txt', 'angsd_fst.table')
 	process9 = subprocess.Popen(cmd9, \
 		stdout=subprocess.PIPE, \
@@ -162,9 +162,19 @@ def main():
 		pass
 	process9.stdout.close()
 
+	cmd11 = ('echo -e "CHROM,POS,FST" | cat - %s > %s') \
+		% ('angsd_fst.table', 'angsd_fst_headers.table')
+	process11 = subprocess.Popen(cmd11, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while process11.wait() is None:
+		pass
+	process11.stdout.close()
+
 	# Converting to csv file.
 	cmd10 = ('cat %s | tr "\\t" "," > %s') \
-		% ('angsd_fst.table', 'angsd_fst.csv')
+		% ('angsd_fst_headers.table', 'angsd_fst_headers.csv')
 	process10 = subprocess.Popen(cmd10, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
