@@ -2,7 +2,8 @@
 
 #	Input from pipeline -> this script 
 #	-> output Fst statistics table and graph
-#
+#	Version: VCFtools/v0.1.13
+
 #	Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
 #
 #	This program is free software: you can redistribute it and/or modify
