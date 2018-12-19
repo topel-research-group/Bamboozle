@@ -22,5 +22,6 @@ Ouput: a html file with an interactive plot of the selected contig.
 
 ### Dependencies  
 VCFtools/v0.1.13   
-Highcharts/v6.2.0
+Highcharts/v6.2.0   
+angsd/v0.918  
 
