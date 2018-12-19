@@ -104,11 +104,12 @@ def main():
 		pass
 	process4.stdout.close()
 
-	# Global Fst estimate.
-	cmd5 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
-		'fst', 'stats', 'here.fst.idx']
+	# Global Fst estimate,log = Fst.Unweight Fst.Weight.
+	cmd5 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
+		fst stats here.fst.idx > angsd_fst_estimate.log')
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
+		shell=True, \
 		cwd='ANGSD')
 	while process5.wait() is None:
 		pass
