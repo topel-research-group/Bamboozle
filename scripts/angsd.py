@@ -91,7 +91,7 @@ def main():
 	process3.stdout.close()
 
 	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
-		'pop1.saf.idx', 'pop2.saf.idx', \
+		'fst', 'index', 'pop1.saf.idx', 'pop2.saf.idx', \
 		'-sfs', 'pop1.pop2.ml', \
 		'-fstout', 'here']
 	process4 = subprocess.Popen(cmd4, \
