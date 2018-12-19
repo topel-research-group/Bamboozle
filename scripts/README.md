@@ -3,10 +3,10 @@ These scripts will do Fst statistics and plot the results from the pipeline.
 
 ## Usage    
 `fst.py --pop1 <INPUT POPULATION1> --pop2 <INPUT POPULATION2>`   
-Where INPUT is a directory with subdirectories corresponding to the samples, vcf.gz files as input.  
+Where INPUT is a directory with subdirectories corresponding to the samples. The script uses [VCFtools](https://vcftools.github.io), vcf.gz files as input.   
 
 `angsd.py --pop1 <INPUT POPULATION1> --pop2 <INPUT POPULATION2> --ref <FASTA>`  
-Where INPUT is a directory with subdirectories corresponding to the samples and FASTA a reference genome in FASTA format. The script uses ANGSD (github: https://github.com/ANGSD/angsd), bam files as input.  
+Where INPUT is a directory with subdirectories corresponding to the samples and FASTA a reference genome in FASTA format. The script uses [ANGSD](https://github.com/ANGSD/angsd), bam files as input.  
 
 `make_plot.py --inputfile <INPUTFILE> --grep <"NAME">`   
 Where INPUTFILE is the resulting csv file from `fst.py` or `angsd.py` and "NAME" is the name of the contig you want to plot.  
