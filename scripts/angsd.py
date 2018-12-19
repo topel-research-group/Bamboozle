@@ -56,6 +56,7 @@ def main():
 
 	myfile2.close()
 	
+	# Calculate per pop site allele freq.
 	cmd1 = ['angsd', '-b', '../bam_list1.txt', \
 		'-anc', add+ref, \
 		'-out', 'pop1', \
@@ -80,6 +81,7 @@ def main():
 		pass	
 	process2.stdout.close()
 
+	# Calculate 2dsfs prior.
 	cmd3 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
 		pop1.saf.idx pop2.saf.idx > pop1.pop2.ml') 
 	process3 = subprocess.Popen(cmd3, \
@@ -90,6 +92,7 @@ def main():
 		pass
 	process3.stdout.close()
 
+	# Index and prepare for fst analysis and easy sliding window analysis.
 	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
 		'fst', 'index', 'pop1.saf.idx', 'pop2.saf.idx', \
 		'-sfs', 'pop1.pop2.ml', \
@@ -101,6 +104,7 @@ def main():
 		pass
 	process4.stdout.close()
 
+	# Global Fst estimate.
 	cmd5 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
 		'fst', 'stats', 'here.fst.idx']
 	process5 = subprocess.Popen(cmd5, \
@@ -110,6 +114,8 @@ def main():
 		pass
 	process5.stdout.close()
 
+	# Print stdout of Fst analysis to file, tab-separated.
+	# Columns: CHROM, POS, (a), (a+b).
 	cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
 		fst print here.fst.idx > angsd_results.txt')
 	process6 = subprocess.Popen(cmd6, \
@@ -120,6 +126,7 @@ def main():
 		pass
 	process6.stdout.close()
 
+	# Divide col 3 and 4 (a/(a+b)) and print in col 5 (=Fst value).
 	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "UND"}1' \
 		angsd_result.txt > angsd_fst_results.txt''')
 	process7 = subprocess.Popen(cmd7, \
@@ -130,6 +137,7 @@ def main():
 		pass
 	process7.stdout.close()
 	
+	# Filtering and preparation of Fst table.
 	cmd8 = ('''awk '{print $1 "\\t" $2 "\\t" $5}' \
 		angsd_fst_results.txt > angsd_fst_results_flt.txt''') 
 	process8 = subprocess.Popen(cmd8, \
@@ -153,6 +161,7 @@ def main():
 		pass
 	process9.stdout.close()
 
+	# Converting to csv file.
 	cmd10 = ('cat %s | tr "\\t" "," > %s') \
 		% ('angsd_fst.table', 'angsd_fst.csv')
 	process10 = subprocess.Popen(cmd10, \
