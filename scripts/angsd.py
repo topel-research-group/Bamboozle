@@ -62,7 +62,7 @@ def main():
 	myfile2.close()
 	
 	# Calculate per pop site allele freq.
-	cmd1 = ['angsd', '-b', '../bam_list1.txt', \
+	cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
 		'-anc', add+ref, \
 		'-out', 'pop1', \
 		'-dosaf', '1', '-gl', \
@@ -74,7 +74,7 @@ def main():
 		pass
 	process1.stdout.close()
 
-	cmd2 = ['angsd', '-b', '../bam_list2.txt', \
+	cmd2 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list2.txt', \
 		'-anc', add+ref, \
 		'-out', 'pop2', \
 		'-dosaf', '1', \
@@ -88,7 +88,7 @@ def main():
 
 	# Calculate 2dsfs prior.
 	cmd3 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
-		pop1.saf.idx pop2.saf.idx > pop1.pop2.ml') 
+		pop1.saf.idx pop2.saf.idx -P $NSLOTS > pop1.pop2.ml') 
 	process3 = subprocess.Popen(cmd3, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -99,7 +99,7 @@ def main():
 
 	# Index and prepare for fst analysis and easy sliding window analysis.
 	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
-		'fst', 'index', 'pop1.saf.idx', 'pop2.saf.idx', \
+		'-P', '$NSLOTS', 'fst', 'index', 'pop1.saf.idx', 'pop2.saf.idx', \
 		'-sfs', 'pop1.pop2.ml', \
 		'-fstout', 'pop1.pop2']
 	process4 = subprocess.Popen(cmd4, \
@@ -111,7 +111,7 @@ def main():
 
 	# Global Fst estimate,log = Fst.Unweight Fst.Weight.
 	cmd5 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
-		fst stats pop1.pop2.fst.idx > angsd_fst_estimate.log')
+		fst stats pop1.pop2.fst.idx -P $NSLOTS > angsd_fst_estimate.log')
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -123,7 +123,7 @@ def main():
 	# Print stdout of Fst analysis to file, tab-separated.
 	# Columns: CHROM, POS, (a), (a+b).
 	cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
-		fst print %s > %s') \
+		fst print %s -P $NSLOTS > %s') \
 		% ('pop1.pop2.fst.idx', fst_print)
 	process6 = subprocess.Popen(cmd6, \
 		stdout=subprocess.PIPE, \
