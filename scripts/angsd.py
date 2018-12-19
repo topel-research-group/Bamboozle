@@ -30,9 +30,9 @@ args = parser.parse_args()
 #######################################################################
 
 ref = args.ref
-fst_print = 'angsd_results.txt' 
-fst_results = 'angsd_fst_results_flt.txt'
-fst_flt = 'angsd_fst.table'
+fst_print = 'tmp.angsd_results.txt' 
+fst_results = 'tmp.angsd_fst_results_flt.txt'
+fst_flt = 'tmp.angsd_fst.table'
 fst_headers = 'angsd_fst_headers.table'
 fst_csv = 'angsd_fst_headers.csv'
 add = '../'
@@ -190,16 +190,14 @@ def main():
 		pass
 	process10.stdout.close()
 
-#	if args.clean:
-#		for textfile in os.listdir('.'):
-#			if fnmatch.fnmatch(textfile, 'name_*_list.txt'):
-#				os.remove(textfile)
-#			elif fnmatch.fnmatch(textfile, 'pop_list.txt'):
-#				os.remove(textfile)
-#
-#		for fstfile in os.listdir('Fst_stats'):
-#			if fnmatch.fnmatch(fstfile, 'tmp.*'):
-#				os.remove('Fst_stats/' + fstfile)
+	if args.clean:
+		for textfile in os.listdir('.'):
+			if fnmatch.fnmatch(textfile, 'bam_list*.txt'):
+				os.remove(textfile)
+
+		for fstfile in os.listdir('ANGSD'):
+			if fnmatch.fnmatch(fstfile, 'tmp.*'):
+				os.remove('ANGSD/' + fstfile)
 
 if __name__ == "__main__":
 	main()
