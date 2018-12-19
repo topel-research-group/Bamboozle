@@ -32,6 +32,7 @@ args = parser.parse_args()
 ref = args.ref
 fst_print = 'tmp.angsd_results.txt' 
 fst_results = 'tmp.angsd_fst_results_flt.txt'
+fst_col = 'tmp.angsd_fst_results_col5.txt'
 fst_flt = 'tmp.angsd_fst.table'
 fst_headers = 'angsd_fst_headers.table'
 fst_csv = 'angsd_fst_headers.csv'
@@ -123,7 +124,7 @@ def main():
 	# Columns: CHROM, POS, (a), (a+b).
 	cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
 		fst print %s > %s') \
-		% ('pop1.pop2.fst.idx', 'angsd_results.txt')
+		% ('pop1.pop2.fst.idx', fst_print)
 	process6 = subprocess.Popen(cmd6, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -135,7 +136,7 @@ def main():
 	# Divide col 3 and 4 (a/(a+b)) and print in col 5 (=Fst value).
 	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "UND"}1' \
 		%s > %s''') \
-		% ('angsd_results.txt', fst_print)
+		% (fst_print, fst_results)
 	process7 = subprocess.Popen(cmd7, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -147,7 +148,7 @@ def main():
 	# Filtering and preparation of Fst table.
 	cmd8 = ('''awk '{print $1 "\\t" $2 "\\t" $5}' \
 		%s > %s''') \
-		% (fst_print, fst_results) 
+		% (fst_results, fst_col) 
 	process8 = subprocess.Popen(cmd8, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -160,7 +161,7 @@ def main():
 		| grep -v "nan" \
 		| awk '{if ($3 >0) print}' \
 		> %s''') \
-		% (fst_results, fst_flt)
+		% (fst_col, fst_flt)
 	process9 = subprocess.Popen(cmd9, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
