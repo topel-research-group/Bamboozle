@@ -30,7 +30,11 @@ args = parser.parse_args()
 #######################################################################
 
 ref = args.ref
-#fstout = 'angsd_fst'
+fst_print = 'angsd_results.txt' 
+fst_results = 'angsd_fst_results_flt.txt'
+fst_flt = 'angsd_fst.table'
+fst_headers = 'angsd_fst_headers.table'
+fst_csv = 'angsd_fst_headers.csv'
 add = '../'
 
 #######################################################################
@@ -96,7 +100,7 @@ def main():
 	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
 		'fst', 'index', 'pop1.saf.idx', 'pop2.saf.idx', \
 		'-sfs', 'pop1.pop2.ml', \
-		'-fstout', 'here']
+		'-fstout', 'pop1.pop2']
 	process4 = subprocess.Popen(cmd4, \
 		stdout=subprocess.PIPE, \
 		cwd='ANGSD')
@@ -106,7 +110,7 @@ def main():
 
 	# Global Fst estimate,log = Fst.Unweight Fst.Weight.
 	cmd5 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
-		fst stats here.fst.idx > angsd_fst_estimate.log')
+		fst stats pop1.pop2.fst.idx > angsd_fst_estimate.log')
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -118,7 +122,8 @@ def main():
 	# Print stdout of Fst analysis to file, tab-separated.
 	# Columns: CHROM, POS, (a), (a+b).
 	cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
-		fst print here.fst.idx > angsd_results.txt')
+		fst print %s > %s') \
+		% ('pop1.pop2.fst.idx', 'angsd_results.txt')
 	process6 = subprocess.Popen(cmd6, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -129,7 +134,8 @@ def main():
 
 	# Divide col 3 and 4 (a/(a+b)) and print in col 5 (=Fst value).
 	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "UND"}1' \
-		angsd_results.txt > angsd_fst_results.txt''')
+		%s > %s''') \
+		% ('angsd_results.txt', fst_print)
 	process7 = subprocess.Popen(cmd7, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -140,7 +146,8 @@ def main():
 	
 	# Filtering and preparation of Fst table.
 	cmd8 = ('''awk '{print $1 "\\t" $2 "\\t" $5}' \
-		angsd_fst_results.txt > angsd_fst_results_flt.txt''') 
+		%s > %s''') \
+		% (fst_print, fst_results) 
 	process8 = subprocess.Popen(cmd8, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -153,7 +160,7 @@ def main():
 		| grep -v "nan" \
 		| awk '{if ($3 >0) print}' \
 		> %s''') \
-		% ('angsd_fst_results_flt.txt', 'angsd_fst.table')
+		% (fst_results, fst_flt)
 	process9 = subprocess.Popen(cmd9, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -163,7 +170,7 @@ def main():
 	process9.stdout.close()
 
 	cmd11 = ('echo -e "CHROM,POS,FST" | cat - %s > %s') \
-		% ('angsd_fst.table', 'angsd_fst_headers.table')
+		% (fst_flt, fst_headers)
 	process11 = subprocess.Popen(cmd11, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -174,7 +181,7 @@ def main():
 
 	# Converting to csv file.
 	cmd10 = ('cat %s | tr "\\t" "," > %s') \
-		% ('angsd_fst_headers.table', 'angsd_fst_headers.csv')
+		% (fst_headers, fst_csv)
 	process10 = subprocess.Popen(cmd10, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -183,6 +190,16 @@ def main():
 		pass
 	process10.stdout.close()
 
+#	if args.clean:
+#		for textfile in os.listdir('.'):
+#			if fnmatch.fnmatch(textfile, 'name_*_list.txt'):
+#				os.remove(textfile)
+#			elif fnmatch.fnmatch(textfile, 'pop_list.txt'):
+#				os.remove(textfile)
+#
+#		for fstfile in os.listdir('Fst_stats'):
+#			if fnmatch.fnmatch(fstfile, 'tmp.*'):
+#				os.remove('Fst_stats/' + fstfile)
 
 if __name__ == "__main__":
 	main()
