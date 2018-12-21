@@ -157,7 +157,7 @@ def main():
 	process8.stdout.close()
 
 	cmd9 = ('''cat %s \
-		| grep -v "nan" \
+		| grep -v "UND" \
 		| awk '{if ($3 >0) print}' \
 		> %s''') \
 		% (fst_col, fst_flt)
