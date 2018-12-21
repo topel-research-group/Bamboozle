@@ -258,7 +258,7 @@ def main():
 				ax.set_title('Weir and Cockerham Fst', fontsize=40)
 				plt.tick_params(axis='x', length=0.01)
 
-			# Save plot as pdf. 
+			# Save plot as png. 
 			plt.savefig("ANGSD/Fst_plot.png")
 
 	if args.clean:
