@@ -259,7 +259,7 @@ def main():
 				plt.tick_params(axis='x', length=0.01)
 
 			# Save plot as pdf. 
-			plt.savefig("ANGSD/Fst_plot.pdf")
+			plt.savefig("ANGSD/Fst_plot.png")
 
 	if args.clean:
 		for textfile in os.listdir('.'):
