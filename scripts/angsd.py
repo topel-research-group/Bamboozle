@@ -99,7 +99,7 @@ def main():
 
 	# Index and prepare for fst analysis and easy sliding window analysis.
 	cmd4 = ['/usr/local/packages/angsd0.918/angsd/misc/realSFS', \
-		'-P', '$NSLOTS', 'fst', 'index', 'pop1.saf.idx', 'pop2.saf.idx', \
+		'fst', 'index', 'pop1.saf.idx', 'pop2.saf.idx', \
 		'-sfs', 'pop1.pop2.ml', \
 		'-fstout', 'pop1.pop2']
 	process4 = subprocess.Popen(cmd4, \
