@@ -10,6 +10,13 @@ import fnmatch
 import os
 import glob
 
+import pandas as pd
+import numpy as np
+from scipy.stats import uniform
+from scipy.stats import randint
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+
 #######################################################################
 
 parser = argparse.ArgumentParser(prog="angsd.py")
