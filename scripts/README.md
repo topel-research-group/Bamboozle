@@ -22,7 +22,7 @@ Ouput: a table and a csv file with the names, positions and Fst value and a summ
 
 `angsd.py --pop1 Pop_1/ --pop2 Pop_2/ --ref example.fst`  
 
-Ouput: a table and a csv file with the names, positions and Fst value (pdf summary planned).
+Ouput: a table and a csv file with the names, positions and Fst value and a summary of the results in a png image.
 
 `make_plot.py --inputfile pop1_pop2_results.csv --grep "contig_name"`   
 
