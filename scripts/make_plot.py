@@ -50,27 +50,7 @@ def main():
 
 	string_prefix = '''"\\"POS\\";\\"FST\\"'''
 
-	html_part2 = '''","googleSpreadsheetKey":false,"googleSpreadsheetWorksheet":false},"pane":{"background":[]},"responsive":{"rules":[]},"legend":{"enabled":true,"floating":false},"xAxis":[{}],"yAxis":[{"max":1}],"tooltip":{"shared":true},"mapNavigation":{"enableMouseWheelZoom":true,"enableButtons":true,"enabled":true},"plotOptions":{"series":{"animation":false}}};/*
-// Sample of extending options:
-Highcharts.merge(true, options, {
-    chart: {
-        backgroundColor: "#bada55"
-    },
-    plotOptions: {
-        series: {
-            cursor: "pointer",
-            events: {
-                click: function(event) {
-                    alert(this.name + " clicked\n" +
-                          "Alt: " + event.altKey + "\n" +
-                          "Control: " + event.ctrlKey + "\n" +
-                          "Shift: " + event.shiftKey + "\n");
-                }
-            }
-        }
-    }
-});
-*/new Highcharts.Chart("highcharts-aac96e77-0ad0-4715-a815-b427470cf979", options);}}})();
+	html_part2 = '''","googleSpreadsheetKey":false,"googleSpreadsheetWorksheet":false},"pane":{"background":[]},"responsive":{"rules":[]},"legend":{"enabled":true,"floating":false},"xAxis":[{}],"yAxis":[{"max":1}],"tooltip":{"shared":true},"mapNavigation":{"enableMouseWheelZoom":true,"enableButtons":true,"enabled":true},"plotOptions":{"series":{"animation":false}}};new Highcharts.Chart("highcharts-aac96e77-0ad0-4715-a815-b427470cf979", options);}}})();
 </script> '''
 	csv_string = html_part1 + string_prefix + ''.join(csv_list) + html_part2
 	file.write(csv_string)
