@@ -198,7 +198,7 @@ def main():
 	process10.stdout.close()
 
 	# Making a plot of the Fst results using pandas and matplotlib, 
-	# input is the csv file and the output is a pdf file with the plot.
+	# input is the csv file and the output is a png file with the plot.
 	for file in os.listdir('ANGSD'):
 		if fnmatch.fnmatch(file, 'angsd_fst_headers.csv'):
 			# Import csv file with Fst results.
@@ -213,7 +213,8 @@ def main():
 			optimized_gl[converted_int.columns] = converted_int
 			optimized_gl[converted_float.columns] = converted_float
 
-			# Convert CHROM column from object to category.
+			# Convert CHROM column from object to category,
+			# to decrease memory usage.
 			gl_obj = gl.select_dtypes(include=['object']).copy()
 			chrom = gl_obj.CHROM
 			chrom_cat = chrom.astype('category')
