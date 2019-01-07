@@ -325,7 +325,10 @@ def main():
 			df_grouped = df.groupby(('code'))
 			fig = plt.figure(figsize=(80, 20))
 			ax = fig.add_subplot(111)
-			colors = ['green', 'turquoise', 'blue', 'purple', 'red', 'orange', 'yellow']
+			colors = ['green', 'turquoise', \
+				'blue', 'purple', \
+				'red', 'orange', \
+				'yellow']
 			x_labels = []
 			x_labels_pos = []
 			for num, (name, group) in enumerate(df_grouped):
