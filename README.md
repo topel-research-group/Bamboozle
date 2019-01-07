@@ -31,7 +31,7 @@ bcftools/v1.9
 snpEff/v.4.3t  
 gffutils/v0.9  
 
-Versions used in `fst.py`, `angsd.py` and `make_plot.py`:  
+Versions used in utility scripts:  
 VCFtools/v0.1.13  
 Highcharts/v6.2.0  
 angsd/v0.918  
