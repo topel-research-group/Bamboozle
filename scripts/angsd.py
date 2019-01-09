@@ -354,8 +354,9 @@ def main():
 	if args.window and args.step:
 		slidingwindow()
 		plot()
-	angsd()
-	plot()
+	else:
+		angsd()
+		plot()
 
 	if args.clean:
 		for textfile in os.listdir('.'):
