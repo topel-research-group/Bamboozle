@@ -206,53 +206,55 @@ def angsd():
 
 def slidingwindow():
 	# Using sliding window.
-	if args.window and args.step:
-		cmdw = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
-			fst stats2 pop1.pop2.fst.idx -win %s -step %s > %s') \
-			% (args.window, args.step, slidingwindow)
-		processw = subprocess.Popen(cmdw, \
-			stdout=subprocess.PIPE, \
-			shell=True, \
-			cwd='ANGSD')
-		while processw.wait() is None:
-			pass
-		processw.stdout.close()
+	# Requires pop1.pop2.fst.idx as input.
+	cmdw = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
+		fst stats2 pop1.pop2.fst.idx -win %s -step %s > %s') \
+		% (args.window, args.step, slidingwindow)
+	processw = subprocess.Popen(cmdw, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while processw.wait() is None:
+		pass
+	processw.stdout.close()
 
-		# Filtering and preparation of Fst table.
-		cmdx = ('''awk '{print $2 "\\t" $3 "\\t" $5}' \
-			%s > %s''') \
-			% (slidingwindow, window_col) 
-		processx = subprocess.Popen(cmdx, \
-			stdout=subprocess.PIPE, \
-			shell=True, \
-			cwd='ANGSD')
-		while processx.wait() is None:
-			pass
-		processx.stdout.close()
+	# Filtering and preparation of Fst table.
+	cmdx = ('''awk '{print $2 "\\t" $3 "\\t" $5}' \
+		%s > %s''') \
+		% (slidingwindow, window_col) 
+	processx = subprocess.Popen(cmdx, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while processx.wait() is None:
+		pass
+	processx.stdout.close()
 
-		cmdy = ('''cat %s \
-			| grep -v "nan" \
-			| awk '{if ($3 >0) print}' \
-			> %s''') \
-			% (window_col, window_flt)
-		processy = subprocess.Popen(cmdy, \
-			stdout=subprocess.PIPE, \
-			shell=True, \
-			cwd='ANGSD')
-		while processy.wait() is None:
-			pass
-		processy.stdout.close()
+	cmdy = ('''cat %s \
+		| grep -v "nan" \
+		| awk '{if ($3 >0) print}' \
+		> %s''') \
+		% (window_col, window_flt)
+	processy = subprocess.Popen(cmdy, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while processy.wait() is None:
+		pass
+	processy.stdout.close()
+	
+	# Remove the header provided by ANGSD.
+	cmdz = ('echo "$(tail -n +2 %s)" > %s') \
+		% (window_flt, fst_flt) 
+	processz = subprocess.Popen(cmdz, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while processz.wait() is None:
+		pass
+	processz.stdout.close()
 
-		cmdz = ('echo "$(tail -n +2 %s)" > %s') \
-			% (window_flt, fst_flt) 
-		processz = subprocess.Popen(cmdz, \
-			stdout=subprocess.PIPE, \
-			shell=True, \
-			cwd='ANGSD')
-		while processz.wait() is None:
-			pass
-		processz.stdout.close()
-
+	# Add headers. 
 	cmda = ('echo -e "CHROM\\tPOS\\tFST" | cat - %s > %s') \
 		% (fst_flt, fst_headers)
 	processa = subprocess.Popen(cmda, \
@@ -366,6 +368,7 @@ def main():
 		for fstfile in os.listdir('ANGSD'):
 			if fnmatch.fnmatch(fstfile, 'tmp.*'):
 				os.remove('ANGSD/' + fstfile)
+
 if __name__ == "__main__":
 	main()
 
