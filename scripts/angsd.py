@@ -33,10 +33,8 @@ parser.add_argument("-f", "--ref", \
                 required=True, \
                 help="Reference")
 parser.add_argument("-w", "--window", \
-                type=int, \
 		help="Size of window")
 parser.add_argument("-s", "--step", \
-                type=int, \
 		help="Size of step")
 args = parser.parse_args()
 
@@ -206,7 +204,7 @@ def angsd():
 		pass
 	process11.stdout.close()
 
-def slidingwindow():
+def sliding_window():
 	# Using sliding window.
 	# Requires pop1.pop2.fst.idx as input.
 	cmdw = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
@@ -356,10 +354,10 @@ def plot():
 
 def main():
 	if args.window and args.step:
-		if fnmatch.fnmatch(file, 'ANGSD/pop1.pop2.fst.idx'):
-			slidingwindow()
+		try:
+			sliding_window()
 			plot()
-		else:
+		except:
 			angsd()
 			slidingwindow()
 			plot()
