@@ -31,6 +31,7 @@ import numpy as np
 from scipy.stats import uniform
 from scipy.stats import randint
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 
 #######################################################################
 
