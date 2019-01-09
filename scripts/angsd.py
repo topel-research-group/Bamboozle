@@ -32,11 +32,18 @@ parser.add_argument("-2", "--pop2", \
 parser.add_argument("-f", "--ref", \
                 required=True, \
                 help="Reference")
+parser.add_argument("-w", "--window", \
+                required=True, \
+                help="Size of window")
+parser.add_argument("-s", "--step", \
+                required=True, \
+                help="Size of step")
 args = parser.parse_args()
 
 #######################################################################
 
 ref = args.ref
+slidingwindow = 'angsd_slidingwindow.txt'
 fst_print = 'tmp.angsd_results.txt' 
 fst_results = 'tmp.angsd_fst_results_flt.txt'
 fst_col = 'tmp.angsd_fst_results_col5.txt'
@@ -127,18 +134,43 @@ def main():
 		pass
 	process5.stdout.close()
 
-	# Print stdout of Fst analysis to file, tab-separated.
-	# Columns: CHROM, POS, (a), (a+b).
-	cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
-		fst print %s > %s') \
-		% ('pop1.pop2.fst.idx', fst_print)
-	process6 = subprocess.Popen(cmd6, \
-		stdout=subprocess.PIPE, \
-		shell=True, \
-		cwd='ANGSD')
-	while process6.wait() is None:
-		pass
-	process6.stdout.close()
+	# Using sliding window.
+	if args.window and args.step:
+		cmdx = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
+			fst stats2 pop1.pop2.fst.idx -win %s -step %s > %s') \
+			% (args.window, args.step, slidingwindow)
+		processx = subprocess.Popen(cmdx, \
+			stdout=subprocess.PIPE, \
+			shell=True, \
+			cwd='ANGSD')
+		while processx.wait() is None:
+			pass
+		processx.stdout.close()
+
+		cmdy = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
+			fst print %s > %s') \
+			% (slidingwindow, fst_print)
+		processy = subprocess.Popen(cmdy, \
+			stdout=subprocess.PIPE, \
+			shell=True, \
+			cwd='ANGSD')
+		while processy.wait() is None:
+			pass
+		processy.stdout.close()
+
+	else:
+		# Print stdout of Fst analysis to file, tab-separated.
+		# Columns: CHROM, POS, (a), (a+b).
+		cmd6 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
+			fst print %s > %s') \
+			% ('pop1.pop2.fst.idx', fst_print)
+		process6 = subprocess.Popen(cmd6, \
+			stdout=subprocess.PIPE, \
+			shell=True, \
+			cwd='ANGSD')
+		while process6.wait() is None:
+			pass
+		process6.stdout.close()
 
 	# Divide col 3 and 4 (a/(a+b)) and print in col 5 (=Fst value).
 	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "nan"}1' \
