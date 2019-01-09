@@ -48,13 +48,15 @@ fst_print = 'tmp.angsd_results.txt'
 fst_results = 'tmp.angsd_fst_results_flt.txt'
 fst_col = 'tmp.angsd_fst_results_col5.txt'
 fst_flt = 'tmp.angsd_fst.table'
+window_col = 'tmp.window_angsd_fst_results_col5.txt'
+window_flt = 'tmp.window_angsd_fst.table'
 fst_headers = 'angsd_fst_headers.table'
 fst_csv = 'angsd_fst_headers.csv'
 add = '../'
 
 #######################################################################
 
-def main():
+def angsd():
 	# Make directory for angsd output. 
 	if not os.path.exists('ANGSD'):
 		os.makedirs('ANGSD')
@@ -145,7 +147,7 @@ def main():
 		cwd='ANGSD')
 	while process6.wait() is None:
 		pass
-	process6.stdout.close()
+	process6.stdout.close() 
 
 	# Divide col 3 and 4 (a/(a+b)) and print in col 5 (=Fst value).
 	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "nan"}1' \
@@ -183,6 +185,28 @@ def main():
 		pass
 	process9.stdout.close()
 
+	cmd10 = ('echo -e "CHROM\\tPOS\\tFST" | cat - %s > %s') \
+		% (fst_flt, fst_headers)
+	process10 = subprocess.Popen(cmd10, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while process10.wait() is None:
+		pass
+	process10.stdout.close()
+
+	# Converting to csv file.
+	cmd11 = ('cat %s | tr "\\t" "," > %s') \
+		% (fst_headers, fst_csv)
+	process11 = subprocess.Popen(cmd11, \
+		stdout=subprocess.PIPE, \
+		shell=True, \
+		cwd='ANGSD')
+	while process11.wait() is None:
+		pass
+	process11.stdout.close()
+
+def slidingwindow():
 	# Using sliding window.
 	if args.window and args.step:
 		cmdw = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
@@ -199,7 +223,7 @@ def main():
 		# Filtering and preparation of Fst table.
 		cmdx = ('''awk '{print $2 "\\t" $3 "\\t" $5}' \
 			%s > %s''') \
-			% (window_results, window_col) 
+			% (slidingwindow, window_col) 
 		processx = subprocess.Popen(cmdx, \
 			stdout=subprocess.PIPE, \
 			shell=True, \
@@ -231,28 +255,28 @@ def main():
 			pass
 		processz.stdout.close()
 
-	cmd11 = ('echo -e "CHROM\\tPOS\\tFST" | cat - %s > %s') \
+	cmda = ('echo -e "CHROM\\tPOS\\tFST" | cat - %s > %s') \
 		% (fst_flt, fst_headers)
-	process11 = subprocess.Popen(cmd11, \
+	processa = subprocess.Popen(cmda, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
 		cwd='ANGSD')
-	while process11.wait() is None:
+	while processa.wait() is None:
 		pass
-	process11.stdout.close()
+	processa.stdout.close()
 
 	# Converting to csv file.
-	cmd10 = ('cat %s | tr "\\t" "," > %s') \
+	cmdb = ('cat %s | tr "\\t" "," > %s') \
 		% (fst_headers, fst_csv)
-	process10 = subprocess.Popen(cmd10, \
+	processb = subprocess.Popen(cmdb, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
 		cwd='ANGSD')
-	while process10.wait() is None:
+	while processb.wait() is None:
 		pass
-	process10.stdout.close()
+	processb.stdout.close()
 
-
+def plot():
 	# Making a plot of the Fst results using pandas and matplotlib, 
 	# input is the csv file and the output is a png file with the plot.
 	for file in os.listdir('ANGSD'):
@@ -328,6 +352,13 @@ def main():
 			# Save plot as png. 
 			plt.savefig("ANGSD/Fst_plot.png")
 
+def main():
+	if args.window and args.step:
+		slidingwindow()
+		plot()
+	angsd()
+	plot()
+
 	if args.clean:
 		for textfile in os.listdir('.'):
 			if fnmatch.fnmatch(textfile, 'bam_list*.txt'):
@@ -336,8 +367,6 @@ def main():
 		for fstfile in os.listdir('ANGSD'):
 			if fnmatch.fnmatch(fstfile, 'tmp.*'):
 				os.remove('ANGSD/' + fstfile)
-
-
 if __name__ == "__main__":
 	main()
 
