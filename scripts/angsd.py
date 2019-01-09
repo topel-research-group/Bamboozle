@@ -33,10 +33,8 @@ parser.add_argument("-f", "--ref", \
                 required=True, \
                 help="Reference")
 parser.add_argument("-w", "--window", \
-                required=True, \
                 help="Size of window")
 parser.add_argument("-s", "--step", \
-                required=True, \
                 help="Size of step")
 args = parser.parse_args()
 
