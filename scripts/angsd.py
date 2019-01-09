@@ -33,9 +33,11 @@ parser.add_argument("-f", "--ref", \
                 required=True, \
                 help="Reference")
 parser.add_argument("-w", "--window", \
-                help="Size of window")
+                type=int, \
+		help="Size of window")
 parser.add_argument("-s", "--step", \
-                help="Size of step")
+                type=int, \
+		help="Size of step")
 args = parser.parse_args()
 
 #######################################################################
@@ -354,8 +356,13 @@ def plot():
 
 def main():
 	if args.window and args.step:
-		slidingwindow()
-		plot()
+		if fnmatch.fnmatch(file, 'ANGSD/pop1.pop2.fst.idx'):
+			slidingwindow()
+			plot()
+		else:
+			angsd()
+			slidingwindow()
+			plot()
 	else:
 		angsd()
 		plot()
