@@ -359,7 +359,7 @@ def main():
 			plot()
 		except:
 			angsd()
-			slidingwindow()
+			sliding_window()
 			plot()
 	else:
 		angsd()
