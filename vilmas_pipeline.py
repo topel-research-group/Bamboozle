@@ -330,5 +330,11 @@ def main():
 		done()
 
 if __name__ == "__main__":
-	main()
+	if args.gff and args.feature:
+		try:
+			annotation(args)
+		except:
+			main()
+	else:
+		main()
 
