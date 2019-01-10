@@ -45,6 +45,8 @@ parser.add_argument("-1", "--pop1", \
 parser.add_argument("-2", "--pop2", \
 		required=True, \
 		help="Population 2 input directory")
+parser.add_argument("--feature", \
+		help="Input gff feature")
 args = parser.parse_args()
 
 #######################################################################
@@ -68,12 +70,16 @@ fst_results_sorted = 'pop1_pop2_flt_results_sorted.table'
 fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
 path_for_plot = 'Fst_stats/'
 add = '../'
+if args.feature:
+	filename = '*' + args.feature +'.snpeff_annotated.vcf.gz'
+else:
+	filename= '*.snpeff_annotated.vcf.gz'
 
 #######################################################################
 
 # Perform Fst-statistics on snpEff results (gzipped vcf-files).
 def main():
-	directories = '*/*/Bcftools/*.snpeff_annotated.vcf.gz'
+	directories = args.pop1 + '/*/Bcftools/' + filename
 	file_list = glob.glob(directories)
 	for f in file_list:
 		cmd1 = ['bcftools', 'index', '-c', '-f', f]
@@ -83,6 +89,16 @@ def main():
 			pass
 		process1.stdout.close()
 
+	directories1 = args.pop2 + '/*/Bcftools/' + filename
+	file_list1 = glob.glob(directories1)
+	for f1 in file_list1:
+		cmd_1 = ['bcftools', 'index', '-c', '-f', f1]
+		process_1 = subprocess.Popen(cmd_1, \
+			stdout=subprocess.PIPE)
+		while process_1.wait() is None:
+			pass
+		process_1.stdout.close()
+
 	# Make directory for the merged vcf-files 
 	# for population1 and population2.
 	if not os.path.exists('Populations'):
@@ -90,7 +106,7 @@ def main():
 
 	# Making a list of vcf-files that will be input to bcftools merge 
 	# and then merge population1.
-	directories2 = args.pop1 + '/*/Bcftools/*.snpeff_annotated.vcf.gz'
+	directories2 = args.pop1 + '/*/Bcftools/' + filename
 	name_list1 = glob.glob(directories2)
 	myfile = open("name_1_list.txt","w")
 	for n1 in name_list1:
@@ -109,7 +125,7 @@ def main():
 
 	# Making a list of vcf-files that will be input to bcftools merge 
 	# and then merge population2.
-	directories3 = args.pop2 + '/*/Bcftools/*.snpeff_annotated.vcf.gz'
+	directories3 = args.pop2 + '/*/Bcftools/' + filename
 	name_list2 = glob.glob(directories3)
 	myfile2 = open("name_2_list.txt","w")
 	for n2 in name_list2:
