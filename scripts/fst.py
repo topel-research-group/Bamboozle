@@ -70,6 +70,8 @@ fst_results_sorted = 'pop1_pop2_flt_results_sorted.table'
 fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
 path_for_plot = 'Fst_stats/'
 add = '../'
+
+# Specify input file for the analysis by using '--feature'.
 if args.feature:
 	filename = '*' + args.feature +'.snpeff_annotated.vcf.gz'
 else:
