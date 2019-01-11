@@ -16,7 +16,7 @@ Input files:
 `-F <FORWARD READS> -R <REVERSE READS>` or `-b <BAMFILE>` 
    
 #### Example:  
-FASTQ files as input:
+FASTQ files as input:  
 `vilmas_pipeline.py -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F file_R1.fastq.gz -R file_R2.fastq.gz`  
 
 BAM file as input:   
