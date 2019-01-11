@@ -330,6 +330,7 @@ def main():
 		done()
 
 if __name__ == "__main__":
+	# Use gff parser without running whole pipeline.
 	if args.gff and args.feature:
 		try:
 			annotation(args)
