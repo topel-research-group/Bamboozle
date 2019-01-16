@@ -73,7 +73,7 @@ add = '../'
 
 # Specify input file for the analysis by using '--feature'.
 if args.feature:
-	filename = '*' + args.feature +'.snpeff_annotated.vcf.gz'
+	filename = '*' + args.feature +'_snpeff_annotated.vcf.gz'
 else:
 	filename= '*.snpeff_annotated.vcf.gz'
 
