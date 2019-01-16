@@ -234,7 +234,7 @@ def annotation(args):
 				parse(args.gff, args.feature)
 				out = add + 'out.gff'	
 				my_interval = "-interval %s" % out
-				my_output = name + '_' + args.feature + '.snpeff_annotated.vcf'
+				my_output = name + '_' + args.feature + '_snpeff_annotated.vcf'
 			my_args = my_interval + " -no-downstream -no-upstream \
 				-no-intron -no-intergenic \
 				-classic Skeletonema_marinoi_v1.1.1.1 \
