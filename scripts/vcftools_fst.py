@@ -47,6 +47,10 @@ parser.add_argument("-2", "--pop2", \
 		help="Population 2 input directory")
 parser.add_argument("--feature", \
 		help="Input gff feature")
+parser.add_argument("-w", "--window", \
+		help="Size of window")
+parser.add_argument("-s", "--step", \
+		help="Size of step")
 args = parser.parse_args()
 
 #######################################################################
@@ -68,6 +72,9 @@ fst_out_flt_results = 'tmp.pop1_pop2_flt_results.table'
 fst_out_flt2_results = 'tmp.pop1_pop2_flt2_results.table'
 fst_results_sorted = 'pop1_pop2_flt_results_sorted.table'
 fst_results_sorted_csv = 'pop1_pop2_flt_results_sorted.csv'
+fst_calculated = 'tmp.calculated.table'
+rm_headers = 'tmp.remove_headers.table'
+fst_headers = 'tmp.new_headers.table'
 path_for_plot = 'Fst_stats/'
 add = '../'
 
@@ -80,7 +87,7 @@ else:
 #######################################################################
 
 # Perform Fst-statistics on snpEff results (gzipped vcf-files).
-def main():
+def vcftools():
 	directories = args.pop1 + '/*/Bcftools/' + filename
 	file_list = glob.glob(directories)
 	for f in file_list:
@@ -218,6 +225,7 @@ def main():
 	# of the individuals from population1 and one txt file with 
 	# names of the individulas from population2, output is a table 
 	# of Fst values and a log file of the results. 
+def fst():
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
 			cmd9 = ['vcftools', \
@@ -294,8 +302,116 @@ def main():
 				pass
 			process14.stdout.close()
 
-	# Making a plot of the Fst results using pandas and matplotlib, 
-	# input is the csv file and the output is a pdf file with the plot.
+def sliding_window():
+	for file in os.listdir('Populations'):
+		if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
+			cmda = ['vcftools', \
+				'--gzvcf', all_pop_merged, \
+				'--weir-fst-pop', indv_txt_pop1, \
+				'--weir-fst-pop', indv_txt_pop2, \
+				'--fst-window-size', args.window, \
+				'--fst-window-step', args.step, \
+				'--out', fst_out]
+			processa = subprocess.Popen(cmda, \
+				stdout=subprocess.PIPE, \
+				cwd='Populations')
+			while processa.wait() is None:
+				pass
+			processa.stdout.close()
+
+	for file in os.listdir('Populations'):
+		if fnmatch.fnmatch(file, '*.weir.fst'):
+			cmdb = ('cat %s | grep -v "nan" > %s') \
+				% (fst_out_in, fst_out_flt)
+			processb = subprocess.Popen(cmdb, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
+			while processb.wait() is None:
+				pass
+			processb.stdout.close()
+
+	# Removing the results below zero.
+	for file in os.listdir('Fst_stats'):
+		if fnmatch.fnmatch(file, '*flt.table'):
+			cmdc = ("awk '{if ($6 >0) print}' %s > %s") \
+				% (fst_out_flt, fst_out_flt_results)
+			processc = subprocess.Popen(cmdc, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
+			while processc.wait() is None:
+				pass
+			processc.stdout.close()
+
+			cmde = ('''awk '{a=int(($2+$3)/2); $2=a; print}' %s > %s''') \
+				% (fst_out_flt_results, fst_out_flt2_results)
+			processe = subprocess.Popen(cmde, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
+			while processe.wait() is None:
+				pass
+			processe.stdout.close()
+
+			# Rearrange columns (if needed).
+			cmdd = ('''awk '{print $1 "\\t" $2 "\\t" $6}' %s > %s''') \
+				% (fst_out_flt2_results, fst_calculated)
+			processd = subprocess.Popen(cmdd, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
+			while processd.wait() is None:
+				pass
+			processd.stdout.close()
+
+			# Remove the header provided.
+			cmdf = ('echo "$(tail -n +2 %s)" > %s') \
+				% (fst_calculated, rm_headers) 
+			processf = subprocess.Popen(cmdf, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
+			while processf.wait() is None:
+				pass
+			processf.stdout.close()
+
+			# Add headers. 
+			cmdg = ('echo -e "CHROM\\tPOS\\tWEIR_AND_COCKERHAM_FST" | cat - %s > %s') \
+				% (rm_headers, fst_headers)
+			processg = subprocess.Popen(cmdg, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
+			while processg.wait() is None:
+				pass
+			processg.stdout.close()
+
+			# Sorting the POS column (needed for x-axis in highcharts).
+			cmdi = ("cat %s | sort -n > %s") \
+				% (fst_headers, fst_results_sorted)
+			processi = subprocess.Popen(cmdi, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
+			while processi.wait() is None:
+				pass
+			processi.stdout.close()
+
+			# Making a csv file.
+			cmdj = ('cat %s | tr "\\t" ","  > %s') \
+				% (fst_results_sorted, fst_results_sorted_csv)
+			processj = subprocess.Popen(cmdj, \
+				stdout=subprocess.PIPE, \
+				shell=True, \
+				cwd='Fst_stats')
+			while processj.wait() is None:
+				pass
+			processj.stdout.close()
+
+# Making a plot of the Fst results using pandas and matplotlib, 
+# input is the csv file and the output is a pdf file with the plot.
+def plot():
 	for file in os.listdir('Fst_stats'):
 		if fnmatch.fnmatch(file, 'pop1_pop2_flt_results_sorted.csv'):
 			# Import csv file with Fst results.
@@ -367,7 +483,19 @@ def main():
 
 			# Save plot as pdf. 
 			plt.savefig("Fst_stats/Fst_plot.pdf")
-	
+def main():
+	if args.window and args.step:
+		try:
+			sliding_window()
+			plot()
+		except:
+			vcftools()
+			sliding_window()
+			plot()
+	else:
+		vcftools()
+		fst()
+		plot()	
 
 	# Removing tmp-files.
 	if args.clean:
