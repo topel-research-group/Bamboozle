@@ -269,7 +269,7 @@ def annotation(args):
 				pass
 			process_a.stdout.close()
 
-			cmd_b = ("sed -i '/##INFO=<ID=NMD/a##INFO=<ID=out_ID,Number=1,Type=String,Description="">\
+			cmd_b = ("sed -i '/##INFO=<ID=MQ/a##INFO=<ID=out_ID,Number=1,Type=String,Description="">\
 				\\n##INFO=<ID=out_Parent,Number=1,Type=String,Description="">\
 				\\n##INFO=<ID=out_type,Number=1,Type=String,Description="">\
 				\\n##INFO=<ID=out_source,Number=1,Type=String,Description="">' \
