@@ -258,53 +258,56 @@ def annotation(args):
 			process9.stdout.close()
 
 			# Add headers to gff parsed vcf file for fst statistics.
-			my_output_hdr = name + '_' + args.feature + '_hdr_snpeff_annotated.vcf'
-			cmd_a = ("bcftools view -h %s > hdr.txt") \
-				% (my_output)
-			process_a = subprocess.Popen(cmd_a, \
-				stdout=subprocess.PIPE, \
-				shell=True, \
-				cwd='Bcftools')
-			while process_a.wait() is None:
-				pass
-			process_a.stdout.close()
+			if args.gff and args.feature:
+				my_output_hdr = name + '_' + args.feature + '_hdr_snpeff_annotated.vcf'
+				cmd_a = ("bcftools view -h %s > hdr.txt") \
+					% (my_output)
+				process_a = subprocess.Popen(cmd_a, \
+					stdout=subprocess.PIPE, \
+					shell=True, \
+					cwd='Bcftools')
+				while process_a.wait() is None:
+					pass
+				process_a.stdout.close()
 
-			cmd_b = ("sed -i '/##INFO=<ID=MQ/a##INFO=<ID=out_ID,Number=1,Type=String,Description="">\
-				\\n##INFO=<ID=out_Parent,Number=1,Type=String,Description="">\
-				\\n##INFO=<ID=out_type,Number=1,Type=String,Description="">\
-				\\n##INFO=<ID=out_source,Number=1,Type=String,Description="">' \
-				hdr.txt") 
-			process_b = subprocess.Popen(cmd_b, \
-				stdout=subprocess.PIPE, \
-				shell=True, \
-				cwd='Bcftools')
-			while process_b.wait() is None:
-				pass
-			process_b.stdout.close()
-			
-			cmd_c = ("bcftools reheader -h hdr.txt %s > %s") \
-				% (my_output, my_output_hdr)
-			process_c = subprocess.Popen(cmd_c, \
-				stdout=subprocess.PIPE, \
-				shell=True, \
-				cwd='Bcftools')
-			while process_c.wait() is None:
-				pass
-			process_c.stdout.close()
+				cmd_b = ("sed -i '/##INFO=<ID=MQ/a##INFO=<ID=out_ID,Number=1,Type=String,Description="">\
+					\\n##INFO=<ID=out_Parent,Number=1,Type=String,Description="">\
+					\\n##INFO=<ID=out_type,Number=1,Type=String,Description="">\
+					\\n##INFO=<ID=out_source,Number=1,Type=String,Description="">' \
+					hdr.txt") 
+				process_b = subprocess.Popen(cmd_b, \
+					stdout=subprocess.PIPE, \
+					shell=True, \
+					cwd='Bcftools')
+				while process_b.wait() is None:
+					pass
+				process_b.stdout.close()
+				
+				cmd_c = ("bcftools reheader -h hdr.txt %s > %s") \
+					% (my_output, my_output_hdr)
+				process_c = subprocess.Popen(cmd_c, \
+					stdout=subprocess.PIPE, \
+					shell=True, \
+					cwd='Bcftools')
+				while process_c.wait() is None:
+					pass
+				process_c.stdout.close()
 
-			cmd_d = ('bgzip -c %s > %s') % (my_output_hdr, my_output_hdr + '.gz')
-			process_d = subprocess.Popen(cmd_d, \
-				stdout=subprocess.PIPE, \
-				shell=True, \
-				cwd='Bcftools')
-			while process_d.wait() is None:
+				cmd_d = ('bgzip -c %s > %s') % (my_output_hdr, my_output_hdr + '.gz')
+				process_d = subprocess.Popen(cmd_d, \
+					stdout=subprocess.PIPE, \
+					shell=True, \
+					cwd='Bcftools')
+				while process_d.wait() is None:
+					pass
+				process_d.stdout.close()
+				os.remove('out.gff')
+				os.remove('Bcftools/hdr.txt')
+				for vcffile in os.listdir('Bcftools'):
+					if fnmatch.fnmatch(vcffile, '*'+args.feature+'_snpeff_annotated.vcf'+'*'):
+						os.remove('Bcftools/' + vcffile)
+			else:
 				pass
-			process_d.stdout.close()
-			os.remove('out.gff')
-			os.remove('Bcftools/hdr.txt')
-			for vcffile in os.listdir('Bcftools'):
-				if fnmatch.fnmatch(vcffile, '*'+args.feature+'_snpeff_annotated.vcf'+'*'):
-					os.remove('Bcftools/' + vcffile)
 					
 
 # Filtering and making a summary of annotated files using 
