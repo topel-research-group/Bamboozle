@@ -269,10 +269,10 @@ def annotation(args):
 				pass
 			process_a.stdout.close()
 
-			cmd_b = ("sed -i '/##INFO=<ID=NMD/a##INFO=<ID=out_ID,Number=1,Type=String>\
-				\\n##INFO=<ID=out_Parent,Number=1,Type=String>\
-				\\n##INFO=<ID=out_type,Number=1,Type=String>\
-				\\n##INFO=<ID=out_source,Number=1,Type=String>' \
+			cmd_b = ("sed -i '/##INFO=<ID=NMD/a##INFO=<ID=out_ID,Number=1,Type=String,Description="">\
+				\\n##INFO=<ID=out_Parent,Number=1,Type=String,Description="">\
+				\\n##INFO=<ID=out_type,Number=1,Type=String,Description="">\
+				\\n##INFO=<ID=out_source,Number=1,Type=String,Description="">' \
 				hdr.txt") 
 			process_b = subprocess.Popen(cmd_b, \
 				stdout=subprocess.PIPE, \
