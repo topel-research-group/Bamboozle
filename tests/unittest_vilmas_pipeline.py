@@ -110,12 +110,12 @@ class TestProcess(TestClass, unittest.TestCase):
 		test_snpsift.close()
 		expected_snpsift.close()
 
-	def test120_gff_parser_output(self):
-		myProcess = subprocess.check_call('diff \
-			out.gff \
-			../example_data/out.gff', \
-			shell=True)
-		self.assertIs(myProcess, 0)
+#	def test120_gff_parser_output(self):
+#		myProcess = subprocess.check_call('diff \
+#			out.gff \
+#			../example_data/out.gff', \
+#			shell=True)
+#		self.assertIs(myProcess, 0)
 
 	def tearDown(self):
 		pass
