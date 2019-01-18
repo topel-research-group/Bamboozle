@@ -236,6 +236,7 @@ def annotation(args):
 				out = add + 'out.gff'	
 				my_interval = "-interval %s" % out
 				my_output = name + '_' + args.feature + '_snpeff_annotated.vcf'
+
 			my_args = my_interval + " -no-downstream -no-upstream \
 				-no-intron -no-intergenic \
 				-classic Skeletonema_marinoi_v1.1.1.1 \
@@ -317,10 +318,14 @@ def annotation(args):
 def snpsift():
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*_annotated.vcf'):
+			my_output = annotated_vcf
+			if args.gff and args.feature:
+				my_output = name + '_' + args.feature + '_hdr_snpeff_annotated.vcf'
+
 			cmd10 = ('java -jar /usr/local/packages/snpEff/SnpSift.jar \
 			extractFields -e "." -s "," %s CHROM POS "EFF[*].GENE" REF ALT QUAL DP AF \
 			"EFF[*].EFFECT" "EFF[*].AA" "EFF[*].FUNCLASS" > %s') \
-			% (annotated_vcf, annotated_table) 
+			% (my_output, annotated_table) 
 			process10 = subprocess.Popen(cmd10, \
 				stdout=subprocess.PIPE, \
 				shell=True, \
