@@ -36,4 +36,6 @@ VCFtools/v0.1.13
 Highcharts/v6.2.0  
 angsd/v0.918  
 
+## More information  
+* [Wiki](https://github.com/topel-research-group/Pipeline_vilma/wiki)  
 
