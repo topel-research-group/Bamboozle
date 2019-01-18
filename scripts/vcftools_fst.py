@@ -83,7 +83,7 @@ add = '../'
 if args.feature:
 	filename = '*' + args.feature +'_hdr_snpeff_annotated.vcf.gz'
 else:
-	filename= '*.snpeff_annotated.vcf.gz'
+	filename = '*.snpeff_annotated.vcf.gz'
 
 #######################################################################
 
@@ -216,12 +216,12 @@ def vcftools():
 		pass
 	process8.stdout.close()
 
+def fst():
 	# Fst_statistics using vcftools --weir-fst-pop, input files are a
 	# vcf file with all merged populations one txt file with names 
 	# of the individuals from population1 and one txt file with 
 	# names of the individulas from population2, output is a table 
 	# of Fst values and a log file of the results. 
-def fst():
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
 			cmd9 = ['vcftools', \
@@ -299,6 +299,7 @@ def fst():
 			process14.stdout.close()
 
 def sliding_window():
+	# If using sliding window.
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, 'all_pop_merged.vcf.gz'):
 			cmda = ['vcftools', \
@@ -339,7 +340,8 @@ def sliding_window():
 			while processc.wait() is None:
 				pass
 			processc.stdout.close()
-
+			# Calculating the midpoint position when using sliding window,
+			# column (2+3)/2 and the output in column 2.
 			cmde = ('''awk '{a=int(($2+$3)/2); $2=a; print}' %s > %s''') \
 				% (fst_out_flt_results, fst_out_flt2_results)
 			processe = subprocess.Popen(cmde, \
@@ -350,7 +352,7 @@ def sliding_window():
 				pass
 			processe.stdout.close()
 
-			# Rearrange columns (if needed).
+			# Rearrange columns (if needed) and keep midpoint value in column 2.
 			cmdd = ('''awk '{print $1 "\\t" $2 "\\t" $6}' %s > %s''') \
 				% (fst_out_flt2_results, fst_calculated)
 			processd = subprocess.Popen(cmdd, \
@@ -361,7 +363,7 @@ def sliding_window():
 				pass
 			processd.stdout.close()
 
-			# Remove the header provided.
+			# Remove the header provided when using sliding window.
 			cmdf = ('echo "$(tail -n +2 %s)" > %s') \
 				% (fst_calculated, rm_headers) 
 			processf = subprocess.Popen(cmdf, \
