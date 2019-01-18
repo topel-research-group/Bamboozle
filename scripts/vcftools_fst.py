@@ -67,6 +67,7 @@ population_list = 'pop_list.txt'
 all_pop_merged = 'all_pop_merged.vcf.gz'
 fst_out = 'pop1_pop2'
 fst_out_in = '../Populations/pop1_pop2.weir.fst' 
+fst_out_window_in = '../Populations/pop1_pop2.windowed.weir.fst' 
 fst_out_flt = 'tmp.pop1_pop2_flt.table'
 fst_out_flt_results = 'tmp.pop1_pop2_flt_results.table'
 fst_out_flt2_results = 'tmp.pop1_pop2_flt2_results.table'
@@ -215,11 +216,6 @@ def vcftools():
 		pass
 	process8.stdout.close()
 
-	# Making directory for Fst-results, 
-	# input-files to pandas and matplotlib.
-	if not os.path.exists('Fst_stats'):
-		os.makedirs('Fst_stats')
-
 	# Fst_statistics using vcftools --weir-fst-pop, input files are a
 	# vcf file with all merged populations one txt file with names 
 	# of the individuals from population1 and one txt file with 
@@ -322,7 +318,7 @@ def sliding_window():
 	for file in os.listdir('Populations'):
 		if fnmatch.fnmatch(file, '*.weir.fst'):
 			cmdb = ('cat %s | grep -v "nan" > %s') \
-				% (fst_out_in, fst_out_flt)
+				% (fst_out_window_in, fst_out_flt)
 			processb = subprocess.Popen(cmdb, \
 				stdout=subprocess.PIPE, \
 				shell=True, \
@@ -484,6 +480,11 @@ def plot():
 			# Save plot as pdf. 
 			plt.savefig("Fst_stats/Fst_plot.pdf")
 def main():
+	# Making directory for Fst-results, 
+	# input-files to pandas and matplotlib.
+	if not os.path.exists('Fst_stats'):
+		os.makedirs('Fst_stats')
+
 	if args.window and args.step:
 		try:
 			sliding_window()
