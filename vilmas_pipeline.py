@@ -46,7 +46,8 @@ args = parser.parse_args()
 
 if args.feature and args.gff is None:
 	parser.error("--feature requires --gff")
-
+elif args.gff and args.feature is None:
+	parser.error("--feature requires --gff")
 #######################################################################
 
 current_directory = os.getcwd()
