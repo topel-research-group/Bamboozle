@@ -171,7 +171,7 @@ def angsd():
 	process8.stdout.close()
 
 	cmd9 = ('''cat %s \
-		| awk '{if ($3 >0) print}' \
+		| awk '{if ($3 >=0) print}' \
 		> %s''') \
 		% (fst_col, fst_flt)
 	process9 = subprocess.Popen(cmd9, \
@@ -230,8 +230,7 @@ def sliding_window():
 	processx.stdout.close()
 
 	cmdy = ('''cat %s \
-		| grep -v "nan" \
-		| awk '{if ($3 >0) print}' \
+		| awk '{if ($3 >=0) print}' \
 		> %s''') \
 		% (window_col, window_flt)
 	processy = subprocess.Popen(cmdy, \
