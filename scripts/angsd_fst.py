@@ -148,7 +148,7 @@ def angsd():
 	process6.stdout.close() 
 
 	# Divide col 3 and 4 (a/(a+b)) and print in col 5 (=Fst value).
-	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "nan"}1' \
+	cmd7 = ('''awk -v OFS='\\t' '{$5 = ($4 != 0) ? sprintf("%.6f", $3 / $4) : "0"}1' \
 		tmp.angsd_results.txt > tmp.angsd_fst_results_flt.txt''') 
 	process7 = subprocess.Popen(cmd7, \
 		stdout=subprocess.PIPE, \
@@ -171,7 +171,6 @@ def angsd():
 	process8.stdout.close()
 
 	cmd9 = ('''cat %s \
-		| grep -v "nan" \
 		| awk '{if ($3 >0) print}' \
 		> %s''') \
 		% (fst_col, fst_flt)
