@@ -20,7 +20,8 @@ args = parser.parse_args()
 #######################################################################
 
 filtered = 'tmp_filtered.csv'
-output_name = args.grep + "_results.html"
+prefix = os.path.splitext(args.inputfile)[0]
+output_name = prefix + '_' + args.grep + "_results.html"
 
 #######################################################################
 
