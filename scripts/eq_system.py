@@ -21,20 +21,20 @@ import pandas as pd
 
 parser = argparse.ArgumentParser(prog="angsd.py")
 parser.add_argument("-1", "--file1", \
-                required=True, \
+                required=False, \
                 help="Input file warm_cold")
 parser.add_argument("-2", "--file2", \
-                required=True, \
+                required=False, \
                 help="Input file control_cold")
 parser.add_argument("-3", "--file3", \
-                required=True, \
+                required=False, \
                 help="Input file control_warm")
 args = parser.parse_args()
 
 #######################################################################
 
 
-def main():
+def main(args):
 	# Import csv files.
 	fst1 = pd.read_csv(args.file1)	
 	
@@ -73,4 +73,4 @@ def main():
 
 
 if __name__ == "__main__":
-	main()	
+	main(args)	
