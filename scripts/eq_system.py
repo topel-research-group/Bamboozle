@@ -29,6 +29,9 @@ parser.add_argument("-2", "--file2", \
 parser.add_argument("-3", "--file3", \
                 required=False, \
                 help="Input file control_warm")
+parser.add_argument("-m", "--mean", \
+		action="store_true", \
+		help="Output mean")
 args = parser.parse_args()
 
 #######################################################################
@@ -41,6 +44,23 @@ def main(args):
 	fst2 = pd.read_csv(args.file2)	
 	
 	fst3 = pd.read_csv(args.file3)	
+
+	if args.mean:
+		mean1 = fst1['FST'].mean()
+		mean2 = fst2['FST'].mean()
+		mean3 = fst3['FST'].mean()	
+	
+		# Do the calculations (using equation systems).
+		temp = (mean1-mean2+mean3)/2
+		loc = mean3 - temp
+		time = mean2 - loc
+
+		mean_file = open('Mean_FST.txt', 'w')
+		mean_file.write('Temperature:' + str(temp) + '\n' \
+				'Location:' + str(loc) + '\n' \
+				'Time:' + str(time) + '\n')
+		mean_file.close()
+
 	
 	# Select FST column from each file and put in variable.
 	new = pd.DataFrame({'value1': fst1['FST'], 'value2' : fst2['FST'], 'value3': fst3['FST']})
