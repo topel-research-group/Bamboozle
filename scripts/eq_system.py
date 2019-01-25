@@ -7,7 +7,8 @@ import fnmatch
 import os
 
 import pandas as pd
-
+import numpy as np
+import matplotlib.pyplot as plt
 
 #	Temperature + Time = value1 (File1) 
 #	Time + Location = value2 (File2)
@@ -91,6 +92,17 @@ def main(args):
 	del fst3['FST']
 	fst3.to_csv('local.csv', index=False)
 
+	# Plot the results.
+	df = pd.DataFrame({'Temperature': temp, 'Location': loc, 'Time': time})
+	ax = df.plot(kind='box',
+		color=dict(boxes='r', whiskers='black', medians='r', caps='black'),
+		flierprops=dict(linestyle='-', linewidth=1.5),
+		medianprops=dict(linestyle='-', linewidth=1.5),
+		whiskerprops=dict(linestyle='-', linewidth=1.5),
+		capprops=dict(linestyle='-', linewidth=1.5),
+		showfliers=False, grid=False, rot=0)
+	ax.set_ylabel('Fst')
+	plt.savefig("environmental_fst_plot.png")
 
 if __name__ == "__main__":
 	main(args)	
