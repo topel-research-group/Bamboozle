@@ -33,10 +33,21 @@ parser.add_argument("-3", "--file3", \
 parser.add_argument("-m", "--mean", \
 		action="store_true", \
 		help="Output mean")
+parser.add_argument("-v", "--vcftools", \
+		action="store_true", \
+		help="Input from vcftools_fsy.py")
+parser.add_argument("-a", "--angsd", \
+		action="store_true", \
+		help="Input from angsd_fst.py")
 args = parser.parse_args()
 
 #######################################################################
 
+fst_name = ""
+if args.angsd:
+	fst_name = 'FST'
+if args.vcftools:
+	fst_name = 'WEIR_AND_COCKERHAM_FST'
 
 def main(args):
 	# Import csv files.
@@ -47,24 +58,24 @@ def main(args):
 	fst3 = pd.read_csv(args.file3)	
 
 	if args.mean:
-		mean1 = fst1['FST'].mean()
-		mean2 = fst2['FST'].mean()
-		mean3 = fst3['FST'].mean()	
+		mean1 = fst1[fst_name].mean()
+		mean2 = fst2[fst_name].mean()
+		mean3 = fst3[fst_name].mean()	
 	
 		# Do the calculations (using equation systems).
 		temp = (mean1-mean2+mean3)/2
 		loc = mean3 - temp
 		time = mean2 - loc
 
-		mean_file = open('Mean_FST.txt', 'w')
+		mean_file = open('Mean_' + fst_name + '.txt', 'w')
 		mean_file.write('Temperature:' + str(temp) + '\n' \
 				'Location:' + str(loc) + '\n' \
 				'Time:' + str(time) + '\n')
 		mean_file.close()
 
 	
-	# Select FST column from each file and put in variable.
-	new = pd.DataFrame({'value1': fst1['FST'], 'value2' : fst2['FST'], 'value3': fst3['FST']})
+	# Select WEIR_AND_COCKERHAM_FST column from each file and put in variable.
+	new = pd.DataFrame({'value1': fst1[fst_name], 'value2' : fst2[fst_name], 'value3': fst3[fst_name]})
 
 	# If NaN print 0.
 	new = new.fillna(0)
@@ -81,15 +92,15 @@ def main(args):
 
 	# Put results in new csv files.
 	fst1['Temperature'] = temp
-	del fst1['FST']
+	del fst1[fst_name]
 	fst1.to_csv('temp.csv', index=False)
 
 	fst2['Time'] = time
-	del fst2['FST']
+	del fst2[fst_name]
 	fst2.to_csv('time.csv', index=False)
 
 	fst3['Location'] = loc 
-	del fst3['FST']
+	del fst3[fst_name]
 	fst3.to_csv('local.csv', index=False)
 
 	# Plot the results.
@@ -102,7 +113,7 @@ def main(args):
 		capprops=dict(linestyle='-', linewidth=1.5),
 		showfliers=False, grid=False, rot=0)
 	ax.set_ylabel('Fst')
-	plt.savefig("environmental_fst_plot.png")
+	plt.savefig('environmental_' + fst_name + '_plot.png')
 
 if __name__ == "__main__":
 	main(args)	
