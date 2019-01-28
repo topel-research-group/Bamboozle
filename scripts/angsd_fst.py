@@ -36,6 +36,10 @@ parser.add_argument("-w", "--window", \
 		help="Size of window")
 parser.add_argument("-s", "--step", \
 		help="Size of step")
+parser.add_argument("--gff", \
+		help="Path to gff file")
+parser.add_argument("--feature", \
+		help="Name of feature")
 args = parser.parse_args()
 
 #######################################################################
@@ -54,10 +58,26 @@ add = '../'
 
 #######################################################################
 
+
 def angsd():
 	# Make directory for angsd output. 
 	if not os.path.exists('ANGSD'):
 		os.makedirs('ANGSD')
+
+	if args.gff and args.feature:
+		import sys
+		sys.path.append('/proj/data11/vilma/Pipeline_vilma/')
+		from modules.parse_gff import main as parse
+		parse(args.gff, args.feature)
+		out = add + 'out.gff'
+		cmd_0 = ("cat %s | cut -f1,4,5 | sort -k1,1 -k2V | sed '/\\t/{s/\\t/:/}' | tr '\\t' '-' > region_file.txt") % (out) 
+		process_0 = subprocess.Popen(cmd_0, \
+			stdout=subprocess.PIPE, \
+			shell=True, \
+			cwd='ANGSD')
+		while process_0.wait() is None:
+			pass
+		process_0.stdout.close()
 
 	directories1 = args.pop1 + '/*/Bowtie2/*.bam'
 	bam_list1 = glob.glob(directories1)
@@ -75,30 +95,58 @@ def angsd():
 
 	myfile2.close()
 
-	# Calculate per pop site allele freq.
-	cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
-		'-anc', add+ref, \
-		'-out', 'pop1', \
-		'-dosaf', '1', '-gl', \
-		'1']	
-	process1 = subprocess.Popen(cmd1, \
-		stdout=subprocess.PIPE, \
-		cwd='ANGSD')
-	while process1.wait() is None:
-		pass
-	process1.stdout.close()
+	if args.gff and args.feature:
+		# Calculate per pop site allele freq.
+		cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
+			'-anc', add+ref, \
+			'-out', 'pop1', \
+			'-dosaf', '1', \
+			'-gl', '1', \
+			'-rf', 'region_file.txt']	
+		process1 = subprocess.Popen(cmd1, \
+			stdout=subprocess.PIPE, \
+			cwd='ANGSD')
+		while process1.wait() is None:
+			pass
+		process1.stdout.close()
 
-	cmd2 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list2.txt', \
-		'-anc', add+ref, \
-		'-out', 'pop2', \
-		'-dosaf', '1', \
-		'-gl', '1']	
-	process2 = subprocess.Popen(cmd2, \
-		stdout=subprocess.PIPE, \
-		cwd='ANGSD')
-	while process2.wait() is None:
-		pass	
-	process2.stdout.close()
+		cmd2 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list2.txt', \
+			'-anc', add+ref, \
+			'-out', 'pop2', \
+			'-dosaf', '1', \
+			'-gl', '1', \
+			'-rf', 'region_file.txt']	
+		process2 = subprocess.Popen(cmd2, \
+			stdout=subprocess.PIPE, \
+			cwd='ANGSD')
+		while process2.wait() is None:
+			pass	
+		process2.stdout.close()
+	else:
+		# Calculate per pop site allele freq.
+		cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
+			'-anc', add+ref, \
+			'-out', 'pop1', \
+			'-dosaf', '1', '-gl', \
+			'1']	
+		process1 = subprocess.Popen(cmd1, \
+			stdout=subprocess.PIPE, \
+			cwd='ANGSD')
+		while process1.wait() is None:
+			pass
+		process1.stdout.close()
+
+		cmd2 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list2.txt', \
+			'-anc', add+ref, \
+			'-out', 'pop2', \
+			'-dosaf', '1', \
+			'-gl', '1']	
+		process2 = subprocess.Popen(cmd2, \
+			stdout=subprocess.PIPE, \
+			cwd='ANGSD')
+		while process2.wait() is None:
+			pass	
+		process2.stdout.close()
 
 	# Calculate 2dsfs prior.
 	cmd3 = ('/usr/local/packages/angsd0.918/angsd/misc/realSFS \
