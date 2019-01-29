@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from functools import reduce
 
 #	Temperature + Time = value1 (File1) 
 #	Time + Location = value2 (File2)
@@ -75,33 +76,62 @@ def main(args):
 
 	
 	# Select WEIR_AND_COCKERHAM_FST column from each file and put in variable.
-	new = pd.DataFrame({'value1': fst1[fst_name], 'value2' : fst2[fst_name], 'value3': fst3[fst_name]})
+#	new = pd.DataFrame({'value1': fst1[fst_name], 'value2' : fst2[fst_name], 'value3': fst3[fst_name]})
 
 	# If NaN print 0.
-	new = new.fillna(0)
+#	new = new.fillna(0)
+	frames = [fst1, fst2, fst3]
+	new = reduce(lambda left,right: pd.merge(left,right,on=['CHROM','POS'],suffixes=('_1', '_2')), frames)
 
+	temp = (new['FST_1']-new['FST_2']+new['FST'])/2
+	loc = new['FST'] - temp
+	time = new['FST_2'] - loc
 	# Do the calculations (using equation systems).
-	temp = (new['value1']-new['value2']+new['value3'])/2
-	loc = new['value3'] - temp
-	time = new['value2'] - loc
+#	temp = (new['value1']-new['value2']+new['value3'])/2
+#	loc = new['value3'] - temp
+#	time = new['value2'] - loc
 
 	# If minus value print 0.
 	temp[temp < 0] = 0
 	loc[loc < 0] = 0
 	time[time < 0] = 0	
 
+	new.to_csv('results.csv', index=False)
+
 	# Put results in new csv files.
-	fst1['Temperature'] = temp
-	del fst1[fst_name]
-	fst1.to_csv('temp.csv', index=False)
+	new['Temperature'] = temp
+	del new['FST_1']
+	del new['FST_2']
+	del new['FST']
+	new.to_csv('temp.csv', index=False)
 
-	fst2['Time'] = time
-	del fst2[fst_name]
-	fst2.to_csv('time.csv', index=False)
+	new['Location'] = loc 
+	del new['Temperature']
+	new.to_csv('local.csv', index=False)
 
-	fst3['Location'] = loc 
-	del fst3[fst_name]
-	fst3.to_csv('local.csv', index=False)
+	new['Time'] = time
+	del new['Location']
+	new.to_csv('time.csv', index=False)
+
+#	fst2['Time'] = time
+#	del fst2[fst_name]
+#	fst2.to_csv('time.csv', index=False)
+
+#	fst3['Location'] = loc 
+#	del fst3[fst_name]
+#	fst3.to_csv('local.csv', index=False)
+	# Put results in new csv files.
+#	fst1['Temperature'] = temp
+#	del fst1[fst_name]
+#	fst1.to_csv('temp.csv', index=False)
+
+#	fst2['Time'] = time
+#	del fst2[fst_name]
+#	fst2.to_csv('time.csv', index=False)
+
+#	fst3['Location'] = loc 
+#	del fst3[fst_name]
+#	fst3.to_csv('local.csv', index=False)
 
 	# Plot the results.
 	df = pd.DataFrame({'Temperature': temp, 'Location': loc, 'Time': time})
