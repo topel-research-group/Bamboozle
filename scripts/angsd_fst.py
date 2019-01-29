@@ -52,8 +52,13 @@ fst_col = 'tmp.angsd_fst_results_col5.txt'
 fst_flt = 'tmp.angsd_fst.table'
 window_col = 'tmp.window_angsd_fst_results_col5.txt'
 window_flt = 'tmp.window_angsd_fst.table'
-fst_headers = 'angsd_fst_headers.table'
-fst_csv = 'angsd_fst_headers.csv'
+if args.gff and args.feature:
+	fst_headers = 'angsd_fst_headers' + '_' + args.feature + '.csv'
+	fst_csv = 'angsd_fst_headers' + '_' + args.feature+ '.csv'
+else:
+	fst_headers = 'angsd_fst_headers.table'
+	fst_csv = 'angsd_fst_headers.csv'
+
 add = '../'
 
 #######################################################################
