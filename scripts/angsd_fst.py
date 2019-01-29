@@ -70,7 +70,7 @@ def angsd():
 		from modules.parse_gff import main as parse
 		parse(args.gff, args.feature)
 		out = add + 'out.gff'
-		cmd_0 = ("cat %s | cut -f1,4,5 | sort -k1,1 -k2V | sed '/\\t/{s/\\t/:/}' | tr '\\t' '-' > region_file.txt") % (out) 
+		cmd_0 = ("cat %s | cut -f1,4,5 | sort -k1,1 -k2V > region_file.txt") % (out) 
 		process_0 = subprocess.Popen(cmd_0, \
 			stdout=subprocess.PIPE, \
 			shell=True, \
@@ -78,6 +78,14 @@ def angsd():
 		while process_0.wait() is None:
 			pass
 		process_0.stdout.close()
+
+		cmd_00 = ['angsd', 'sites', 'index', 'region_file.txt'] 
+		process_00 = subprocess.Popen(cmd_00, \
+			stdout=subprocess.PIPE, \
+			cwd='ANGSD')
+		while process_00.wait() is None:
+			pass
+		process_00.stdout.close()
 
 	directories1 = args.pop1 + '/*/Bowtie2/*.bam'
 	bam_list1 = glob.glob(directories1)
@@ -102,7 +110,7 @@ def angsd():
 			'-out', 'pop1', \
 			'-dosaf', '1', \
 			'-gl', '1', \
-			'-rf', 'region_file.txt']	
+			'-sites', 'region_file.txt']	
 		process1 = subprocess.Popen(cmd1, \
 			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
@@ -115,7 +123,7 @@ def angsd():
 			'-out', 'pop2', \
 			'-dosaf', '1', \
 			'-gl', '1', \
-			'-rf', 'region_file.txt']	
+			'-sites', 'region_file.txt']	
 		process2 = subprocess.Popen(cmd2, \
 			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
