@@ -52,15 +52,11 @@ fst_col = 'tmp.angsd_fst_results_col5.txt'
 fst_flt = 'tmp.angsd_fst.table'
 window_col = 'tmp.window_angsd_fst_results_col5.txt'
 window_flt = 'tmp.window_angsd_fst.table'
-if args.gff and args.feature:
-	fst_headers = 'angsd_fst_headers' + '_' + args.feature + '.csv'
-	fst_csv = 'angsd_fst_headers' + '_' + args.feature+ '.csv'
-else:
-	fst_headers = 'angsd_fst_headers.table'
-	fst_csv = 'angsd_fst_headers.csv'
-
+fst_headers = 'angsd_fst_headers.table'
+fst_csv = 'angsd_fst_headers.csv'
 add = '../'
-
+if args.gff and args.feature:
+	fst_csv = 'angsd_fst_headers' + '_' + args.feature+ '.csv'
 #######################################################################
 
 
@@ -343,9 +339,9 @@ def plot():
 	# Making a plot of the Fst results using pandas and matplotlib, 
 	# input is the csv file and the output is a png file with the plot.
 	for file in os.listdir('ANGSD'):
-		if fnmatch.fnmatch(file, 'angsd_fst_headers.csv'):
+		if fnmatch.fnmatch(file, 'angsd_fst_headers*.csv'):
 			# Import csv file with Fst results.
-			gl = pd.read_csv('ANGSD/angsd_fst_headers.csv')
+			gl = pd.read_csv('ANGSD/'+fst_csv)
 
 			# Optimize memory usage.
 			gl_int = gl.select_dtypes(include=['int'])
@@ -378,7 +374,7 @@ def plot():
 			dtypes_col = optimized_gl.dtypes.index
 			dtypes_type = [i.name for i in optimized_gl.dtypes.values]
 			column_types = dict(zip(dtypes_col, dtypes_type))
-			read_and_optimized = pd.read_csv('ANGSD/angsd_fst_headers.csv', \
+			read_and_optimized = pd.read_csv('ANGSD/'+fst_csv, \
 							 dtype=column_types)
 
 			# Rename the read and optimized csv file 
