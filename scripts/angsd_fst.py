@@ -75,7 +75,11 @@ def angsd():
 		from modules.parse_gff import main as parse
 		parse(args.gff, args.feature)
 		out = add + 'out.gff'
-		cmd_0 = ("cat %s | cut -f1,4,5 | sort -k1,1 -k2V > region_file.txt") % (out) 
+		cmd_0 = ("cat %s \
+			| cut -f1,4,5 \
+			| sort -k1,1 -k2V \
+			> region_file.txt") \
+			% (out) 
 		process_0 = subprocess.Popen(cmd_0, \
 			stdout=subprocess.PIPE, \
 			shell=True, \
