@@ -58,6 +58,8 @@ class TestProcess(unittest.TestCase):
 		for file in os.listdir():
 			if fnmatch.fnmatch(file, '*.csv'): 
 				os.remove(file)	
+			if fnmatch.fnmatch(file, '*.png'):
+				os.remove(file)
 
 if __name__ == '__main__':
 	unittest.main()
