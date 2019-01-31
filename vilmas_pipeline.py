@@ -25,7 +25,7 @@ import os
 import argparse
 import subprocess
 import fnmatch
-
+from functools import reduce 
 #######################################################################
 
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
@@ -36,6 +36,14 @@ parser.add_argument("-b", "--bamfile", help="BAM infile")
 parser.add_argument("--gff", help="gff infile")  
 parser.add_argument("--feature", help="Feature for gff parser")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
+parser.add_argument("-e", "--snpeff", nargs='*', \
+			help="Input options for snpeff, \
+			witout the '-' before, \
+			otherwise: -no-downstream \
+			-no-upstream \
+                        -no-intron \
+			-no-intergenic \
+                        -classic")
 parser.add_argument("-s", "--snpsift", action="store_true", \
 			help="Run snpSift")
 parser.add_argument("-r", "--clean", action="store_true", \
@@ -237,10 +245,23 @@ def annotation(args):
 				my_interval = "-interval %s" % out
 				my_output = name + '_' + args.feature + '_snpeff_annotated.vcf'
 
-			my_args = my_interval + " -no-downstream -no-upstream \
-				-no-intron -no-intergenic \
-				-classic Skeletonema_marinoi_v1.1.1.1 \
-				-stats snpEff_summary.html"
+			if args.snpeff:
+				for i in args.snpeff:
+					options = [] 
+					options.append('-'+i)
+					o=reduce(lambda x, y: list(x)+list(y), zip(options))
+				opt = ''.join(o)
+				print(opt)
+				my_args = my_interval + opt \
+					+ " Skeletonema_marinoi_v1.1.1.1 \
+					 -stats snpEff_summary.html"
+				print(my_args)
+			else:
+				my_args = my_interval + " -no-downstream -no-upstream \
+					-no-intron -no-intergenic \
+					-classic Skeletonema_marinoi_v1.1.1.1 \
+					-stats snpEff_summary.html"
+
 			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, my_output)
 			process8 = subprocess.Popen(cmd8, \
 				stdout=subprocess.PIPE, \
