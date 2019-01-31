@@ -5,6 +5,7 @@ import subprocess
 import argparse
 import fnmatch
 import os
+import time
 
 import pandas as pd
 import numpy as np
@@ -122,4 +123,7 @@ def main(args):
 	plt.savefig('environmental_' + fst_name + '_plot.png')
 
 if __name__ == "__main__":
+	start_time = time.time()
 	main(args)	
+	print("--- %s seconds ---" % (time.time() - start_time))	
+
