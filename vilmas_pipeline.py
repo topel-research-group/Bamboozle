@@ -38,7 +38,7 @@ parser.add_argument("--feature", help="Feature for gff parser")
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-e", "--snpeff", nargs='*', \
 			help="Input options for snpeff, \
-			witout the '-' before, \
+			without the '-' before, \
 			otherwise: -no-downstream \
 			-no-upstream \
                         -no-intron \
@@ -245,17 +245,13 @@ def annotation(args):
 				my_interval = "-interval %s" % out
 				my_output = name + '_' + args.feature + '_snpeff_annotated.vcf'
 
+			# If you want to specify options yourself.
+			# If you don't want any flags at all, use --snpeff without arguments.
 			if args.snpeff:
-				for i in args.snpeff:
-					options = [] 
-					options.append('-'+i)
-					o=reduce(lambda x, y: list(x)+list(y), zip(options))
-				opt = ''.join(o)
-				print(opt)
-				my_args = my_interval + opt \
+				opt = '-'+' -'.join(args.snpeff)
+				my_args = my_interval + " " + opt \
 					+ " Skeletonema_marinoi_v1.1.1.1 \
 					 -stats snpEff_summary.html"
-				print(my_args)
 			else:
 				my_args = my_interval + " -no-downstream -no-upstream \
 					-no-intron -no-intergenic \
