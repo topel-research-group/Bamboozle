@@ -26,6 +26,10 @@ import argparse
 import subprocess
 import fnmatch
 from functools import reduce 
+from functools import wraps
+from time import time
+import datetime
+
 #######################################################################
 
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
@@ -73,11 +77,32 @@ add = '../'
 add2 = '../Bowtie2/'
 
 #######################################################################
+
+# Time decorator.
+def timing(function):
+	@wraps(function)
+	def wrapper(*args, **kwargs):
+		now = datetime.datetime.now()
+		start = time()
+		result = function(*args, **kwargs)
+		end = time()
+		fh = open("time.log", "a")
+		lines_of_text = now.strftime("%Y-%m-%d %H:%M") \
+				+ ' Function: ' \
+				+ function.__name__ \
+				+ ' Elapsed time: {}'.format(end-start) \
+				+ ' seconds \n'
+		fh.writelines(lines_of_text)
+		fh.close()
+		return result
+	return wrapper
+
 # Makes new directory 'Bowtie2' if it doesn't exists.
 if not os.path.exists('Bowtie2'):
 	os.makedirs('Bowtie2')
 
 # Running bowtie2-build to index reference genome and bowtie2 to align. 
+@timing
 def bowtie2(args):
 	# Selected input files using forward and reverse flags, 
 	# the flags can take several input files.
@@ -119,6 +144,7 @@ def bowtie2(args):
 			process2.stdout.close()
 
 # Converting SAM to BAM using samtools view.
+@timing
 def samtools_view():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
@@ -132,6 +158,7 @@ def samtools_view():
 			process3.stdout.close()
 
 # Sort BAM files.
+@timing
 def samtools_sort():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
@@ -144,6 +171,7 @@ def samtools_sort():
 			process4.stdout.close()
 		
 # BAM input file by using the '-b' flag.
+@timing
 def bam_input(args):
 	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, \
 		'-o', sorted_bam_out]
@@ -155,6 +183,7 @@ def bam_input(args):
 	process5.stdout.close()
 
 # Index sorted BAM files.
+@timing
 def samtools_index():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
@@ -180,6 +209,7 @@ def clean():
 # Variant calling using bcftools mpileup, input is sorted BAM file, 
 # output file is a gzipped vcf file, 
 # makes new directory 'Bcftools' if it doesn't exists.
+@timing
 def bcftools(args):
 	if not os.path.exists('Bcftools'):
 		os.makedirs('Bcftools')
@@ -233,6 +263,7 @@ def snpEff_test():
 # Annotating variant calling output using snpEff, output is a vcf, 
 # the vcf file is bgzipped to work as an input file to the Fst analysis,
 # the original vcf file is kept by using the -c flag. 
+@timing
 def annotation(args):					
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
@@ -332,6 +363,7 @@ def annotation(args):
 # Filtering and making a summary of annotated files using 
 # the vcf (not bgzipped) output file from snpEff, 
 # the summary will be in table format, tab separated.
+@timing
 def snpsift():
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*_annotated.vcf'):
