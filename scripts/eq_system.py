@@ -37,7 +37,7 @@ parser.add_argument("-m", "--mean", \
 		help="Output mean")
 parser.add_argument("-v", "--vcftools", \
 		action="store_true", \
-		help="Input from vcftools_fsy.py")
+		help="Input from vcftools_fst.py")
 parser.add_argument("-a", "--angsd", \
 		action="store_true", \
 		help="Input from angsd_fst.py")
