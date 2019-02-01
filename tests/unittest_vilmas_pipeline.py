@@ -129,6 +129,10 @@ class TestProcess(TestClass, unittest.TestCase):
 			shutil.rmtree('Bcftools')
 		if 'out.gff' in os.listdir():
 			os.remove('out.gff')		
+		if 'time.log' in os.listdir():
+			os.remove('time.log')		
+		if 'pipeline.log' in os.listdir():
+			os.remove('pipeline.log')		
 
 if __name__ == '__main__':
 	options = [sys.argv[0]] + [a for a in sys.argv if a.startswith("-")]
