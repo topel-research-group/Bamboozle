@@ -76,6 +76,7 @@ annotated_table = name + '.snpsift_table.txt'
 add = '../'
 add2 = '../Bowtie2/'
 
+log_file=open('pipeline.log','a')
 #######################################################################
 
 # Time decorator.
@@ -125,6 +126,7 @@ def bowtie2(args):
 	cmd1 = ['bowtie2-build', add+args.ref, base]
 	process1 = subprocess.Popen(cmd1, \
 		stdout=subprocess.PIPE, \
+		stderr = log_file, \
 		cwd='Bowtie2')	
 	while process1.wait() is None:
 		pass
@@ -138,11 +140,12 @@ def bowtie2(args):
 			'-x', base, '-1', file1, '-2', file2, '-S', sam]	
 			process2 = subprocess.Popen(cmd2, \
 				stdout=subprocess.PIPE, \
+				stderr = log_file, \
 				cwd='Bowtie2')
 			while process2.wait() is None:
 				pass
 			process2.stdout.close()
-
+			
 # Converting SAM to BAM using samtools view.
 @timing
 def samtools_view():
@@ -151,6 +154,7 @@ def samtools_view():
 			cmd3 = ('samtools view -@ %s -Sb %s > %s') % (args.threads, sam, bam)
 			process3 = subprocess.Popen(cmd3, \
 				stdout=subprocess.PIPE, \
+				stderr = log_file, \
 				shell=True, \
 				cwd='Bowtie2')
 			while process3.wait() is None:
@@ -165,6 +169,7 @@ def samtools_sort():
 			cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
 			process4 = subprocess.Popen(cmd4, \
 				stdout=subprocess.PIPE, \
+				stderr = log_file, \
 				cwd='Bowtie2')
 			while process4.wait() is None:
 				pass	
@@ -177,6 +182,7 @@ def bam_input(args):
 		'-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
+		stderr = log_file, \
 		cwd='Bowtie2')
 	while process5.wait() is None:
 		pass	
@@ -190,6 +196,7 @@ def samtools_index():
 			cmd6 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
 			process6 = subprocess.Popen(cmd6, \
 				stdout=subprocess.PIPE, \
+				stderr = log_file, \
 				cwd='Bowtie2')
 			while process6.wait() is None:
 				pass
@@ -222,12 +229,13 @@ def bcftools(args):
 			% (threads, add+args.ref, add2+sorted_bam_out, bcftools_out)
 			process7 = subprocess.Popen(cmd7, \
 				stdout=subprocess.PIPE, \
+				stderr = log_file, \
 				shell=True, \
 				cwd='Bcftools')
 			while process7.wait() is None:
 				pass
 			process7.stdout.close()
-
+				
 # Checks for dependencies required for snpEff 
 def snpEff_test():
 	# Checks if there is a Skeletonema database, 
@@ -292,6 +300,7 @@ def annotation(args):
 			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, my_output)
 			process8 = subprocess.Popen(cmd8, \
 				stdout=subprocess.PIPE, \
+				stderr = log_file, \
 				shell=True, \
 				cwd='Bcftools')
 			while process8.wait() is None:
@@ -301,6 +310,7 @@ def annotation(args):
 			cmd9 = ('bgzip -c %s > %s') % (my_output, my_output + '.gz')
 			process9 = subprocess.Popen(cmd9, \
 				stdout=subprocess.PIPE, \
+				stderr = log_file, \
 				shell=True, \
 				cwd='Bcftools')
 			while process9.wait() is None:
@@ -314,6 +324,7 @@ def annotation(args):
 					% (my_output)
 				process_a = subprocess.Popen(cmd_a, \
 					stdout=subprocess.PIPE, \
+					stderr = log_file, \
 					shell=True, \
 					cwd='Bcftools')
 				while process_a.wait() is None:
@@ -327,6 +338,7 @@ def annotation(args):
 					hdr.txt''') 
 				process_b = subprocess.Popen(cmd_b, \
 					stdout=subprocess.PIPE, \
+					stderr = log_file, \
 					shell=True, \
 					cwd='Bcftools')
 				while process_b.wait() is None:
@@ -337,6 +349,7 @@ def annotation(args):
 					% (my_output, my_output_hdr)
 				process_c = subprocess.Popen(cmd_c, \
 					stdout=subprocess.PIPE, \
+					stderr = log_file, \
 					shell=True, \
 					cwd='Bcftools')
 				while process_c.wait() is None:
@@ -346,6 +359,7 @@ def annotation(args):
 				cmd_d = ('bgzip -c %s > %s') % (my_output_hdr, my_output_hdr + '.gz')
 				process_d = subprocess.Popen(cmd_d, \
 					stdout=subprocess.PIPE, \
+					stderr = log_file, \
 					shell=True, \
 					cwd='Bcftools')
 				while process_d.wait() is None:
@@ -430,7 +444,8 @@ def main():
 
 	if args.done:
 		done()
-	
+
+	log_file.close()
 
 if __name__ == "__main__":
 	# Use gff parser without running whole pipeline.
