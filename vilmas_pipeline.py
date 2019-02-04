@@ -37,6 +37,7 @@ parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
+parser.add_argument("--sortbam", help="´orted BAM infile")  
 parser.add_argument("--gff", help="gff infile")  
 parser.add_argument("--feature", help="Feature for gff parser")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
@@ -428,6 +429,10 @@ def main():
 	if args.bamfile:
 		input_files()
 		exit()	
+
+	if args.sortbam()
+		bcftools(args)
+		annotation(args)
 
 	bowtie2(args)
 	samtools_view()
