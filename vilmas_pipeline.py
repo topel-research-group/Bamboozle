@@ -37,7 +37,7 @@ parser.add_argument("-f", "--ref", required=True, help="Reference")
 parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
 parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
-parser.add_argument("--sortbam", help="´orted BAM infile")  
+parser.add_argument("--sortbam", help="Sorted BAM infile")  
 parser.add_argument("--gff", help="gff infile")  
 parser.add_argument("--feature", help="Feature for gff parser")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
@@ -65,17 +65,21 @@ elif args.gff and args.feature is None:
 
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
+add = '../'
+add2 = '../Bowtie2/'
 threads = str(args.threads)
 base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam' 
-sorted_bam_out = name + '_sorted.bam'
+if args.sortbam:
+	sorted_bam_out = add + str(args.sortbam)
+else:
+	sorted_bam_out = add2 + name + '_sorted.bam'
+
 sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_table = name + '.snpsift_table.txt'
-add = '../'
-add2 = '../Bowtie2/'
 
 log_file=open('pipeline.log','a')
 #######################################################################
@@ -227,7 +231,7 @@ def bcftools(args):
 			cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s \
 				| bcftools call -Ou -mv \
 	 			| bcftools filter -s LowQual -e 'QUAL<20 || DP>100' -Oz -o %s") \
-			% (threads, add+args.ref, add2+sorted_bam_out, bcftools_out)
+			% (threads, add+args.ref, sorted_bam_out, bcftools_out)
 			process7 = subprocess.Popen(cmd7, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -406,18 +410,22 @@ def done():
 # If the '-b' flag is used this function will run, 
 # excluding the first steps of the program. 
 def input_files():
-	bam_input(args)
-	samtools_index()
-	bcftools(args)
-	annotation(args)
-	if args.snpsift:
-		snpsift()
+	if args.sortbam:
+		bcftools(args)
+		annotation(args)
+	else:
+		bam_input(args)
+		samtools_index()
+		bcftools(args)
+		annotation(args)
+		if args.snpsift:
+			snpsift()
 
-	if args.clean:
-		clean()
+		if args.clean:
+			clean()
 
-	if args.done:
-		done()
+		if args.done:
+			done()
 
 # Exit program
 def exit():
@@ -426,13 +434,9 @@ def exit():
 def main():
 	snpEff_test()
 
-	if args.bamfile:
+	if args.bamfile or args.sortbam:
 		input_files()
 		exit()	
-
-	if args.sortbam()
-		bcftools(args)
-		annotation(args)
 
 	bowtie2(args)
 	samtools_view()
