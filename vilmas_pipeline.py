@@ -418,14 +418,14 @@ def input_files():
 		samtools_index()
 		bcftools(args)
 		annotation(args)
-		if args.snpsift:
-			snpsift()
+	if args.snpsift:
+		snpsift()
 
-		if args.clean:
-			clean()
+	if args.clean:
+		clean()
 
-		if args.done:
-			done()
+	if args.done:
+		done()
 
 # Exit program
 def exit():
