@@ -21,17 +21,23 @@ FASTQ files as input:
 
 BAM file as input:   
 `vilmas_pipeline.py -f Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -b file.bam`
+***  
+| Utility script | Description |  
+|---|---|  
+|[`angsd_fst.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Fst statistics using BAM file from the SAMtools step as input. Uses genotype likelihoods to calculate Fst values, preferred if coverage is low or medium.|  
+|[`vcftools_fst.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Fst statistics using VCFtools --weir-fst-pop takes vcf files from the SnpEff step as input.|  
+|[`make_plot.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Makes an interactive plot of either the ANGSD csv results or the VCFtools csv results by specifying the contig you want to plot. Outputs a html file.|
 
 ## Dependencies
 
-Versions used:  
+**Versions used:**  
 Bowtie2/v2.3.3.1  
 samtools/v1.9  
 bcftools/v1.9  
 snpEff/v.4.3t  
 gffutils/v0.9  
 
-Versions used in utility scripts:  
+**Versions used in utility scripts:**  
 VCFtools/v0.1.13  
 Highcharts/v6.2.0  
 angsd/v0.918  
