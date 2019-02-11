@@ -30,17 +30,12 @@ BAM file as input:
 
 ## Dependencies
 
-**Versions used:**  
-Bowtie2/v2.3.3.1  
-samtools/v1.9  
-bcftools/v1.9  
-snpEff/v.4.3t  
-gffutils/v0.9  
-
-**Versions used in utility scripts:**  
-VCFtools/v0.1.13  
-Highcharts/v6.2.0  
-angsd/v0.918  
+|Program|Versions used|
+|---|---| 
+|`vilmas_pipeline` | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 |
+|`angsd_fst` |angsd/v0.918 |
+|`vcftools_fst` | VCFtools/v0.1.13 |  
+|`make_plot` | Highcharts/v6.2.0 |  
 
 ## More information  
 * [Wiki](https://github.com/topel-research-group/Pipeline_vilma/wiki)  
