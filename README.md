@@ -1,6 +1,6 @@
 # Pipeline_vilma
 
-This is a pipeline that will take raw data, such as FASTQ files, or a BAM file as input and give a filtered human readable output. The purpose is to simplify and make the bioinformatic analysis easier to reproduce.
+**This is a pipeline that will take raw data, such as FASTQ files, or a BAM file as input and give a filtered human readable output. The purpose is to simplify and make the bioinformatic analysis easier to reproduce.**
 
 The steps include mapping, SNP calling, Fst statistics, filtering and plotting of the results.  
 
