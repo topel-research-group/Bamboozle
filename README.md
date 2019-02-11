@@ -4,6 +4,8 @@ This is a pipeline that will take raw data, such as FASTQ files, or a BAM file a
 
 The steps include mapping, SNP calling, Fst statistics, filtering and plotting of the results.  
 
+<img src="https://user-images.githubusercontent.com/42669709/52559213-fbb93580-2df4-11e9-96f6-a8e6877352b6.png" width="400">
+
 ## Features  
 * This pipeline will give you a summary of the analysis in table format with effect prediction and annotated variants  
 * Fst statistics on the results can be made with the additional program `fst.py`, this will give you a table with Fst statistics and a plot of the Fst results
