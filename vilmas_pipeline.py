@@ -81,7 +81,6 @@ bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
 annotated_table = name + '.snpsift_table.txt'
 
-log_file=open('pipeline.log','a')
 #######################################################################
 
 # Time decorator.
@@ -110,6 +109,7 @@ if not os.path.exists('Bowtie2'):
 # Running bowtie2-build to index reference genome and bowtie2 to align. 
 @timing
 def bowtie2(args):
+	log_file=open('pipeline.log','a')
 	# Selected input files using forward and reverse flags, 
 	# the flags can take several input files.
 	file1 = ''
@@ -150,10 +150,12 @@ def bowtie2(args):
 			while process2.wait() is None:
 				pass
 			process2.stdout.close()
+	log_file.close()
 			
 # Converting SAM to BAM using samtools view.
 @timing
 def samtools_view():
+	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
 			cmd3 = ('samtools view -@ %s -Sb %s > %s') % (args.threads, sam, bam)
@@ -165,10 +167,12 @@ def samtools_view():
 			while process3.wait() is None:
 				pass
 			process3.stdout.close()
+	log_file.close()
 
 # Sort BAM files.
 @timing
 def samtools_sort():
+	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
@@ -179,10 +183,12 @@ def samtools_sort():
 			while process4.wait() is None:
 				pass	
 			process4.stdout.close()
+	log_file.close()
 		
 # BAM input file by using the '-b' flag.
 @timing
 def bam_input(args):
+	log_file=open('pipeline.log','a')
 	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, \
 		'-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, \
@@ -192,10 +198,12 @@ def bam_input(args):
 	while process5.wait() is None:
 		pass	
 	process5.stdout.close()
+	log_file.close()
 
 # Index sorted BAM files.
 @timing
 def samtools_index():
+	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
 			cmd6 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
@@ -206,6 +214,7 @@ def samtools_index():
 			while process6.wait() is None:
 				pass
 			process6.stdout.close()
+	log_file.close()
 
 # Remove SAM and BAM files.
 def clean():
@@ -223,6 +232,7 @@ def clean():
 # makes new directory 'Bcftools' if it doesn't exists.
 @timing
 def bcftools(args):
+	log_file=open('pipeline.log','a')
 	if not os.path.exists('Bcftools'):
 		os.makedirs('Bcftools')
 
@@ -240,6 +250,7 @@ def bcftools(args):
 			while process7.wait() is None:
 				pass
 			process7.stdout.close()
+	log_file.close()
 				
 # Checks for dependencies required for snpEff 
 def snpEff_test():
@@ -278,6 +289,7 @@ def snpEff_test():
 # the original vcf file is kept by using the -c flag. 
 @timing
 def annotation(args):					
+	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bcftools'):
 		if fnmatch.fnmatch(file, '*.bcftools_filtered.vcf.gz'):
 			my_output = annotated_vcf
@@ -377,6 +389,7 @@ def annotation(args):
 						os.remove('Bcftools/' + vcffile)
 			else:
 				pass
+	log_file.close()
 					
 
 # Filtering and making a summary of annotated files using 
@@ -453,8 +466,6 @@ def main():
 
 	if args.done:
 		done()
-
-	log_file.close()
 
 if __name__ == "__main__":
 	# Use gff parser without running whole pipeline.
