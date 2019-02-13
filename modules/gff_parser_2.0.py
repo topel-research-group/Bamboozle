@@ -13,10 +13,10 @@ gff = '../../../Skeletonema_marinoi_Ref_v1.1_Primary.all.gff'
 feature = 'CDS'
 contigsizes = 'chrom.genome'
 #sorted_gff =
-intergenic_sorted_bed = 'intergenic_regions.bed'
-exon_sorted_bed = 'exon.gff'
+intergenic_sorted_bed = 'intergenic_regions_sorted.bed'
+exon_sorted_bed = 'exon_sorted.bed'
 exon_intergenic_sorted_bed = 'tmp.exon_intergenic_sorted.txt'
-intron_sorted_bed = 'introns.bed'
+intron_sorted_bed = 'introns_sorted.bed'
 
 #######################################################
 def main(gff, feature, contigsizes):
@@ -36,7 +36,8 @@ def main(gff, feature, contigsizes):
 
 		cmd2 = ('''awk '{if ($3 == "exon") print $1, $4, $5}' %s \
 			| tr " " "\\t" > %s''') \
-		% (gff, exon_sorted_bed)
+		% (gff, \
+		exon_sorted_bed)
 		process2 = subprocess.Popen(cmd2, \
 			stdout=subprocess.PIPE, \
 			shell=True)
@@ -60,7 +61,9 @@ def main(gff, feature, contigsizes):
 		
 		# Intergenic regions
 		cmd1 = ('bedtools complement -i %s -g %s > %s') \
-		% (gff, contigsizes, intergenic_sorted_bed)
+		% (gff, \
+		contigsizes, \
+		intergenic_sorted_bed)
 		process1 = subprocess.Popen(cmd1, \
 			stdout=subprocess.PIPE, \
 			shell=True)
@@ -84,7 +87,9 @@ def main(gff, feature, contigsizes):
 
 		# Intergenic regions.
 		cmd1 = ('bedtools complement -i %s -g %s > %s') \
-		% (gff, contigsizes, intergenic_sorted_bed)
+		% (gff, \
+		contigsizes, \
+		intergenic_sorted_bed)
 		process1 = subprocess.Popen(cmd1, \
 			stdout=subprocess.PIPE, \
 			shell=True)
@@ -95,7 +100,8 @@ def main(gff, feature, contigsizes):
 		# Exons.
 		cmd2 = ('''awk '{if ($3 == "exon") print $1, $4, $5}' %s \
 			| tr " " "\\t" > %s''') \
-		% (gff, exon_sorted_bed)
+		% (gff, \
+		exon_sorted_bed)
 		process2 = subprocess.Popen(cmd2, \
 			stdout=subprocess.PIPE, \
 			shell=True)
@@ -105,7 +111,9 @@ def main(gff, feature, contigsizes):
 
 		# Cat intergenic and exons.
 		cmd3 = ('cat %s %s | sort -k1,1 -k2,2n > %s') \
-		% (exon_sorted_bed, intergenic_sorted_bed, exon_intergenic_sorted_bed)
+		% (exon_sorted_bed, \
+		intergenic_sorted_bed, \
+		exon_intergenic_sorted_bed)
 		process3 = subprocess.Popen(cmd3, \
 			stdout=subprocess.PIPE, \
 			shell=True)
@@ -115,7 +123,9 @@ def main(gff, feature, contigsizes):
 		
 		# Introns.
 		cmd4 = ('bedtools complement -i %s -g %s > %s') \
-		% (exon_intergenic_sorted_bed, contigsizes, intron_sorted_bed)
+		% (exon_intergenic_sorted_bed, \
+		contigsizes, \
+		intron_sorted_bed)
 		process4 = subprocess.Popen(cmd4, \
 			stdout=subprocess.PIPE, \
 			shell=True)
