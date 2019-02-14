@@ -1,6 +1,6 @@
 #$ -cwd
-#$ -q sandbox 
-#$ -pe mpich 16 
+#$ -q Annotation-3 
+#$ -pe mpich 40 
 #$ -S /bin/bash
 
 module load Bowtie2/v2.3.3.1
@@ -17,7 +17,7 @@ for DIR in `find Pop_*/* -maxdepth 0 -type d`; do
                 continue
         else
 	cd ${DIR}/
-	/proj/data11/vilma/Pipeline_vilma/vilmas_pipeline.py -t $NSLOTS -f /proj/data11/Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F *R1*fastq.gz -R *R2*fastq.gz -r -p 
+	/proj/data11/vilma/Pipeline_vilma/vilmas_pipeline.py -t $NSLOTS -f ../../../../../Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F *R1*fastq.gz -R *R2*fastq.gz -r -p 
 	cd ../..
 	fi
 done
