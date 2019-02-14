@@ -134,6 +134,7 @@ def main(gff, feature, contigsizes):
 		# Remove exon and intergenic regions files when done.
 		os.remove('intergenic_regions_sorted.bed')
 		os.remove('exon_sorted.bed')
+		os.remove('tmp.exon_intergenic_sorted.txt')
 
 	else:
 		gff_path = os.path.dirname(gff)  
