@@ -34,7 +34,7 @@ BAM file as input:
 
 |Program|Versions used|
 |---|---| 
-|`vilmas_pipeline` | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 |
+|`vilmas_pipeline` | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 <br/> Bedtools2/v2.27.1|
 |`angsd_fst` |angsd/v0.918 |
 |`vcftools_fst` | VCFtools/v0.1.13 |  
 |`make_plot` | Highcharts/v6.2.0 |  
