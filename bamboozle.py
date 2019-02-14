@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Obtain statistics regarding percen
 The script gives percentage of positions in an assembly/contig,\nwith coverage greater than or equal to a given \
 threshold', formatter_class=RawTextHelpFormatter)
 parser.add_argument('--mode', choices=['coverage','consensus','zero','deletion-1','deletion-2','deletion-3',\
-'deletion-x','homohetero','median-one','median-all','median-pc-coverage'],help="Specify the desired mode of Bamboozle, where:\n\
+'deletion-x','homohetero','median-one','median-all','median-pc-coverage','long-coverage'],help="Specify the desired mode of Bamboozle, where:\n\
 * coverage = Print a statistic for what percentage of bases in an assembly have >=Nx coverage\n\
 * consensus = Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)\n\
 * zero = Find areas of zero coverage and print the reference sequence, along with a GC percentage\n\
@@ -23,7 +23,8 @@ parser.add_argument('--mode', choices=['coverage','consensus','zero','deletion-1
 * homohetero = Attempt to determine whether a deletion is homozygous or heterozygous\n\
 * median-one = Find regions differing from the contig median  by +/- 50%%\n\
 * median-all = Find regions differing from the contig median  by +/- 50%%, for each contig\n\
-* median-pc-coverage = Find the median coverage for each contig in an assembly")
+* median-pc-coverage = Find the median coverage for each contig in an assembly\n\
+* long-coverage = Find the longest region between given coverage limits for a given contig")
 
 parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
 parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
@@ -32,6 +33,7 @@ parser.add_argument("-b", "--bam", help="Bam file")
 parser.add_argument("-a", "--range", help="somethingsomsing")
 parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
 parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
+parser.add_argument("-l", "--limits", type=int, nargs=2, help="Specify lower and upper limits for long-coverage function; two arguments required")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -477,6 +479,53 @@ def make_bed(contig_lib,this_contig,lower,upper):
 		print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
 
 
+def coverage_limits():
+	# This function identifies the longest continuous region of the contig where
+	# all positions fall between defined coverage limits
+
+	command = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
+	if args.limits[0] < args.limits[1]:
+		lower = args.limits[0]
+		upper = args.limits[1]
+	else:
+		lower = args.limits[1]
+		upper = args.limits[0]
+
+	longest = 0
+	start = "N/A"
+	stop = "N/A"
+
+	current = 0
+	current_start = "N/A"
+	current_stop = "N/A"
+
+	recording = False
+
+	with process.stdout as result:
+		rows = (line.decode().split('\t') for line in result)
+		for row in rows:
+			position = int(row[1])
+			coverage = int(row[2])
+			if lower <= coverage <= upper:
+				if not recording:
+					current_start = position
+					recording = True
+				current += 1
+			else:
+				current_stop = position - 1
+				if current > longest:
+					longest = current
+					start = current_start
+					stop = current_stop
+				current = 0
+				recording = False
+
+	print("Longest stretch between " + str(lower) + "x and " + str(upper) + \
+	"x coverage on " + args.contig + "\t" + str(longest) + "\t" + str(start) + "-" + str(stop))
+
+
 def extract_sequence():
 	# This function extracts the sequence of the mapped reads 
 	# from a part of the reference sequence specified by args.range
@@ -523,6 +572,8 @@ def main():
 		median_percontig_coverage()
 	elif args.mode == "coverage":
 		coverage_stats()
+	elif args.mode == "long-coverage":
+		coverage_limits()
 	else:
 		print("Please specify a mode with the --mode option!")
 		exit()

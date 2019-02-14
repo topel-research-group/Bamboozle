@@ -106,6 +106,13 @@ This is a stripped-down version of the `median-all` function, providing a simpli
 
 ```bash
 ./bamboozle.py --mode median_pc_coverage -b <BAMFILE> > <output.txt>
+```
+
+## Identify the longest stretch in a given contig which has coverage between two specified limits
+
+```bash
+./bamboozle.py --mode long-coverage -b <BAMFILE> -c <CONTIG> -l <LOWER LIMIT> <UPPER LIMIT>
+```
 
 
 ## Features to add
