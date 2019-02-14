@@ -44,12 +44,7 @@ parser.add_argument("--feature", help="Feature for gff parser")
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-e", "--snpeff", nargs='*', \
 			help="Input options for snpeff, \
-			without the '-' before, \
-			otherwise: -no-downstream \
-			-no-upstream \
-                        -no-intron \
-			-no-intergenic \
-                        -classic")
+			without the '-' before")
 parser.add_argument("-s", "--snpsift", action="store_true", \
 			help="Run snpSift")
 parser.add_argument("-r", "--clean", action="store_true", \
@@ -310,9 +305,8 @@ def annotation(args):
 					+ " Skeletonema_marinoi_v1.1.1.1 \
 					 -stats snpEff_summary.html"
 			else:
-				my_args = my_interval + " -no-downstream -no-upstream \
-					-no-intron -no-intergenic \
-					-classic Skeletonema_marinoi_v1.1.1.1 \
+				my_args = my_interval + \
+					" Skeletonema_marinoi_v1.1.1.1 \
 					-stats snpEff_summary.html"
 
 			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, my_output)
@@ -383,7 +377,7 @@ def annotation(args):
 				while process_d.wait() is None:
 					pass
 				process_d.stdout.close()
-				os.remove('out.gff')
+				#os.remove('out.gff')
 				os.remove('Bcftools/hdr.txt')
 				for vcffile in os.listdir('Bcftools'):
 					if fnmatch.fnmatch(vcffile, '*'+args.feature+'_snpeff_annotated.vcf'+'*'):
