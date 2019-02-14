@@ -298,7 +298,6 @@ def annotation(args):
 				my_output = name + '_' + args.feature + '_snpeff_annotated.vcf'
 
 			# If you want to specify options yourself.
-			# If you don't want any flags at all, use --snpeff without arguments.
 			if args.snpeff:
 				opt = '-'+' -'.join(args.snpeff)
 				my_args = my_interval + " " + opt \
