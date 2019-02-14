@@ -377,7 +377,7 @@ def annotation(args):
 				while process_d.wait() is None:
 					pass
 				process_d.stdout.close()
-				#os.remove('out.gff')
+				os.remove('out.gff')
 				os.remove('Bcftools/hdr.txt')
 				for vcffile in os.listdir('Bcftools'):
 					if fnmatch.fnmatch(vcffile, '*'+args.feature+'_snpeff_annotated.vcf'+'*'):
