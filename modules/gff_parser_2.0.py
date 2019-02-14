@@ -9,9 +9,6 @@ import subprocess
 # which will work as input in the annoation function 
 # in the pipeline if args.gff and args.feature are used.
 #######################################################
-gff = '../../../Skeletonema_marinoi_Ref_v1.1_Primary.all.gff'
-feature = 'CDS'
-contigsizes = 'chrom.genome'
 #sorted_gff =
 intergenic_sorted_bed = 'intergenic_regions_sorted.bed'
 exon_sorted_bed = 'exon_sorted.bed'
