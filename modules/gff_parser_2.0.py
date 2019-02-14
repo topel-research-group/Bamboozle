@@ -17,6 +17,7 @@ intergenic_sorted_bed = 'intergenic_regions_sorted.bed'
 exon_sorted_bed = 'exon_sorted.bed'
 exon_intergenic_sorted_bed = 'tmp.exon_intergenic_sorted.txt'
 intron_sorted_bed = 'introns_sorted.bed'
+out = 'out.gff'
 
 #######################################################
 def main(gff, feature, contigsizes):
@@ -37,7 +38,7 @@ def main(gff, feature, contigsizes):
 		cmd2 = ('''awk '{if ($3 == "exon") print $1, $4, $5}' %s \
 			| tr " " "\\t" > %s''') \
 		% (gff, \
-		exon_sorted_bed)
+		out)
 		process2 = subprocess.Popen(cmd2, \
 			stdout=subprocess.PIPE, \
 			shell=True)
@@ -63,7 +64,7 @@ def main(gff, feature, contigsizes):
 		cmd1 = ('bedtools complement -i %s -g %s > %s') \
 		% (gff, \
 		contigsizes, \
-		intergenic_sorted_bed)
+		out)
 		process1 = subprocess.Popen(cmd1, \
 			stdout=subprocess.PIPE, \
 			shell=True)
@@ -125,7 +126,7 @@ def main(gff, feature, contigsizes):
 		cmd4 = ('bedtools complement -i %s -g %s > %s') \
 		% (exon_intergenic_sorted_bed, \
 		contigsizes, \
-		intron_sorted_bed)
+		out)
 		process4 = subprocess.Popen(cmd4, \
 			stdout=subprocess.PIPE, \
 			shell=True)
@@ -133,8 +134,9 @@ def main(gff, feature, contigsizes):
 			pass
 		process4.stdout.close()
 		
-		# Remove exon file when done.
-		#os.remove('exon.bed')
+		# Remove exon and intergenic regions files when done.
+		os.remove('intergenic_regions_sorted.bed')
+		os.remove('exon_sorted.bed')
 
 	else:
 		gff_path = os.path.dirname(gff)  
