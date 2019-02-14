@@ -8,7 +8,7 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 
 ## Features  
 * This pipeline will give you a summary of the analysis in table format with effect prediction and annotated variants  
-* Fst statistics on the results can be made with the additional program `fst.py`, this will give you a table with Fst statistics and a plot of the Fst results
+* Fst can be calculated using the utility scripts `vcftools_fst.py` or `angsd_fst.py`, this will give you a table with Fst values and a plot of the results
 * If you want to plot a specific contig use the additional program `make_plot.py`
 
 ## Usage  
