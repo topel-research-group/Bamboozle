@@ -39,6 +39,7 @@ parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
 parser.add_argument("-b", "--bamfile", help="BAM infile")  
 parser.add_argument("--sortbam", help="Sorted BAM infile")  
 parser.add_argument("--gff", help="gff infile")  
+parser.add_argument("--contigsizes", help="Contig sizes for gff parser")  
 parser.add_argument("--feature", help="Feature for gff parser")  
 parser.add_argument("-t", "--threads", default=1, help="Threads")
 parser.add_argument("-e", "--snpeff", nargs='*', \
@@ -295,8 +296,8 @@ def annotation(args):
 			my_output = annotated_vcf
 			my_interval = ""
 			if args.gff and args.feature:
-				from modules.parse_gff import main as parse
-				parse(args.gff, args.feature)
+				from modules.parse_gff_2 import main as parse
+				parse(args.gff, args.feature, args.contigsizes)
 				out = add + 'out.gff'	
 				my_interval = "-interval %s" % out
 				my_output = name + '_' + args.feature + '_snpeff_annotated.vcf'
