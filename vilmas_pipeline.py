@@ -294,7 +294,7 @@ def annotation(args):
 				from modules.parse_gff_2 import main as parse
 				parse(args.gff, args.feature, args.contigsizes)
 				out = add + 'out.gff'	
-				my_interval = "-interval %s" % out
+				my_interval = "-fi %s" % out
 				my_output = name + '_' + args.feature + '_snpeff_annotated.vcf'
 
 			# If you want to specify options yourself.
