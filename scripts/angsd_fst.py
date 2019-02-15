@@ -40,6 +40,8 @@ parser.add_argument("--gff", \
 		help="Path to gff file")
 parser.add_argument("--feature", \
 		help="Name of feature")
+parser.add_argument("--contigsizes", \
+		help="Contig sizes for gff parser")
 args = parser.parse_args()
 
 #######################################################################
