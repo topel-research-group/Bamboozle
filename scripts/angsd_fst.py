@@ -164,7 +164,7 @@ def angsd():
 		process2.stdout.close()
 
 	# Calculate 2dsfs prior.
-	cmd3 = ('/usr/local/packages/angsd-0.918/angsd/misc/realSFS \
+	cmd3 = ('/usr/local/packages/angsd-0.923/angsd/misc/realSFS \
 		pop1.saf.idx pop2.saf.idx -P %s > pop1.pop2.ml') % ('$NSLOTS')
 	process3 = subprocess.Popen(cmd3, \
 		stdout=subprocess.PIPE, \
@@ -175,7 +175,7 @@ def angsd():
 	process3.stdout.close()
 
 	# Index and prepare for fst analysis and easy sliding window analysis.
-	cmd4 = ['/usr/local/packages/angsd-0.918/angsd/misc/realSFS', \
+	cmd4 = ['/usr/local/packages/angsd-0.923/angsd/misc/realSFS', \
 		'fst', 'index', 'pop1.saf.idx', 'pop2.saf.idx', \
 		'-sfs', 'pop1.pop2.ml', \
 		'-fstout', 'pop1.pop2']
@@ -187,7 +187,7 @@ def angsd():
 	process4.stdout.close()
 
 	# Global Fst estimate,log = Fst.Unweight Fst.Weight.
-	cmd5 = ('/usr/local/packages/angsd-0.918/angsd/misc/realSFS \
+	cmd5 = ('/usr/local/packages/angsd-0.923/angsd/misc/realSFS \
 		fst stats pop1.pop2.fst.idx > angsd_fst_estimate.log')
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
@@ -199,7 +199,7 @@ def angsd():
 
 	# Print stdout of Fst analysis to file, tab-separated.
 	# Columns: CHROM, POS, (a), (a+b).
-	cmd6 = ('/usr/local/packages/angsd-0.918/angsd/misc/realSFS \
+	cmd6 = ('/usr/local/packages/angsd-0.923/angsd/misc/realSFS \
 		fst print %s > %s') \
 		% ('pop1.pop2.fst.idx', fst_print)
 	process6 = subprocess.Popen(cmd6, \
@@ -269,7 +269,7 @@ def angsd():
 def sliding_window():
 	# Using sliding window.
 	# Requires pop1.pop2.fst.idx as input.
-	cmdw = ('/usr/local/packages/angsd-0.918/angsd/misc/realSFS \
+	cmdw = ('/usr/local/packages/angsd-0.923/angsd/misc/realSFS \
 		fst stats2 pop1.pop2.fst.idx -win %s -step %s > %s') \
 		% (args.window, args.step, slidingwindow)
 	processw = subprocess.Popen(cmdw, \
