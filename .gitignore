@@ -1,4 +1,9 @@
-Coverage_test_101.txt
+*.txt
+*.bed
+*.bam
+*.bai
+_*
+test*
 template_engine.py
 example/
 tmp/
