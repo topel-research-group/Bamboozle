@@ -113,12 +113,12 @@ def main(args):
 	# Plot the results.
 	df = pd.DataFrame({'Temperature': temp, 'Location': loc, 'Time': time})
 	ax = df.plot(kind='box',
-		color=dict(boxes='r', whiskers='black', medians='r', caps='black'),
+		color=dict(boxes='black', whiskers='black', medians='r', caps='black'),
 		flierprops=dict(linestyle='-', linewidth=1.5),
 		medianprops=dict(linestyle='-', linewidth=1.5),
 		whiskerprops=dict(linestyle='-', linewidth=1.5),
 		capprops=dict(linestyle='-', linewidth=1.5),
-		showfliers=False, grid=False, rot=0)
+		showfliers=False, meanline=True, showmeans=True, grid=False, rot=0)
 	ax.set_ylabel('Fst')
 	plt.savefig('environmental_' + fst_name + '_plot.png')
 
