@@ -67,33 +67,6 @@ def angsd():
 	if not os.path.exists('ANGSD'):
 		os.makedirs('ANGSD')
 
-	if args.gff and args.feature:
-		import sys
-		sys.path.append('/proj/data11/vilma/Pipeline_vilma/')
-		from modules.parse_gff_2 import main as parse
-		parse(args.gff, args.feature, args.contigsizes)
-		out = add + 'out.gff'
-#		cmd_0 = ("cat %s \
-#			| cut -f1,4,5 \
-#			| sort -k1,1 -k2V \
-#			> region_file.txt") \
-#			% (out) 
-#		process_0 = subprocess.Popen(cmd_0, \
-#			stdout=subprocess.PIPE, \
-#			shell=True, \
-#			cwd='ANGSD')
-#		while process_0.wait() is None:
-#			pass
-#		process_0.stdout.close()
-
-		cmd_00 = ['angsd', 'sites', 'index', 'out.gff'] 
-		process_00 = subprocess.Popen(cmd_00, \
-			stdout=subprocess.PIPE, \
-			cwd='.')
-		while process_00.wait() is None:
-			pass
-		process_00.stdout.close()
-
 	directories1 = args.pop1 + '/*/Bowtie2/*.bam'
 	bam_list1 = glob.glob(directories1)
 	myfile = open("bam_list1.txt","w")
@@ -111,13 +84,36 @@ def angsd():
 	myfile2.close()
 
 	if args.gff and args.feature:
+		import sys
+		sys.path.append('/proj/data11/vilma/Bamboozle/vilmas_pipeline/')
+		from modules.parse_gff_2 import main as parse
+		parse(args.gff, args.feature, args.contigsizes)
+		out = add + 'out.gff'
+		cmd_0 = ('''awk '{print $1"\\t"$2+1"\\t"$3}' %s > region_file.txt''') \
+			% (out) 
+		process_0 = subprocess.Popen(cmd_0, \
+			stdout=subprocess.PIPE, \
+			shell=True, \
+			cwd='ANGSD')
+		while process_0.wait() is None:
+			pass
+		process_0.stdout.close()
+
+		cmd_00 = ['angsd', 'sites', 'index', 'region_file.txt'] 
+		process_00 = subprocess.Popen(cmd_00, \
+			stdout=subprocess.PIPE, \
+			cwd='ANGSD')
+		while process_00.wait() is None:
+			pass
+		process_00.stdout.close()
+
 		# Calculate per pop site allele freq.
 		cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop1', \
 			'-dosaf', '1', \
 			'-gl', '1', \
-			'-sites', out]	
+			'-sites', 'region_file.txt']	
 		process1 = subprocess.Popen(cmd1, \
 			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
@@ -130,7 +126,7 @@ def angsd():
 			'-out', 'pop2', \
 			'-dosaf', '1', \
 			'-gl', '1', \
-			'-sites', out]	
+			'-sites', 'region_file.txt']	
 		process2 = subprocess.Popen(cmd2, \
 			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
