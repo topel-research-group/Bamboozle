@@ -71,7 +71,7 @@ def angsd():
 		import sys
 		sys.path.append('/proj/data11/vilma/Pipeline_vilma/')
 		from modules.parse_gff_2 import main as parse
-		parse(args.gff, args.feature)
+		parse(args.gff, args.feature, args.contigsizes)
 		out = add + 'out.gff'
 #		cmd_0 = ("cat %s \
 #			| cut -f1,4,5 \
@@ -86,10 +86,10 @@ def angsd():
 #			pass
 #		process_0.stdout.close()
 
-		cmd_00 = ['angsd', 'sites', 'index', out] 
+		cmd_00 = ['angsd', 'sites', 'index', 'out.gff'] 
 		process_00 = subprocess.Popen(cmd_00, \
 			stdout=subprocess.PIPE, \
-			cwd='ANGSD')
+			cwd='.')
 		while process_00.wait() is None:
 			pass
 		process_00.stdout.close()
@@ -117,7 +117,7 @@ def angsd():
 			'-out', 'pop1', \
 			'-dosaf', '1', \
 			'-gl', '1', \
-			'-sites', 'region_file.txt']	
+			'-sites', out]	
 		process1 = subprocess.Popen(cmd1, \
 			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
@@ -130,7 +130,7 @@ def angsd():
 			'-out', 'pop2', \
 			'-dosaf', '1', \
 			'-gl', '1', \
-			'-sites', 'region_file.txt']	
+			'-sites', out]	
 		process2 = subprocess.Popen(cmd2, \
 			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
