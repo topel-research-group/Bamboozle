@@ -1,0 +1,9 @@
+#$ -cwd
+#$ -q Annotation-2 
+#$ -pe mpich 40
+#$ -S /bin/bash
+
+module load seqtk/v1.2-r94 
+
+/usr/local/git/shell_scripts_Alvar/mapping_filtering.sh -t $NSLOTS -d ../example_data/test_Skeletonema_marinoi_Ref.txt -1 ../Pop_1/P8352_103/P8352_103_S40_L004_R1_001.fastq.gz -2 ../Pop_1/P8352_103/P8352_103_S40_L004_R2_001.fastq.gz -n test_P8352_103
+

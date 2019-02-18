@@ -1,0 +1,27 @@
+#$ -cwd
+#$ -q Annotation-3 
+#$ -pe mpich 40 
+#$ -S /bin/bash
+
+module load Bowtie2/v2.3.3.1
+module load samtools/v1.9
+module load bcftools/v1.9
+module load snpEff/v.4.3t
+
+#./vilmas_pipeline.py -t $NSLOTS -f /proj/data11/Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -b P8352_102.bam 
+#./vilmas_pipeline.py -t $NSLOTS -f /proj/data11/Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -c  
+
+# Loop through the Population directories, if 'pipeline.done' exists continue otherwise execute pipeline
+for DIR in `find Pop_*/* -maxdepth 0 -type d`; do
+        if [ -f ${DIR}/pipeline.done ]; then
+                continue
+        else
+	cd ${DIR}/
+	/proj/data11/vilma/Pipeline_vilma/vilmas_pipeline.py -t $NSLOTS -f ../../../../../Skeletonema_marinoi_Ref_v1.1_Primary.all.fst -F *R1*fastq.gz -R *R2*fastq.gz -r -p 
+	cd ../..
+	fi
+done
+
+# Do Fst statistics
+/proj/data11/vilma/Pipeline_vilma/scripts/fst.py --pop1 Pop_1/ --pop2 Pop_2/ --clean
+
