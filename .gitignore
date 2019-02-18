@@ -8,4 +8,4 @@ template_engine.py
 example/
 tmp/
 *~
-dev/*
+vilmas_pipeline/dev/*
