@@ -26,9 +26,9 @@ BAM file as input:
 ***  
 | Utility script | Description |  
 |---|---|  
-|[`angsd_fst.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Fst statistics using BAM file from the SAMtools step as input. Uses genotype likelihoods to calculate Fst values, preferred if coverage is low or medium.|  
-|[`vcftools_fst.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Fst statistics using VCFtools --weir-fst-pop takes vcf files from the SnpEff step as input.|  
-|[`make_plot.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Makes an interactive plot of either the ANGSD csv results or the VCFtools csv results by specifying the contig you want to plot. Outputs a html file.|
+|[`angsd_fst.py`](https://github.com/topel-research-group/Bamboozle/wiki/Manual)| Fst statistics using BAM file from the SAMtools step as input. Uses genotype likelihoods to calculate Fst values, preferred if coverage is low or medium.|  
+|[`vcftools_fst.py`](https://github.com/topel-research-group/Bamboozle/wiki/Manual)| Fst statistics using VCFtools --weir-fst-pop takes vcf files from the SnpEff step as input.|  
+|[`make_plot.py`](https://github.com/topel-research-group/Bamboozle/wiki/Manual)| Makes an interactive plot of either the ANGSD csv results or the VCFtools csv results by specifying the contig you want to plot. Outputs a html file.|
 
 ## Dependencies
 
@@ -40,5 +40,5 @@ BAM file as input:
 |`make_plot` | Highcharts/v6.2.0 |  
 
 ## More information  
-* [Wiki](https://github.com/topel-research-group/Pipeline_vilma/wiki)  
+* [Wiki](https://github.com/topel-research-group/Bamboozle/wiki)  
 
