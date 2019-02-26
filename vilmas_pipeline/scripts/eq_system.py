@@ -119,7 +119,7 @@ def main(args):
 		whiskerprops=dict(linestyle='-', linewidth=1.5),
 		capprops=dict(linestyle='-', linewidth=1.5),
 		showfliers=False, meanline=True, showmeans=True, grid=False, rot=0)
-	ax.set_ylabel('Fst')
+	ax.set_ylabel('Value')
 	plt.savefig('environmental_' + fst_name + '_plot.png')
 
 if __name__ == "__main__":
