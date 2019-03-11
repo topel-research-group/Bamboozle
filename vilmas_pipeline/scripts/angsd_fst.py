@@ -411,18 +411,13 @@ def plot():
 
 def main():
 	if args.window and args.step:
-		if args.gff and args.feature:
+		try:
+			sliding_window()
+			plot()
+		except:
 			angsd()
 			sliding_window()
 			plot()
-		else:
-			try:
-				sliding_window()
-				plot()
-			except:
-				angsd()
-				sliding_window()
-				plot()
 	else:
 		angsd()
 		plot()
