@@ -139,6 +139,8 @@ This is a stripped-down version of the `median-all` function, providing a simpli
     * Speed is definitely an issue here...
 * Code can be simplified thanks to this flag...
 
+* Add function for giving MEAN average, instead of/as well as median
+
 ## Known bugs
 In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
 together in the output
