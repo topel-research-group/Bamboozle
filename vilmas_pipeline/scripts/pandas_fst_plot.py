@@ -88,6 +88,10 @@ def plot():
 	df['ind'] = range(len(df))
 	df_grouped = df.groupby(('code'))
 
+	names = dict( enumerate(df['CHROM'].cat.categories ))
+#	print(df_grouped['code'].cat.codes)
+#	print(names)
+
 	fig = plt.figure(figsize=(80,20))
 	ax = fig.add_subplot(111)
 	colors = ['green', 'turquoise','blue','purple','red','orange', 'yellow']
@@ -105,6 +109,15 @@ def plot():
 		ax.set_ylabel('Fst value', fontsize=24)
 		ax.set_title('Fst', fontsize=40)
 		plt.tick_params(axis='x', length=0.01)
+	
+	legend_list=[]
+	for key, value in names.items():
+		temp = [key,value]
+		legend_list.append(temp)
+#	legend_str = ''.join(legend_list)
+
+	plt.legend(legend_list,bbox_to_anchor=(1.05, 1), ncol=5, borderaxespad=0)
+	
 
 	# Save plot as image
 	plt.savefig("Fst_plot.png")
