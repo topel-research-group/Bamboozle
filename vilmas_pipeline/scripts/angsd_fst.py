@@ -9,6 +9,7 @@ import argparse
 import fnmatch
 import os
 import glob
+import time
 
 import pandas as pd
 import numpy as np
@@ -89,6 +90,9 @@ def angsd():
 		from modules.parse_gff_2 import main as parse
 		parse(args.gff, args.feature, args.contigsizes)
 		out = add + 'out.gff'
+		time.sleep(10)
+
+	if args.gff and args.feature:
 		cmd_0 = ('''awk '{print $1"\\t"$2+1"\\t"$3}' %s > region_file.txt''') \
 			% (out) 
 		process_0 = subprocess.Popen(cmd_0, \
@@ -98,7 +102,8 @@ def angsd():
 		while process_0.wait() is None:
 			pass
 		process_0.stdout.close()
-
+		time.sleep(20)
+		
 		cmd_00 = ['angsd', 'sites', 'index', 'region_file.txt'] 
 		process_00 = subprocess.Popen(cmd_00, \
 			stdout=subprocess.PIPE, \
@@ -405,6 +410,17 @@ def plot():
 				ax.set_ylabel('Fst value', fontsize=24)
 				ax.set_title('Weir and Cockerham Fst', fontsize=40)
 				plt.tick_params(axis='x', length=0.01)
+
+			# Add legend with key values paired with the name of the contig.
+			legend_list=[]
+			for key, value in names.items():
+				temp = [key,value]
+				legend_list.append(temp)
+
+			plt.legend(legend_list,bbox_to_anchor=(1.01, 1), \
+						ncol=5, \
+						borderaxespad=0)
+			plt.tight_layout(pad=7)
 
 			# Save plot as png. 
 			plt.savefig("ANGSD/Fst_plot.png")
