@@ -479,8 +479,19 @@ def plot():
 				ax.set_title('Weir and Cockerham Fst', fontsize=40)
 				plt.tick_params(axis='x', length=0.01)
 
+			# Add legend with key values paired with the name of the contig.
+			legend_list=[]
+			for key, value in names.items():
+				temp = [key,value]
+				legend_list.append(temp)
+
+			plt.legend(legend_list,bbox_to_anchor=(1.01, 1), \
+						ncol=5, \
+						borderaxespad=0)
+			plt.tight_layout(pad=7)
+
 			# Save plot as pdf. 
-			plt.savefig("Fst_stats/Fst_plot.pdf")
+			plt.savefig("Fst_stats/Fst_plot_vcftools.pdf")
 def main():
 	# Making directory for Fst-results, 
 	# input-files to pandas and matplotlib.
