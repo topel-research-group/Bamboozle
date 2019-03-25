@@ -452,6 +452,7 @@ def plot():
 			# from the Fst analysis to "df".
 			df = read_and_optimized
 			df['code'] = chrom_cat.cat.codes
+			names = dict( enumerate(df['CHROM'].cat.categories ))
 
 			# Make plot of data.
 			df['ind'] = range(len(df))
