@@ -114,10 +114,10 @@ def plot():
 	for key, value in names.items():
 		temp = [key,value]
 		legend_list.append(temp)
-#	legend_str = ''.join(legend_list)
-
-	plt.legend(legend_list,bbox_to_anchor=(1.05, 1), ncol=5, borderaxespad=0)
 	
+	# Add legend with key values paired with the name of the contig.
+	plt.legend(legend_list,bbox_to_anchor=(1.01, 1), ncol=5, borderaxespad=0)
+	plt.tight_layout(pad=7)	
 
 	# Save plot as image
 	plt.savefig("Fst_plot.png")
