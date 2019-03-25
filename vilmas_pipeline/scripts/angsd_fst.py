@@ -423,7 +423,7 @@ def plot():
 			plt.tight_layout(pad=7)
 
 			# Save plot as png. 
-			plt.savefig("ANGSD/Fst_plot.png")
+			plt.savefig("ANGSD/Fst_plot_angsd.png")
 
 def main():
 	if args.window and args.step:
