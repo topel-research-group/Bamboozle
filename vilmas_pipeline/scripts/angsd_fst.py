@@ -388,6 +388,7 @@ def plot():
 			# Make plot of data.
 			df['ind'] = range(len(df))
 			df_grouped = df.groupby(('code'))
+			names = dict( enumerate(df['CHROM'].cat.categories ))
 			fig = plt.figure(figsize=(80, 20))
 			ax = fig.add_subplot(111)
 			colors = ['green', 'turquoise', \
