@@ -91,8 +91,6 @@ def angsd():
 		parse(args.gff, args.feature, args.contigsizes)
 		out = add + 'out.gff'
 
-	if args.gff and args.feature:
-		# Convert bed file to angsd format using awk. 
 		cmd_0 = ('''awk '{print $1"\\t"$2+1"\\t"$3}' %s > region_file.txt''') \
 			% (out) 
 		process_0 = subprocess.Popen(cmd_0, \
