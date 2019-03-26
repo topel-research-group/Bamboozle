@@ -86,7 +86,7 @@ def angsd():
 
 	if args.gff and args.feature:
 		import sys
-		sys.path.append('/proj/data11/vilma/Bamboozle/vilmas_pipeline/')
+		#sys.path.append('/proj/data11/vilma/Bamboozle/vilmas_pipeline/')
 		from modules.parse_gff_2 import main as parse
 		parse(args.gff, args.feature, args.contigsizes)
 		out = add + 'out.gff'
