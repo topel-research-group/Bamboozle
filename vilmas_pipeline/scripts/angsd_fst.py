@@ -90,20 +90,22 @@ def angsd():
 		from modules.parse_gff_2 import main as parse
 		parse(args.gff, args.feature, args.contigsizes)
 		out = add + 'out.gff'
-		time.sleep(10)
 
 	if args.gff and args.feature:
+		# Convert bed file to angsd format using awk. 
 		cmd_0 = ('''awk '{print $1"\\t"$2+1"\\t"$3}' %s > region_file.txt''') \
 			% (out) 
 		process_0 = subprocess.Popen(cmd_0, \
-			stdout=subprocess.PIPE, \
 			shell=True, \
+			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
-		while process_0.wait() is None:
-			pass
+		if process_0.returncode == 0:
+			process_0.stdout.close()
+		else:
+			time.sleep(10)
 		process_0.stdout.close()
-		time.sleep(20)
-		
+
+		# Index filter file.
 		cmd_00 = ['angsd', 'sites', 'index', 'region_file.txt'] 
 		process_00 = subprocess.Popen(cmd_00, \
 			stdout=subprocess.PIPE, \
