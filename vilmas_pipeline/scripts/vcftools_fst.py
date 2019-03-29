@@ -436,11 +436,14 @@ def plot():
 			# from the Fst analysis to "df".
 			df = read_and_optimized
 			df['code'] = chrom_cat.cat.codes
+
+			df['ind'] = range(len(df))
+			df_grouped = df.groupby(('code'))
+
+			# Dict for the contig names and index number.
 			names = dict( enumerate(df['CHROM'].cat.categories ))
 
 			# Make plot of data.
-			df['ind'] = range(len(df))
-			df_grouped = df.groupby(('code'))
 			fig = plt.figure(figsize=(80, 20))
 			ax = fig.add_subplot(111)
 			colors = ['green', 'turquoise', \
