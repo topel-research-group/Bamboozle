@@ -12,9 +12,6 @@ import glob
 import time
 
 import pandas as pd
-import numpy as np
-from scipy.stats import uniform
-from scipy.stats import randint
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
@@ -60,8 +57,8 @@ fst_csv = 'angsd_fst_headers.csv'
 add = '../'
 if args.gff and args.feature:
 	fst_csv = 'angsd_fst_headers' + '_' + args.feature+ '.csv'
-#######################################################################
 
+#######################################################################
 
 def angsd():
 	# Make directory for angsd output. 
@@ -113,7 +110,9 @@ def angsd():
 		process_00.stdout.close()
 
 		# Calculate per pop site allele freq.
-		cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
+		cmd1 = ['angsd', \
+			'-P', '$NSLOTS', \
+			'-b', '../bam_list1.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop1', \
 			'-dosaf', '1', \
@@ -126,7 +125,9 @@ def angsd():
 			pass
 		process1.stdout.close()
 
-		cmd2 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list2.txt', \
+		cmd2 = ['angsd', \
+			'-P', '$NSLOTS', \
+			'-b', '../bam_list2.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop2', \
 			'-dosaf', '1', \
@@ -140,7 +141,9 @@ def angsd():
 		process2.stdout.close()
 	else:
 		# Calculate per pop site allele freq.
-		cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
+		cmd1 = ['angsd', \
+			'-P', '$NSLOTS', \
+			'-b', '../bam_list1.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop1', \
 			'-dosaf', '1', '-gl', \
@@ -152,7 +155,9 @@ def angsd():
 			pass
 		process1.stdout.close()
 
-		cmd2 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list2.txt', \
+		cmd2 = ['angsd', \
+			'-P', '$NSLOTS', \
+			'-b', '../bam_list2.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop2', \
 			'-dosaf', '1', \
@@ -166,7 +171,8 @@ def angsd():
 
 	# Calculate 2dsfs prior.
 	cmd3 = ('realSFS \
-		pop1.saf.idx pop2.saf.idx -P %s > pop1.pop2.ml') % ('$NSLOTS')
+		pop1.saf.idx pop2.saf.idx -P %s > pop1.pop2.ml') \
+		% ('$NSLOTS')
 	process3 = subprocess.Popen(cmd3, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -385,10 +391,13 @@ def plot():
 			df = read_and_optimized
 			df['code'] = chrom_cat.cat.codes
 
-			# Make plot of data.
 			df['ind'] = range(len(df))
 			df_grouped = df.groupby(('code'))
+
+			# Dict for the contig names and index number.
 			names = dict( enumerate(df['CHROM'].cat.categories ))
+
+			# Make plot of data.
 			fig = plt.figure(figsize=(80, 20))
 			ax = fig.add_subplot(111)
 			colors = ['green', 'turquoise', \
@@ -412,7 +421,8 @@ def plot():
 				ax.set_title('Weir and Cockerham Fst', fontsize=40)
 				plt.tick_params(axis='x', length=0.01)
 
-			# Add legend with key values paired with the name of the contig.
+			# Add legend with key values paired with 
+			# the name of the contig.
 			legend_list=[]
 			for key, value in names.items():
 				temp = [key,value]
