@@ -6,13 +6,13 @@
 
 import argparse
 import pandas as pd
-import numpy as np
-from scipy.stats import uniform
-from scipy.stats import randint
 import matplotlib.pyplot as plt
-import logging
+
+from functools import wraps
+from time import time
 
 #######################################################################
+
 parser = argparse.ArgumentParser(prog="pandas_fst_plot.py")
 parser.add_argument("-i", "--inputfile", \
                 required=True, \
@@ -26,10 +26,8 @@ args = parser.parse_args()
 
 inputfile = args.inputfile
 yaxis = args.yaxis
-#######################################################################
-from functools import wraps
-from time import time
 
+#######################################################################
 
 def timing(function):
     @wraps(function)
@@ -43,10 +41,10 @@ def timing(function):
 
 @timing
 def plot():
-	# Import csv from Fst statstics with vcftools
+	# Import csv from Fst statstics with vcftools.
 	gl = pd.read_csv(inputfile)
 
-	# Optimize memory usage
+	# Optimize memory usage.
 	gl_int = gl.select_dtypes(include=['int'])
 	converted_int = gl_int.apply(pd.to_numeric,downcast='unsigned')
 	gl_float = gl.select_dtypes(include=['float'])
@@ -56,13 +54,13 @@ def plot():
 	optimized_gl[converted_float.columns] = converted_float
 	gl_obj = gl.select_dtypes(include=['object']).copy()
 
-	# Convert CHROM column from object to category
+	# Convert CHROM column from object to category.
 	chrom = gl_obj.CHROM
 	chrom_cat = chrom.astype('category')
 	converted_obj = pd.DataFrame()
 
 	# If unique values are more than 50% of the data don't convert to category, 
-	# it will not optimize memory usage
+	# it will not optimize memory usage.
 	for col in gl_obj.columns:
 		num_unique_values = len(gl_obj[col].unique())
 		num_total_values = len(gl_obj[col])
@@ -71,7 +69,7 @@ def plot():
 		else:
 			converted_obj.loc[:,col] = gl_obj[col]
 
-	# Apply on the csv file        
+	# Apply on the csv file.        
 	optimized_gl[converted_obj.columns] = converted_obj
 	dtypes_col = optimized_gl.dtypes.index
 	dtypes_type = [i.name for i in optimized_gl.dtypes.values]
@@ -80,18 +78,17 @@ def plot():
 	read_and_optimized = pd.read_csv(inputfile, \
 					dtype=column_types)
 
-	# Rename read and optimized csv file from the Fst analysis to "df"
+	# Rename read and optimized csv file from the Fst analysis to "df".
 	df = read_and_optimized 
 	df['code'] = chrom_cat.cat.codes
 
-	# Make plot of data
 	df['ind'] = range(len(df))
 	df_grouped = df.groupby(('code'))
 
+	# Dict for the contig names and index number.
 	names = dict( enumerate(df['CHROM'].cat.categories ))
-#	print(df_grouped['code'].cat.codes)
-#	print(names)
 
+	# Make plot of data.
 	fig = plt.figure(figsize=(80,20))
 	ax = fig.add_subplot(111)
 	colors = ['green', 'turquoise','blue','purple','red','orange', 'yellow']
@@ -110,16 +107,16 @@ def plot():
 		ax.set_title('Fst', fontsize=40)
 		plt.tick_params(axis='x', length=0.01)
 	
+	# Add legend with key values paired with the name of the contig.
 	legend_list=[]
 	for key, value in names.items():
 		temp = [key,value]
 		legend_list.append(temp)
 	
-	# Add legend with key values paired with the name of the contig.
 	plt.legend(legend_list,bbox_to_anchor=(1.01, 1), ncol=5, borderaxespad=0)
 	plt.tight_layout(pad=7)	
 
-	# Save plot as image
+	# Save plot as image.
 	plt.savefig("Fst_plot.png")
 
 if __name__ == "__main__":
