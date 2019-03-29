@@ -359,7 +359,8 @@ def sliding_window():
 			processf.stdout.close()
 
 			# Add headers. 
-			cmdg = ('echo -e "CHROM\\tPOS\\tWEIR_AND_COCKERHAM_FST" | cat - %s > %s') \
+			cmdg = ('echo -e "CHROM\\tPOS\\tWEIR_AND_COCKERHAM_FST" \
+				| cat - %s > %s') \
 				% (rm_headers, fst_headers)
 			processg = subprocess.Popen(cmdg, \
 				stdout=subprocess.PIPE, \
