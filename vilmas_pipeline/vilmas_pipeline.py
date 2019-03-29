@@ -33,23 +33,39 @@ import datetime
 #######################################################################
 
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-f", "--ref", required=True, help="Reference")
-parser.add_argument("-F", "--forward", nargs='*', help="Forward reads")
-parser.add_argument("-R", "--reverse", nargs='*', help="Reverse reads")
-parser.add_argument("-b", "--bamfile", help="BAM infile")  
-parser.add_argument("--sortbam", help="Sorted BAM infile")  
-parser.add_argument("--gff", help="gff infile")  
-parser.add_argument("--contigsizes", help="Contig sizes for gff parser")  
-parser.add_argument("--feature", help="Feature for gff parser")  
-parser.add_argument("-t", "--threads", default=1, help="Threads")
-parser.add_argument("-e", "--snpeff", nargs='*', \
-			help="Input options for snpeff, \
-			without the '-' before")
-parser.add_argument("-s", "--snpsift", action="store_true", \
+parser.add_argument("-f", "--ref", \
+			required=True, \
+			help="Reference")
+parser.add_argument("-F", "--forward", \
+			nargs='*', \
+			help="Forward reads")
+parser.add_argument("-R", "--reverse", \
+			nargs='*', \
+			help="Reverse reads")
+parser.add_argument("-b", "--bamfile", \
+			help="BAM infile")  
+parser.add_argument("--sortbam", \
+			help="Sorted BAM infile")  
+parser.add_argument("--gff", \
+			help="gff infile")  
+parser.add_argument("--contigsizes", \
+			help="Contig sizes for gff parser")  
+parser.add_argument("--feature", \
+			help="Feature for gff parser")  
+parser.add_argument("-t", "--threads", \
+			default=1, \
+			help="Threads")
+parser.add_argument("-e", "--snpeff", \
+			nargs='*', \
+			help="Input options for snpeff, without the '-' before")
+parser.add_argument("-s", "--snpsift", \
+			action="store_true", \
 			help="Run snpSift")
-parser.add_argument("-r", "--clean", action="store_true", \
+parser.add_argument("-r", "--clean", \
+			action="store_true", \
 			help="Removes the SAM and BAM files")
-parser.add_argument("-p", "--done", action="store_true", \
+parser.add_argument("-p", "--done", \
+			action="store_true", \
 			help="Add an empty file to mark the directory as done")
 args = parser.parse_args()
 
@@ -57,6 +73,7 @@ if args.feature and args.gff is None:
 	parser.error("--feature requires --gff")
 elif args.gff and args.feature is None:
 	parser.error("--feature requires --gff")
+
 #######################################################################
 
 current_directory = os.getcwd()
@@ -67,6 +84,7 @@ threads = str(args.threads)
 base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam' 
+
 if args.sortbam:
 	sorted_bam_out = add + str(args.sortbam)
 else:
@@ -137,8 +155,14 @@ def bowtie2(args):
 	# fastq files (forward and reverse) the output is a SAM file.
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
-			cmd2 = ['bowtie2', '-p', threads, '--no-unal', '--very-sensitive', \
-			'-x', base, '-1', file1, '-2', file2, '-S', sam]	
+			cmd2 = ['bowtie2', \
+				'-p', threads, \
+				'--no-unal', \
+				'--very-sensitive', \
+				'-x', base, \
+				'-1', file1, \
+				'-2', file2, \
+				'-S', sam]	
 			process2 = subprocess.Popen(cmd2, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -154,7 +178,11 @@ def samtools_view():
 	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
-			cmd3 = ('samtools view -@ %s -Sb %s > %s') % (args.threads, sam, bam)
+			cmd3 = ('samtools view \
+				-@ %s \
+				-Sb %s \
+				> %s') \
+				% (args.threads, sam, bam)
 			process3 = subprocess.Popen(cmd3, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -171,7 +199,10 @@ def samtools_sort():
 	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
-			cmd4 = ['samtools', 'sort', '-@', '$NSLOTS', bam, '-o', sorted_bam_out]
+			cmd4 = ['samtools', 'sort', \
+				'-@', '$NSLOTS', \
+				bam, \
+				'-o', sorted_bam_out]
 			process4 = subprocess.Popen(cmd4, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -185,7 +216,9 @@ def samtools_sort():
 @timing
 def bam_input(args):
 	log_file=open('pipeline.log','a')
-	cmd5 = ['samtools', 'sort', '-@', '$NSLOTS', add+args.bamfile, \
+	cmd5 = ['samtools', 'sort', \
+		'-@', '$NSLOTS', \
+		add+args.bamfile, \
 		'-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, \
 		stdout=subprocess.PIPE, \
@@ -202,7 +235,8 @@ def samtools_index():
 	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd6 = ['samtools','index', sorted_bam_out, sorted_bam_bai]
+			cmd6 = ['samtools','index', \
+				sorted_bam_out, sorted_bam_bai]
 			process6 = subprocess.Popen(cmd6, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -248,7 +282,7 @@ def bcftools(args):
 			process7.stdout.close()
 	log_file.close()
 				
-# Checks for dependencies required for snpEff 
+# Checks for dependencies required for snpEff. 
 def snpEff_test():
 	# Checks if there is a Skeletonema database, 
 	# if it doesn't exists the program will exit 
@@ -262,7 +296,7 @@ def snpEff_test():
 			print('snpEff: Skeletonema database not found, exit program...')
 			exit()
 
-	# Try to import gffutils if gff and feature flag is used	
+	# Try to import gffutils if gff and feature flag is used.	
 	if args.gff and args.feature:
 		try:
 			import gffutils
@@ -308,7 +342,8 @@ def annotation(args):
 					" Skeletonema_marinoi_v1.1.1.1 \
 					-stats snpEff_summary.html"
 
-			cmd8 = ("snpEff	%s %s > %s") % (my_args, bcftools_out, my_output)
+			cmd8 = ("snpEff	%s %s > %s") \
+				% (my_args, bcftools_out, my_output)
 			process8 = subprocess.Popen(cmd8, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -318,7 +353,8 @@ def annotation(args):
 				pass
 			process8.stdout.close()
 
-			cmd9 = ('bgzip -c %s > %s') % (my_output, my_output + '.gz')
+			cmd9 = ('bgzip -c %s > %s') \
+				% (my_output, my_output + '.gz')
 			process9 = subprocess.Popen(cmd9, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -367,7 +403,8 @@ def annotation(args):
 					pass
 				process_c.stdout.close()
 
-				cmd_d = ('bgzip -c %s > %s') % (my_output_hdr, my_output_hdr + '.gz')
+				cmd_d = ('bgzip -c %s > %s') \
+					% (my_output_hdr, my_output_hdr + '.gz')
 				process_d = subprocess.Popen(cmd_d, \
 					stdout=subprocess.PIPE, \
 					stderr = log_file, \
@@ -434,7 +471,7 @@ def input_files():
 	if args.done:
 		done()
 
-# Exit program
+# Exit program.
 def exit():
 	sys.exit()
 
