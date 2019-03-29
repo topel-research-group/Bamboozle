@@ -59,7 +59,8 @@ def plot():
 	chrom_cat = chrom.astype('category')
 	converted_obj = pd.DataFrame()
 
-	# If unique values are more than 50% of the data don't convert to category, 
+	# If unique values are more than 50% of the 
+	# data don't convert to category, 
 	# it will not optimize memory usage.
 	for col in gl_obj.columns:
 		num_unique_values = len(gl_obj[col].unique())
@@ -78,7 +79,8 @@ def plot():
 	read_and_optimized = pd.read_csv(inputfile, \
 					dtype=column_types)
 
-	# Rename read and optimized csv file from the Fst analysis to "df".
+	# Rename read and optimized csv file 
+	# from the Fst analysis to "df".
 	df = read_and_optimized 
 	df['code'] = chrom_cat.cat.codes
 
@@ -91,15 +93,23 @@ def plot():
 	# Make plot of data.
 	fig = plt.figure(figsize=(80,20))
 	ax = fig.add_subplot(111)
-	colors = ['green', 'turquoise','blue','purple','red','orange', 'yellow']
+	colors = ['green', 'turquoise', \
+		'blue', 'purple', \
+		'red', 'orange', \
+		'yellow']
 	x_labels = []
 	x_labels_pos = []
 	for num, (name, group) in enumerate(df_grouped):
-		group.plot(kind='scatter', x='ind', y=yaxis, color=colors[num % len(colors)], ax=ax)
+		group.plot(kind='scatter', x='ind', y=yaxis, \
+		color=colors[num % len(colors)], ax=ax)
 		x_labels.append(name)
-		x_labels_pos.append((group['ind'].iloc[-1] - (group['ind'].iloc[-1] - group['ind'].iloc[0])/2))
+		x_labels_pos.append((group['ind'].iloc[-1] \
+		- (group['ind'].iloc[-1] \
+		- group['ind'].iloc[0])/2))
 		ax.set_xticks(x_labels_pos)
-		ax.set_xticklabels(x_labels, rotation='vertical', fontsize=10)
+		ax.set_xticklabels(x_labels, \
+				rotation='vertical', \
+				fontsize=10)
 		ax.set_xlim([0, len(df)])
 		ax.set_ylim([0, 1])
 		ax.set_xlabel('contigs', fontsize=24)
@@ -107,13 +117,16 @@ def plot():
 		ax.set_title('Fst', fontsize=40)
 		plt.tick_params(axis='x', length=0.01)
 	
-	# Add legend with key values paired with the name of the contig.
+	# Add legend with key values paired 
+	# with the name of the contig.
 	legend_list=[]
 	for key, value in names.items():
 		temp = [key,value]
 		legend_list.append(temp)
 	
-	plt.legend(legend_list,bbox_to_anchor=(1.01, 1), ncol=5, borderaxespad=0)
+	plt.legend(legend_list,bbox_to_anchor=(1.01, 1), \
+					ncol=5, \
+					borderaxespad=0)
 	plt.tight_layout(pad=7)	
 
 	# Save plot as image.
