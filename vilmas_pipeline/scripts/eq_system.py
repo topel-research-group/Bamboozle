@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 
-import sys
-import subprocess
 import argparse
-import fnmatch
-import os
 import time
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 from functools import reduce
 
