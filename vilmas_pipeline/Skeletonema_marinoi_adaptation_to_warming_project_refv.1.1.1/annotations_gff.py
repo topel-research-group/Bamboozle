@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-exon = open('temp_exon_sort_flt0.2_noheader.table', 'r').read().splitlines()
-gff = open('../../../../../CDS.gff', 'r').read().splitlines() 
+exon = open('time_exon_sort_flt0.2_noheader.table', 'r').read().splitlines()
+gff = open('../../../../../../CDS.gff', 'r').read().splitlines() 
 loop = 0
 num_lines = sum(1 for line in exon)
 while loop < num_lines:
