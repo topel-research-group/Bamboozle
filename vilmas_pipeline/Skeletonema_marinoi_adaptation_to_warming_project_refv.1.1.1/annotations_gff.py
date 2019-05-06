@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Specify the csv file with regions of interest in the exon variable.
+# Specify the GFF file you want to extract annotations from in the gff variable.
+
 exon = open('time_exon_sort_flt0.2_noheader.table', 'r').read().splitlines()
 gff = open('../../../../../../CDS.gff', 'r').read().splitlines() 
 loop = 0
