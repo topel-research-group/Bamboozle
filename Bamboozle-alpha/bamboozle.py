@@ -42,15 +42,11 @@ args = parser.parse_args()
 if args.dev == True:
 	start_time = time.time()
 
-def coverage_stats():
-	# This function calculates the percentage of positions in an assembly/contig
-	# with read coverage >= a given threshold (default: 20x)
 
-	try:
-		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
+# Calculate percentage of positions in assembly/contig with read coverage >= a given threshold (default: 20x)
+def coverage_stats():
+
+	check_samtools()
 
 	if args.contig:
 		cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
@@ -83,15 +79,11 @@ def coverage_stats():
 		print(round(value, 3),"% of the " + sequence + " with >=",args.threshold,"x coverage.",sep="")
 
 
+# Identify regions of 0x coverage in specified contig, then print reference sequence and GC content at these coordinates
+# Fasta parsing from Biopython, fp.py and http://stackoverflow.com/questions/7654971/parsing-a-fasta-file-using-a-generator-python
+## DevNote - Add try/except statement for bedtools
+## DevNote - How to ensure that bam is sorted?
 def zero_regions():
-	# This function identifies regions of 0x coverage in a given contig, then prints
-	# the reference sequence and GC content at these coordinates
-
-	# Devel. Add try except statement for bedtools here
-        # Also ensure that bam is sorted?
-
-	# Fasta parsing from Biopython, fp.py and
-	# http://stackoverflow.com/questions/7654971/parsing-a-fasta-file-using-a-generator-python
 
 	def read_fasta(fasta):
 		name, seq = None, []
@@ -125,7 +117,6 @@ def zero_regions():
 						else:
 							zero_range = str(key + 1) + "-" + str(zeroes[key])
 							print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
-		time_taken()
 		exit()
 
 	if not args.contig or not args.reference or not args.bam:
@@ -152,16 +143,10 @@ def zero_regions():
 				zero_print()
 	zero_print()
 
-
+# Scan for potential heterozygous/deletion sites - per base, discrete events, or frameshifts
 def deletion():
-	# This function scans for potential heterozygous/deletion sites, either per-base or as discrete events.
-        # Non-frameshift deletions can also be filtered out
 
-	try:
-		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
+	check_samtools()
 
 	if args.verbose == True:
 		if args.mode == "deletion-1":
@@ -232,16 +217,15 @@ def deletion():
 		if args.mode in ("deletion-2","deletion-3"):	# Ensure that the final event is reported
 			print_deletion(deletion, del_size)
 
-	time_taken()
 
 def print_deletion(m, n):
 	m.append(n)
 	if (args.mode != "deletion-3") or (args.mode == "deletion-3" and n % 3 != 0):
 		print(m[0],m[1],m[2],sep="\t")
 
-
+# Find deletions occurring within exons
+## DevNote - Need to find a way to pass results of deletion function directly into this function
 def exon_mutations():
-	# Need to find a way to pass results of deletion function directly into this function
 
 	frameshifts = 0
 	exon_list = []
@@ -272,16 +256,10 @@ def list_append(argument, list):
 			list.append(line)
 
 
-
+# Calculate percentage coverage difference between first base in a mutation and the base before it, to determine homo/heterozygosity
 def HomoDel_or_Hetero():
-	# This function calculates the percentage coverage difference between the first base in a mutation and the
-	# base before it; this allows the user to determine whether a given deletion is homozygous or heterozygous
 
-	try:
-		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
+	check_samtools()
 
 	# Read in each line of args.mutations, then print out an altered version to a temporary .bed file
 
@@ -329,16 +307,11 @@ def HomoDel_or_Hetero():
 
 	os.remove(temp_bed)	# Delete the temporary file
 
-
+# Calculate median coverage of contig, and identify regions deviating by +/- 50%; output in bed format
+## DevNote - Shows funky behaviour at stretches hovering around the threshold...
 def median_deviation():
-	try:
-		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
 
-	# Calculate median coverage of contig, then identify regions which deviate from this by +/- 50%
-	# Output in bed format
+	check_samtools()
 
 	cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -352,29 +325,14 @@ def median_deviation():
 			position = int(row[1])
 			coverage = int(row[2])
 			cov_stats[position] = coverage
-	median_cov = median(cov_stats.values())
-	low_threshold = median_cov * 0.5	# This is open to change as needed
-	high_threshold = median_cov * 1.5
-#	print("Median coverage =",median_cov)
-#	print("Low threshold =",low_threshold)
-#	print("High threshold =",high_threshold)
-
-
-	# Shows funky behaviour at stretches hovering around the threshold...
-
 	print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
+	make_bed(cov_stats,current_contig)
 
-	make_bed(cov_stats,current_contig,low_threshold,high_threshold)
-
-
+# Calculate median coverage of each contig in assembly, and identify regions deviating by +/- 50%; output in bed format
+## DevNote - Shows funky behaviour at stretches hovering around the threshold...
 def median_deviation_all():
-	# Shows funky behaviour at stretches hovering around the threshold...
 
-	try:
-		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
+	check_samtools()
 
 	cmd = ["samtools depth -aa %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -394,31 +352,19 @@ def median_deviation_all():
 			if ctg == current_contig:
 				cov_stats[position] = coverage
 			elif ctg != current_contig:
-				median_cov = median(cov_stats.values())
-				low_threshold = median_cov * 0.5
-				high_threshold = median_cov * 1.5
-
-				make_bed(cov_stats,current_contig,low_threshold,high_threshold)
-
+				make_bed(cov_stats,current_contig)
 				cov_stats = {}
 				current_contig = ctg
 				cov_stats[position] = coverage
 
 		# Print stats for the final contig
 
-		median_cov = median(cov_stats.values())
-		low_threshold = median_cov * 0.5
-		high_threshold = median_cov * 1.5
-		make_bed(cov_stats,current_contig,low_threshold,high_threshold)
+		make_bed(cov_stats,current_contig)
 
-
+# Obtain a per-contig median average coverage
 def median_percontig_coverage():
-	# Obtain a per-contig median average coverage
-	try:
-		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
+
+	check_samtools()
 
 	cmd = ["samtools depth -aa %s" % args.bam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -447,8 +393,11 @@ def median_percontig_coverage():
 		# Print stats for the final contig
 		print(current_contig,median(cov_stats.values()),sep="\t")
 
+def make_bed(contig_lib,this_contig):
+	median_cov = median(contig_lib.values())
+	lower = median_cov * 0.5
+	upper = median_cov * 1.5
 
-def make_bed(contig_lib,this_contig,lower,upper):
 	FirstHigh = 0
 	LastHigh = 0
 	FirstLow = 0
@@ -478,10 +427,10 @@ def make_bed(contig_lib,this_contig,lower,upper):
 	if LastLow != 0:
 		print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
 
-
+# Identify the longest continuous region of a contig where all positions fall between defined coverage limits
 def coverage_limits():
-	# This function identifies the longest continuous region of the contig where
-	# all positions fall between defined coverage limits
+
+	check_samtools()
 
 	command = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
@@ -547,6 +496,14 @@ def extract_sequence():
 		print(header)
 		print(seq)
 
+
+# Ensure correct version of samtools
+def check_samtools():
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
 
 
 def main():
