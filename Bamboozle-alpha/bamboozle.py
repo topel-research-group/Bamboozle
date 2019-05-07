@@ -144,28 +144,22 @@ def zero_regions():
 	zero_print()
 
 # Scan for potential heterozygous/deletion sites - per base, discrete events, or frameshifts
+## DevNote - currently skips first position
 def deletion():
 
 	check_samtools()
 
 	if args.verbose == True:
+		if not args.contig:
+			args.contig = "assembly"
 		if args.mode == "deletion-1":
-			if args.contig:
-				print("Finding individual deletions in",args.contig)
-			else:
-				print("Finding individual deletions in assembly")
+			print("Finding individual deletions in",args.contig)
 		elif args.mode == "deletion-2":
-			if args.contig:
-				print("Finding deletion events in",args.contig)
-			else:
-				print("Finding deletion events in assembly")
+			print("Finding deletion events in",args.contig)
 		elif args.mode == "deletion-3":
-			if args.contig:
-				print("Finding frameshift deletion events in",args.contig)
-			else:
-				print("Finding frameshift deletion events in assembly")
+			print("Finding frameshift deletion events in",args.contig)
 
-	if args.contig:
+	if args.contig and args.contig != "assembly":
 		cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
 	else:
 		cmd = ["samtools depth -aa %s" % args.bam]
@@ -188,8 +182,6 @@ def deletion():
 				ctg = str(row[0])
 				window = {}
 				reported = []
-
-	# Currently skips the first position...
 
 			if len(window) == 12:
 				del window[position - 12]
@@ -263,7 +255,7 @@ def HomoDel_or_Hetero():
 
 	# Read in each line of args.mutations, then print out an altered version to a temporary .bed file
 
-	temp_bed = "TEMP_" + os.path.basename(args.mutations)
+	temp_bed = "TEMP_" + os.path.basename(args.mutations) 
 
 	if os.path.isfile(temp_bed) == True:
 		print("Temporary file can't be written; please ensure",temp_bed,"is not a file.")
@@ -357,9 +349,7 @@ def median_deviation_all():
 				current_contig = ctg
 				cov_stats[position] = coverage
 
-		# Print stats for the final contig
-
-		make_bed(cov_stats,current_contig)
+		make_bed(cov_stats,current_contig)	# Print stats for the final contig
 
 # Obtain a per-contig median average coverage
 def median_percontig_coverage():
@@ -390,8 +380,7 @@ def median_percontig_coverage():
 				current_contig = ctg
 				cov_stats[position] = coverage
 
-		# Print stats for the final contig
-		print(current_contig,median(cov_stats.values()),sep="\t")
+		print(current_contig,median(cov_stats.values()),sep="\t")	# Print stats for the final contig
 
 def make_bed(contig_lib,this_contig):
 	median_cov = median(contig_lib.values())
