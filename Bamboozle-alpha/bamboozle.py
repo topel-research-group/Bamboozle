@@ -3,37 +3,34 @@
 import sys
 import subprocess
 import argparse
-from argparse import RawTextHelpFormatter
 import time
 import os.path
 from statistics import median
 
-parser = argparse.ArgumentParser(description='Obtain statistics regarding percentage coverage from bam files.\n\
-The script gives percentage of positions in an assembly/contig,\nwith coverage greater than or equal to a given \
-threshold', formatter_class=RawTextHelpFormatter)
-parser.add_argument('--mode', choices=['coverage','consensus','zero','deletion-1','deletion-2','deletion-3',\
-'deletion-x','homohetero','median-one','median-all','median-pc-coverage','long-coverage'],help="Specify the desired mode of Bamboozle, where:\n\
-* coverage = Print a statistic for what percentage of bases in an assembly have >=Nx coverage\n\
-* consensus = Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)\n\
-* zero = Find areas of zero coverage and print the reference sequence, along with a GC percentage\n\
-* deletion-1 = Find deletions\n\
-* deletion-2 = Find deletion events\n\
-* deletion-3 = Find frameshift deletion events\n\
-* deletion-x = Find deletions occurring within exons\n\
-* homohetero = Attempt to determine whether a deletion is homozygous or heterozygous\n\
-* median-one = Find regions differing from the contig median  by +/- 50%%\n\
-* median-all = Find regions differing from the contig median  by +/- 50%%, for each contig\n\
-* median-pc-coverage = Find the median coverage for each contig in an assembly\n\
-* long-coverage = Find the longest region between given coverage limits for a given contig")
+parser = argparse.ArgumentParser(description='Obtain statistics from BAM files')
 
+parser.add_argument('--coverage', action="store_true", help='Print a statistic for what percentage of bases in an assembly have >=Nx coverage')
+parser.add_argument('--consensus', action="store_true", help='Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)')
+parser.add_argument('--zero', action="store_true", help='Find areas of zero coverage and print the reference sequence, along with a GC percentage')
+parser.add_argument('--deletion1', action="store_true", help='Find deletions')
+parser.add_argument('--deletion2', action="store_true", help='Find deletion events')
+parser.add_argument('--deletion3', action="store_true", help='Find frameshift deletion events')
+parser.add_argument('--deletionx', action="store_true", help='Find deletions occurring within exons')
+parser.add_argument('--homohetero', action="store_true", help='Attempt to determine whether a deletion is homozygous or heterozygous')
+parser.add_argument('--median', action="store_true", help='Find regions differing from contig median by +/- 50%%, or just contig medians')
+parser.add_argument('--long_coverage', action="store_true", help='Find the longest region between given coverage limits for a given contig')
+
+parser.add_argument('--complex', action="store_true", help='Print full bed output for median')
+parser.add_argument('--simple', action="store_true", help='Print median coverage only for median')
 parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
-parser.add_argument('-t' ,'--threshold', type=int, nargs='?', const=1, default='20', help='Threshold for calculating coverage percentage; default 20')
-parser.add_argument("-r", "--reference", help="Reference sequence file")
-parser.add_argument("-b", "--bam", help="Bam file")
+parser.add_argument('-t', '--threads', type=int, nargs='?', default='1', help='Number of threads; default 1')
+parser.add_argument('-d', '--threshold', type=int, nargs='?', const='1', default='20', help='Threshold for calculating coverage percentage; default 20')
+parser.add_argument("-f", "--ref", help="Reference sequence file")
+parser.add_argument("--sortbam", help="Sorted bam file")
 parser.add_argument("-a", "--range", help="somethingsomsing")
-parser.add_argument("-m", "--mutations", help="List of mutation events; output of bamboozle.py -d -e/-f")
-parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based). -m also required.")
-parser.add_argument("-l", "--limits", type=int, nargs=2, help="Specify lower and upper limits for long-coverage function; two arguments required")
+parser.add_argument("-m", "--mutations", help="List of mutation events; currently requires output from bamboozle deletion function")
+parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based); -m also required")
+parser.add_argument("-l", "--limits", type=int, nargs=2, help="Specify lower and upper limits for long_coverage function; two arguments required")
 parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
@@ -49,19 +46,19 @@ def coverage_stats():
 	check_samtools()
 
 	if args.contig:
-		cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
+		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
 		sequence = "contig"
 	else:
-		cmd = ["samtools depth -aa %s" % args.bam]
+		cmd = ["samtools depth -aa %s" % args.sortbam]
 		sequence = "assembly"
 
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	if args.verbose == True:
 		if args.contig:
-			print("Obtaining stats for ",args.contig," in ",os.path.basename(args.bam),"; coverage >+",args.threshold,"%.",sep="")
+			print("Obtaining stats for ",args.contig," in ",os.path.basename(args.sortbam),"; coverage >+",args.threshold,"x.",sep="")
 		else:
-			print("Obtaining whole-genome stats for ",os.path.basename(args.bam),"; coverage >+",args.threshold,"%.",sep="")
+			print("Obtaining whole-genome stats for ",os.path.basename(args.sortbam),"; coverage >+",args.threshold,"x.",sep="")
 	cov_stats = {}
 	num_lines = 0
 	with process.stdout as result:
@@ -106,7 +103,7 @@ def zero_regions():
 		return gc_content
 
 	def zero_print():
-		with open(args.reference) as fasta:
+		with open(args.ref) as fasta:
 			for name, seq in read_fasta(fasta):
 				if name[1:] == args.contig:
 					print("GC% for contig:",round(get_gc(seq), 3))
@@ -119,14 +116,14 @@ def zero_regions():
 							print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
 		exit()
 
-	if not args.contig or not args.reference or not args.bam:
+	if not args.contig or not args.ref or not args.sortbam:
 		print("Please ensure all required flags are specified; see readme file")
 		exit()
 
 	if args.verbose == True:
 		print("Finding zero coverage areas in contig",args.contig)
 
-	cmd = ["bedtools genomecov -bga -ibam %s" % args.bam]
+	cmd = ["bedtools genomecov -bga -ibam %s" % args.sortbam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	zeroes = {}
 	correct_contig = 0
@@ -152,17 +149,17 @@ def deletion():
 	if args.verbose == True:
 		if not args.contig:
 			args.contig = "assembly"
-		if args.mode == "deletion-1":
+		if args.deletion1:
 			print("Finding individual deletions in",args.contig)
-		elif args.mode == "deletion-2":
+		elif args.deletion2:
 			print("Finding deletion events in",args.contig)
-		elif args.mode == "deletion-3":
+		elif args.deletion3:
 			print("Finding frameshift deletion events in",args.contig)
 
 	if args.contig and args.contig != "assembly":
-		cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
+		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
 	else:
-		cmd = ["samtools depth -aa %s" % args.bam]
+		cmd = ["samtools depth -aa %s" % args.sortbam]
 
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	
@@ -191,7 +188,7 @@ def deletion():
 					for x, y in window.items():
 						if y < (base1*0.6) and x not in reported:
 							reported.append(x)
-							if args.mode in ("deletion-2","deletion-3"):
+							if args.deletion2 or args.deletion3:
 								if (int(x) - int(old_position)) != 1:
 									if len(deletion) != 0:
 										print_deletion(deletion, del_size)
@@ -206,13 +203,13 @@ def deletion():
 			else:
 				window[position] = coverage
 
-		if args.mode in ("deletion-2","deletion-3"):	# Ensure that the final event is reported
+		if args.deletion2 or args.deletion3:	# Ensure that the final event is reported
 			print_deletion(deletion, del_size)
 
 
 def print_deletion(m, n):
 	m.append(n)
-	if (args.mode != "deletion-3") or (args.mode == "deletion-3" and n % 3 != 0):
+	if not args.deletion3 or (args.deletion3 and n % 3 != 0):
 		print(m[0],m[1],m[2],sep="\t")
 
 # Find deletions occurring within exons
@@ -269,7 +266,7 @@ def HomoDel_or_Hetero():
 
 	# Compare the coverage 
 
-	cmd = ["samtools depth -aa -b %s %s" % (temp_bed, args.bam)]
+	cmd = ["samtools depth -aa -b %s %s" % (temp_bed, args.sortbam)]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	coverage = []
@@ -299,129 +296,108 @@ def HomoDel_or_Hetero():
 
 	os.remove(temp_bed)	# Delete the temporary file
 
-# Calculate median coverage of contig, and identify regions deviating by +/- 50%; output in bed format
+# Complex and contig flags: Calculate median coverage of contig, and identify regions deviating by +/- 50%; output in bed format
+# Complex flag only: Calculate median coverage of each contig in assembly, and identify regions deviating by +/- 50%; output in bed format
+# Simple and contig flags: Obtain a per-contig median average coverage for the specified contig
+# Simple flag only: Obtain a per-contig median average coverage
 ## DevNote - Shows funky behaviour at stretches hovering around the threshold...
 def median_deviation():
 
-	check_samtools()
+	def make_bed(contig_lib,this_contig):	# Generate a bed file of results
+		median_cov = median(contig_lib.values())
+		lower = median_cov * 0.5
+		upper = median_cov * 1.5
 
-	cmd = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+		FirstHigh = 0
+		LastHigh = 0
+		FirstLow = 0
+		LastLow = 0
 
-	cov_stats = {}
-	check_me = 0
-	current_contig = args.contig
-	with process.stdout as result:
-		rows = (line.decode().split('\t') for line in result)
-		for row in rows:
-			position = int(row[1])
-			coverage = int(row[2])
-			cov_stats[position] = coverage
-	print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
-	make_bed(cov_stats,current_contig)
-
-# Calculate median coverage of each contig in assembly, and identify regions deviating by +/- 50%; output in bed format
-## DevNote - Shows funky behaviour at stretches hovering around the threshold...
-def median_deviation_all():
-
-	check_samtools()
-
-	cmd = ["samtools depth -aa %s" % args.bam]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-
-	cov_stats = {}
-	current_contig = "None"
-	print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
-
-	with process.stdout as result:
-		rows = (line.decode().split('\t') for line in result)
-		for row in rows:
-			ctg = str(row[0])
-			position = int(row[1])
-			coverage = int(row[2])
-			if current_contig == "None":
-				current_contig = ctg
-			if ctg == current_contig:
-				cov_stats[position] = coverage
-			elif ctg != current_contig:
-				make_bed(cov_stats,current_contig)
-				cov_stats = {}
-				current_contig = ctg
-				cov_stats[position] = coverage
-
-		make_bed(cov_stats,current_contig)	# Print stats for the final contig
-
-# Obtain a per-contig median average coverage
-def median_percontig_coverage():
-
-	check_samtools()
-
-	cmd = ["samtools depth -aa %s" % args.bam]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-
-	cov_stats = {}
-	current_contig = "None"
-	print("Contig","Median coverage",sep="\t")
-
-	with process.stdout as result:
-		rows = (line.decode().split('\t') for line in result)
-		for row in rows:
-			ctg = str(row[0])
-			position = int(row[1])
-			coverage = int(row[2])
-			if current_contig == "None":
-				current_contig = ctg
-			if ctg == current_contig:
-				cov_stats[position] = coverage
-			elif ctg != current_contig:
-				print(current_contig,median(cov_stats.values()),sep="\t")
-
-				cov_stats = {}
-				current_contig = ctg
-				cov_stats[position] = coverage
-
-		print(current_contig,median(cov_stats.values()),sep="\t")	# Print stats for the final contig
-
-def make_bed(contig_lib,this_contig):
-	median_cov = median(contig_lib.values())
-	lower = median_cov * 0.5
-	upper = median_cov * 1.5
-
-	FirstHigh = 0
-	LastHigh = 0
-	FirstLow = 0
-	LastLow = 0
-
-	for key in contig_lib:
-		if contig_lib[key] > upper and FirstHigh == 0:
-			FirstHigh = key
-		if contig_lib[key] > upper and FirstHigh != 0:
-			LastHigh = key
-		if contig_lib[key] < lower and FirstLow == 0:
-			FirstLow = key
-		if contig_lib[key] < lower and FirstLow != 0:
-			LastLow = key
-		if contig_lib[key] < upper and LastHigh != 0:
+		for key in contig_lib:
+			if contig_lib[key] > upper and FirstHigh == 0:
+				FirstHigh = key
+			if contig_lib[key] > upper and FirstHigh != 0:
+				LastHigh = key
+			if contig_lib[key] < lower and FirstLow == 0:
+				FirstLow = key
+			if contig_lib[key] < lower and FirstLow != 0:
+				LastLow = key
+			if contig_lib[key] < upper and LastHigh != 0:
+				print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
+				FirstHigh = 0
+				LastHigh = 0
+			if contig_lib[key] > lower and LastLow != 0:
+				print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
+				FirstLow=0
+				LastLow=0
+		# Print last high event, if contig ends on a high
+		if LastHigh != 0:
 			print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
-			FirstHigh = 0
-			LastHigh = 0
-		if contig_lib[key] > lower and LastLow != 0:
+		# Print last low event, if contig ends on a low
+		if LastLow != 0:
 			print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
-			FirstLow=0
-			LastLow=0
-	# Print last high event, if contig ends on a high
-	if LastHigh != 0:
-		print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
-	# Print last low event, if contig ends on a low
-	if LastLow != 0:
-		print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
+
+	check_samtools()
+
+	if args.contig:
+
+		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
+		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+		cov_stats = {}
+		current_contig = args.contig
+		with process.stdout as result:
+			rows = (line.decode().split('\t') for line in result)
+			for row in rows:
+				position = int(row[1])
+				coverage = int(row[2])
+				cov_stats[position] = coverage
+		if args.complex:
+			print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
+			make_bed(cov_stats,current_contig)
+		elif args.simple:
+			print(current_contig,median(cov_stats.values()),sep="\t")
+
+	else:
+
+		cmd = ["samtools depth -aa %s" % args.sortbam]
+		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+		cov_stats = {}
+		current_contig = "None"
+		if args.complex:
+			print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
+
+		with process.stdout as result:
+			rows = (line.decode().split('\t') for line in result)
+			for row in rows:
+				ctg = str(row[0])
+				position = int(row[1])
+				coverage = int(row[2])
+				if current_contig == "None":
+					current_contig = ctg
+				if ctg == current_contig:
+					cov_stats[position] = coverage
+				elif ctg != current_contig:
+					if args.complex:
+						make_bed(cov_stats,current_contig)
+					elif args.simple:
+						print(current_contig,median(cov_stats.values()),sep="\t")
+					cov_stats = {}
+					current_contig = ctg
+					cov_stats[position] = coverage
+
+			if args.complex:
+				make_bed(cov_stats,current_contig)	# Print stats for the final contig
+			elif args.simple:
+				print(current_contig,median(cov_stats.values()),sep="\t")
 
 # Identify the longest continuous region of a contig where all positions fall between defined coverage limits
 def coverage_limits():
 
 	check_samtools()
 
-	command = ["samtools depth -aa %s -r %s" % (args.bam, args.contig)]
+	command = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
 	if args.limits[0] < args.limits[1]:
@@ -463,12 +439,11 @@ def coverage_limits():
 	print("Longest stretch between " + str(lower) + "x and " + str(upper) + \
 	"x coverage on " + args.contig + "\t" + str(longest) + "\t" + str(start) + "-" + str(stop))
 
-
+# This function extracts the sequence of the mapped reads from a part of the reference sequence specified by args.range
+## DevNote - This function needs fixing
 def extract_sequence():
-	# This function extracts the sequence of the mapped reads 
-	# from a part of the reference sequence specified by args.range
 	command = ("samtools mpileup -uf %s %s -r %s:%s | bcftools view -cg -") \
-	% (args.reference, args.bam, args.contig, args.range)
+	% (args.ref, args.sortbam, args.contig, args.range)
 	bam = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 	header = ">" + args.contig + ":" + args.range
 	seq = ""
@@ -496,34 +471,33 @@ def check_samtools():
 
 
 def main():
-	if args.mode in ("deletion-1","deletion-2","deletion-3"):
+	if args.deletion1 or args.deletion2 or args.deletion3:
 		deletion()
-	elif args.mode == "deletion-x":
+	elif args.deletionx:
 		if args.mutations:
 			exon_mutations()
 		else:
 			print("Both -x and -m must be specified to find mutations in exons")
 			exit()
-	elif args.mode == "homohetero":
+	elif args.homohetero:
 		HomoDel_or_Hetero()
-	elif args.mode == "zero":
+	elif args.zero:
 		zero_regions()
-	elif args.mode == "consensus":
+	elif args.consensus:
 		extract_sequence()
-	elif args.mode == "median-one":
-		median_deviation()
-	elif args.mode == "median-all":
-		median_deviation_all()
-	elif args.mode == "median-pc-coverage":
-		median_percontig_coverage()
-	elif args.mode == "coverage":
+	elif args.median:
+		if args.simple or args.complex:
+			median_deviation()
+		else:
+			print("Please specify --simple for medians only or --complex for full output")
+			exit()
+	elif args.coverage:
 		coverage_stats()
-	elif args.mode == "long-coverage":
+	elif args.long_coverage:
 		coverage_limits()
 	else:
-		print("Please specify a mode with the --mode option!")
+		parser.print_help(sys.stderr)
 		exit()
-
 
 if __name__ == "__main__":
 	main()
