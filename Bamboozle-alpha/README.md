@@ -7,7 +7,7 @@ Script for retrieving statistics or other types of sequence information from .ba
 Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage
 
 ```bash
-./bamboozle.py --coverage --sortbam <BAMFILE> -c <CHROMOSOME/CONTIG> -d <THRESHOLD>
+./bamboozle.py --coverage --sortbam <BAMFILE> [-c <CHROMOSOME/CONTIG>] [-d <THRESHOLD>]
 ```
 ```bash
 ./bamboozle.py --coverage --sortbam P8352_101_sorted.bam -c 000343F -d 25

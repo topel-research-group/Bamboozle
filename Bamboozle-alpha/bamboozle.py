@@ -7,8 +7,9 @@ import time
 import os.path
 from statistics import median
 
-parser = argparse.ArgumentParser(description='Obtain statistics from BAM files')
+#######################################################################
 
+parser = argparse.ArgumentParser(description='Obtain statistics from BAM files')
 parser.add_argument('--coverage', action="store_true", help='Print a statistic for what percentage of bases in an assembly have >=Nx coverage')
 parser.add_argument('--consensus', action="store_true", help='Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)')
 parser.add_argument('--zero', action="store_true", help='Find areas of zero coverage and print the reference sequence, along with a GC percentage')
@@ -35,10 +36,21 @@ parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbos
 parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
 args = parser.parse_args()
 
+#######################################################################
 
+# For determining how long functions take to run
 if args.dev == True:
 	start_time = time.time()
 
+# Ensure correct version of samtools
+def check_samtools():
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
+#######################################################################
 
 # Calculate percentage of positions in assembly/contig with read coverage >= a given threshold (default: 20x)
 def coverage_stats():
@@ -461,15 +473,6 @@ def extract_sequence():
 		print(seq)
 
 
-# Ensure correct version of samtools
-def check_samtools():
-	try:
-		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
-
-
 def main():
 	if args.deletion1 or args.deletion2 or args.deletion3:
 		deletion()
@@ -484,7 +487,11 @@ def main():
 	elif args.zero:
 		zero_regions()
 	elif args.consensus:
-		extract_sequence()
+		if args.reference and args.contig and args.range:
+			extract_sequence()
+		else:
+			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
+			exit()
 	elif args.median:
 		if args.simple or args.complex:
 			median_deviation()
