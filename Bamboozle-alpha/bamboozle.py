@@ -258,6 +258,7 @@ def list_append(argument, list):
 
 
 # Calculate percentage coverage difference between first base in a mutation and the base before it, to determine homo/heterozygosity
+## DevNote - Need to find a way to pass results of deletion function directly into this function
 def HomoDel_or_Hetero():
 
 	check_samtools()
