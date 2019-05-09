@@ -158,6 +158,15 @@ def deletion():
 
 	check_samtools()
 
+	mutation_list = []
+
+	def print_deletion(m, n):
+		m.append(n)
+		if args.deletion2 or (args.deletion3 and n % 3 != 0):
+			print(m[0],m[1],m[2],sep="\t")
+		elif args.deletionx or args.homohetero:
+			mutation_list.append(m)
+
 	if args.verbose == True:
 		if not args.contig:
 			args.contig = "assembly"
@@ -167,6 +176,10 @@ def deletion():
 			print("Finding deletion events in",args.contig)
 		elif args.deletion3:
 			print("Finding frameshift deletion events in",args.contig)
+		elif args.deletionx:
+			print("Finding deletion events within exons in",args.contig)
+		elif args.homohetero:
+			print("Determining potentially homozygous/heterozygous deletions in",args.contig)
 
 	if args.contig and args.contig != "assembly":
 		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
@@ -200,7 +213,9 @@ def deletion():
 					for x, y in window.items():
 						if y < (base1*0.6) and x not in reported:
 							reported.append(x)
-							if args.deletion2 or args.deletion3:
+							if args.deletion1:
+								print(ctg,x,sep="\t")
+							else:
 								if (int(x) - int(old_position)) != 1:
 									if len(deletion) != 0:
 										print_deletion(deletion, del_size)
@@ -209,80 +224,75 @@ def deletion():
 									del_size = 1
 								else:
 									del_size +=1
-							else:
-								print(ctg,x,sep="\t")
 							old_position = x
 			else:
 				window[position] = coverage
 
-		if args.deletion2 or args.deletion3:	# Ensure that the final event is reported
+		if not args.deletion1:	# Ensure that the final event is reported
 			print_deletion(deletion, del_size)
 
+	if args.deletionx:
+		exon_mutations(mutation_list)
 
-def print_deletion(m, n):
-	m.append(n)
-	if not args.deletion3 or (args.deletion3 and n % 3 != 0):
-		print(m[0],m[1],m[2],sep="\t")
+	if args.homohetero:
+		HomoDel_or_Hetero(mutation_list)
 
 # Find deletions occurring within exons
-## DevNote - Need to find a way to pass results of deletion function directly into this function
-def exon_mutations():
+def exon_mutations(mutation_list):
 
 	frameshifts = 0
 	exon_list = []
-	mutation_list = []
+
+	def list_append(argument, list):
+		with open(argument, 'r') as input:
+			for line in input:
+				list.append(line)
 
 	list_append(args.exons, exon_list)
-	list_append(args.mutations, mutation_list)
 
-	print("Contig","Start","bp","Exon",sep="\t")
+	if not args.verbose:
+		print("Contig","Start","bp","Exon",sep="\t")
 
 	for mut in mutation_list:
-		mut = mut.split("\t")
 		for ex in exon_list:
 			ex = ex.split("\t")
 			if (mut[0] == ex[0]) and (int(ex[1]) <= int(mut[1]) <= int(ex[2])):
 				if int(mut[2]) % 3 != 0:
 					frameshifts += 1
 				if args.verbose:
-					print(mut[2].strip("\n"),"bp mutation at",mut[0],mut[1],"hits exon",ex[3])
+					print(mut[2],"bp mutation at",mut[0],mut[1],"hits exon",ex[3])
 				else:
-					print(mut[0],mut[1],mut[2].strip("\n"),ex[3],sep="\t")
+					print(mut[0],mut[1],mut[2],ex[3],sep="\t")
 				break
 
 	print("Total number of frameshifts in exons:",frameshifts)
 
 
-def list_append(argument, list):
-	with open(argument, 'r') as input:
-		for line in input:
-			list.append(line)
-
-
 # Calculate percentage coverage difference between first base in a mutation and the base before it, to determine homo/heterozygosity
-## DevNote - Need to find a way to pass results of deletion function directly into this function
-def HomoDel_or_Hetero():
-
-	check_samtools()
+## DevNote - Any way to remove the need for a temporary file?
+def HomoDel_or_Hetero(mutation_list):
 
 	# Read in each line of args.mutations, then print out an altered version to a temporary .bed file
 
-	temp_bed = "TEMP_" + os.path.basename(args.mutations) 
+	temp_bed = "temporary_bed_file"
 
 	if os.path.isfile(temp_bed) == True:
 		print("Temporary file can't be written; please ensure",temp_bed,"is not a file.")
 		sys.exit()
 
-	rows = (line.split('\t') for line in open(args.mutations))
-	for row in rows:
+	for item in mutation_list:
 		with open(temp_bed, "a") as output_file:
-			output_file.write(row[0] + "\t" + str(int(row[1]) - 2) + "\t" + row[1] + "\n")
+			output_file.write(item[0] + "\t" + str(int(item[1]) - 2) + "\t" + str(item[1]) + "\n")
 	output_file.close()
 
 	# Compare the coverage 
 
-	cmd = ["samtools depth -aa -b %s %s" % (temp_bed, args.sortbam)]	## DevNote - If passed from a function with -c specified,
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)	## use the -r range flag in samtools depth to speed it up
+	if args.contig:
+		cmd = ["samtools depth -aa -b %s -r %s %s" % (temp_bed, args.contig, args.sortbam)]
+	else:
+		cmd = ["samtools depth -aa -b %s %s" % (temp_bed, args.sortbam)]
+
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	coverage = []
 
@@ -477,16 +487,14 @@ def extract_sequence():
 
 
 def main():
-	if args.deletion1 or args.deletion2 or args.deletion3:
+	if args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
 		deletion()
 	elif args.deletionx:
-		if args.exons and args.mutations:
-			exon_mutations()
+		if args.exons:
+			deletion()
 		else:
-			print("Please ensure that a bed file of exons [-x] and a list of mutations [-m] are given.")
+			print("Please ensure that a bed file of exons [-x] is given.")
 			exit()
-	elif args.homohetero:
-		HomoDel_or_Hetero()
 	elif args.zero:
 		if args.ref and args.contig:
 			zero_regions()
