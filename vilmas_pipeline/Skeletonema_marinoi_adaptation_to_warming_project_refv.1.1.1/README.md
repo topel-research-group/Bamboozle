@@ -22,6 +22,7 @@
 ### Raw data
 |GROUP/POPULATION|SAMPLE|
 |---|---|
+|**control_1960**| `P8352_136` |
 |**control_2000**| `P8352_145` <br/> `P8352_146` <br/> `P8352_147` </br> `P8352_150`|
 |**cold_1960**|`P8352_101` <br/> `P8352_103` <br/> `P8352_108` <br/> `P8352_109` <br/> `P8352_111` <br/> `P8352_112`|
 |**warm_2000**|`P8352_113` <br/> `P8352_114` <br/> `P8352_115` <br/> `P8352_116` <br/> `P8352_117` <br/> `P8352_118` <br/> `P8352_119` <br/> `P8352_120` <br/> `P8352_121` <br/> `P8352_122` <br/> `P8352_123` <br/> `P8352_124` <br/>|
@@ -54,6 +55,11 @@ I checked that the directories were the same using diff (there's probably a bett
 Then the angsd analysis using `angsd_fst.py`:  
 The original GFF file was from:    
 `/proj/data26/Skeletonema_marinoi_genome_project/03_Annotation/Skeletonema_marinoi_Ref_v1.1_Primary/Unique_models_per_locus_ManualCuration/Sm_OnemRNAPerGene.FinalWithSequence.ManualCuration.gff`   
+
+The samples were divided in four groups/populations, control_1960, control_2000, cold_1960 and warm_2000 with 1, 4, 6 and 12 individuals. 
+Control_1960 was excluded from the analysis due to its extreme low sample size (one individual). 
+The control_2000 individuals were from the control, referred to as the cold sediment core in the project description. 
+The cold_1960 and the warm_2000 were taken from same core, referred to as the warm sediment core.  
 
 ```
 ---Same for all---
@@ -725,6 +731,6 @@ Sm_t00016573-RA
 
 
 ## Conclusion
-The sample sizes were altogether too low for a fair assessment of the environmental impact on the genotypes. Nevertheless the analysis provided an example of how much easier the process become when using a customized pipeline in bioinformatics. The pipeline makes the analysis easy to reproduce and the work that is put in the process was only at one time, hence the human error was lowered as well. The tests were performed as if the sample sizes and data were sufficient and the process, programs and models have shown to be successful. The phenotype genotype correlation test uses an updated GFF file to get the gene names, this has not get been done on the FST results (only an older version) this might give some other results in the annotation. I decided to trust the results from the correlation test more and have therefore put the FST analysis a bit on hold. 
+The sample sizes were altogether too low for a fair assessment of the environmental impact on the genotypes. Nevertheless the analysis provided an example of how much easier the process become when using a customized pipeline in bioinformatics. The pipeline makes the analysis easy to reproduce and the work that is put in the process was only at one time, hence the human error was lowered as well. The tests were performed as if the sample sizes and data were sufficient and the process, programs and models have shown to be successful. The genotype-phenotype correlation test uses an updated GFF file to get the gene names, this was done on the FST results as well and gave some other results in the annotation (different gene names). I decided to trust the results from the correlation test more and have therefore put the FST analysis a bit on hold. 
 
 
