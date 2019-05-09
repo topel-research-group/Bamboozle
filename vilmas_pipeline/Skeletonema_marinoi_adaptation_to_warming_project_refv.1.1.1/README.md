@@ -390,11 +390,11 @@ lines = 55839
 6) The phenotype file (from Kai Lohbeck) was filtered and had the resulting format:
 ```
 ```
-Strain	treatment	Location	g1_AlignmenttoSm_Refv111	mean_max	mean_mode	mean_shape
-P8352_145	temp	1	77,21	0,799147762	13,84614141	-4,07870399
-P8352_146	temp	1	81,02	0,804494333	14,63967677	-0,04974438
-P8352_147	temp	1	74,78	0,748955673	20,77559596	-0,633426031
-P8352_150	temp	1	73,86	0,627595509	6,768969697	-6,355021381
+Strain	treatment	Location	Depth(cm)	mean_max	mean_mode	mean_shape
+P8352_145	temp	1	21	0,799147762	13,84614141	-4,07870399
+P8352_146	temp	1	21	0,804494333	14,63967677	-0,04974438
+P8352_147	temp	1	21	0,748955673	20,77559596	-0,633426031
+P8352_150	temp	1	21	0,627595509	6,768969697	-6,355021381
 ```  
 
 ```
