@@ -235,6 +235,8 @@ def exon_mutations():
 	list_append(args.exons, exon_list)
 	list_append(args.mutations, mutation_list)
 
+	print("Contig","Start","bp","Exon",sep="\t")
+
 	for mut in mutation_list:
 		mut = mut.split("\t")
 		for ex in exon_list:
@@ -279,8 +281,8 @@ def HomoDel_or_Hetero():
 
 	# Compare the coverage 
 
-	cmd = ["samtools depth -aa -b %s %s" % (temp_bed, args.sortbam)]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	cmd = ["samtools depth -aa -b %s %s" % (temp_bed, args.sortbam)]	## DevNote - If passed from a function with -c specified,
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)	## use the -r range flag in samtools depth to speed it up
 
 	coverage = []
 
@@ -478,17 +480,21 @@ def main():
 	if args.deletion1 or args.deletion2 or args.deletion3:
 		deletion()
 	elif args.deletionx:
-		if args.mutations:
+		if args.exons and args.mutations:
 			exon_mutations()
 		else:
-			print("Both -x and -m must be specified to find mutations in exons")
+			print("Please ensure that a bed file of exons [-x] and a list of mutations [-m] are given.")
 			exit()
 	elif args.homohetero:
 		HomoDel_or_Hetero()
 	elif args.zero:
-		zero_regions()
+		if args.ref and args.contig:
+			zero_regions()
+		else:
+			print("Please ensure that a reference [-f] and contig [-c] are given.")
+			exit()
 	elif args.consensus:
-		if args.reference and args.contig and args.range:
+		if args.ref and args.contig and args.range:
 			extract_sequence()
 		else:
 			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
