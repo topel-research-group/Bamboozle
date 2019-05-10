@@ -390,11 +390,11 @@ lines = 55839
 6) The phenotype file (from Kai Lohbeck) was filtered and had the resulting format:
 ```
 ```
-Strain	treatment	Location	g1_AlignmenttoSm_Refv111	mean_max	mean_mode	mean_shape
-P8352_145	temp	1	77,21	0,799147762	13,84614141	-4,07870399
-P8352_146	temp	1	81,02	0,804494333	14,63967677	-0,04974438
-P8352_147	temp	1	74,78	0,748955673	20,77559596	-0,633426031
-P8352_150	temp	1	73,86	0,627595509	6,768969697	-6,355021381
+Strain	treatment	Location	Depth(cm)	mean_max	mean_mode	mean_shape
+P8352_145	temp	1	21	0,799147762	13,84614141	-4,07870399
+P8352_146	temp	1	21	0,804494333	14,63967677	-0,04974438
+P8352_147	temp	1	21	0,748955673	20,77559596	-0,633426031
+P8352_150	temp	1	21	0,627595509	6,768969697	-6,355021381
 ```  
 
 ```
@@ -683,15 +683,15 @@ Sm_t00007106-RA 1.5e-72 ANAPC7  anaphase promoting complex subunit 7
 
 **The warm results:**  
 
-|warm_2000|Permutation result|Contig|Position|GFF (feature and gene name)|eggNOG annotation|non_synonymous|   
-|---|---|---|---|---|---|---|   
-|**mean_max**|0.997921002078998 |`Sm_000005F`| 1341045 | `CDS` **Sm_t00002637-RA** |`Ankyrin Repeat`| yes |
-|**mean_max**|0.997898002101998| `Sm_000005F` | 1341115| `CDS` **Sm_t00002637-RA** | `Ankyrin Repeat` | yes| 
-|**mean_max**| 0.997932002067998|`Sm_000009F`|440051| `CDS` **Sm_t00006438-RA**|**TRMU** `tRNA 5-methylaminomethyl-2-thiouridylate methyltransferase`| yes | 
-|**mean_max** | 0.995435004564995 |`Sm_000000F`|2168161| `CDS` **Sm_t00000732-RA** | **UBA1** `Ubiquitin-like modifier activating enzyme` | yes | 
-|**mean_max** |0.995413004586995|`Sm_000000F`| 2223953 | `3' UTR` **Sm_t00000766-RA** | **DNAJC2**  `Transcription factor`| yes | 
-|**mean_max** |0.995341004658995 | `Sm_000000F`|  2223956| `3' UTR` **Sm_t00000766-RA**| **DNAJC2**  `Transcription factor` |yes|  
-|**mean_mode** |0.996069003930996|`Sm_000000F`|222525|`CDS` **Sm_t00000038-RA**|`protein kinase kinase kinase`|yes|
+|warm_2000|Permutation result|Contig|Position|GFF (feature and gene name)|eggNOG annotation|   
+|---|---|---|---|---|---|   
+|**mean_max**|0.997921002078998 |`Sm_000005F`| 1341045 | `CDS` **Sm_t00002637-RA** |`Ankyrin Repeat` |
+|**mean_max**|0.997898002101998| `Sm_000005F` | 1341115| `CDS` **Sm_t00002637-RA** | `Ankyrin Repeat` | 
+|**mean_max**| 0.997932002067998|`Sm_000009F`|440051| `CDS` **Sm_t00006438-RA**|**TRMU** `tRNA 5-methylaminomethyl-2-thiouridylate methyltransferase` | 
+|**mean_max** | 0.995435004564995 |`Sm_000000F`|2168161| `CDS` **Sm_t00000732-RA** | **UBA1** `Ubiquitin-like modifier activating enzyme` |  
+|**mean_max** |0.995413004586995|`Sm_000000F`| 2223953 | `3' UTR` **Sm_t00000766-RA** | **DNAJC2**  `Transcription factor`|  
+|**mean_max** |0.995341004658995 | `Sm_000000F`|  2223956| `3' UTR` **Sm_t00000766-RA**| **DNAJC2**  `Transcription factor` |  
+|**mean_mode** |0.996069003930996|`Sm_000000F`|222525|`CDS` **Sm_t00000038-RA**|`protein kinase kinase kinase`|
 
 Comparing the phenotype genotype correlation test results with the `eq_system.py` FST results showed that 10 of 14 gene names were found in the `eq_system.py` results, however the FST values were of varying results:
 
