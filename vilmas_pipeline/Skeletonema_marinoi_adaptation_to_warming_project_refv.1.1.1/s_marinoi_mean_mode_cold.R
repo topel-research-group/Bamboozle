@@ -1,16 +1,16 @@
 ### mean_mode
 
 P<-read.table("phenotypes_cold_1960.txt",sep="\t",header=T)
-G<-read.table("genotypes_cold_1960.txt",sep="",header=T,comment.char="",check.names=F,as.is=T)
+G<-read.table("genotype_vcf012_cold_wo_extraNcol.txt",sep="",header=T,comment.char="",check.names=F,as.is=T)
 
-Strain<-names(G)[-c(1:4)] 
+Strain<-names(G)[-c(1:2)] 
 P_filtered<-P[P$Strain %in% Strain,]
 
 Plong<-aggregate(P_filtered[3:7],by=list(Strain=P_filtered$Strain,treatment=P_filtered$treatment),FUN=mean,na.rm=T)
 
 Pwide<-reshape(Plong,idvar="Strain",direction="wide",timevar="treatment",v.names=c("mean_max","mean_mode","mean_shape"))
 
-GT<-data.frame(t(G[,-c(1:4)])) # bara genotyper och transponerade
+GT<-data.frame(t(G[,-c(1:2)])) # bara genotyper och transponerade
 names(GT)<-paste(G[,1],G[,2],sep="_") # skapa SNP-namn genom att slå ihop contig och position
 GT[GT==-1]<-NA
 nsnp<-ncol(GT)
@@ -24,11 +24,11 @@ for (i in 1:nsnp) {
 
 GT_rare<-GT[,!rare]
 nsnp<-ncol(GT_rare)
-Strain<-names(G)[-c(1:4)]
+Strain<-names(G)[-c(1:2)]
 snpdata<-cbind(Strain,GT_rare) # join sample name column with GT_rare
 M<-merge(Pwide,snpdata)
 
-snps<-colnames(M)[7:4885]
+snps<-colnames(M)[7:4877]
 nstrains<-length(Strain)
 
 ### Linear model
