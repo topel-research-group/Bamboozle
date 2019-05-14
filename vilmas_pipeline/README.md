@@ -42,3 +42,4 @@ BAM file as input:
 ## More information  
 * [Wiki](https://github.com/topel-research-group/Bamboozle/wiki)  
 
+# Merge with Bamboozle

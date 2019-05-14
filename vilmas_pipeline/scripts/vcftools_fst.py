@@ -2,23 +2,9 @@
 
 #	Input from pipeline -> this script 
 #	-> output Fst statistics table and graph
+#	Requires relative good coverage, if the
+#	coverage is low use angsd_fst.py instead.
 #	Version: VCFtools/v0.1.13
-
-#	Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
-#
-#	This program is free software: you can redistribute it and/or modify
-#	it under the terms of the GNU General Public License as published by
-#	the Free Software Foundation, either version 3 of the License, or
-#	(at your option) any later version.
-#
-#	This program is distributed in the hope that it will be useful,
-#	but WITHOUT ANY WARRANTY; without even the implied warranty of
-#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#	GNU General Public License for more details.
-#
-#	You should have received a copy of the GNU General Public License
-#	along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 
 import sys
 import subprocess
@@ -26,10 +12,8 @@ import argparse
 import fnmatch
 import os
 import glob
+
 import pandas as pd
-import numpy as np
-from scipy.stats import uniform
-from scipy.stats import randint
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
@@ -375,7 +359,8 @@ def sliding_window():
 			processf.stdout.close()
 
 			# Add headers. 
-			cmdg = ('echo -e "CHROM\\tPOS\\tWEIR_AND_COCKERHAM_FST" | cat - %s > %s') \
+			cmdg = ('echo -e "CHROM\\tPOS\\tWEIR_AND_COCKERHAM_FST" \
+				| cat - %s > %s') \
 				% (rm_headers, fst_headers)
 			processg = subprocess.Popen(cmdg, \
 				stdout=subprocess.PIPE, \
@@ -453,9 +438,13 @@ def plot():
 			df = read_and_optimized
 			df['code'] = chrom_cat.cat.codes
 
-			# Make plot of data.
 			df['ind'] = range(len(df))
 			df_grouped = df.groupby(('code'))
+
+			# Dict for the contig names and index number.
+			names = dict( enumerate(df['CHROM'].cat.categories ))
+
+			# Make plot of data.
 			fig = plt.figure(figsize=(80, 20))
 			ax = fig.add_subplot(111)
 			colors = ['green', 'turquoise', \
@@ -479,8 +468,19 @@ def plot():
 				ax.set_title('Weir and Cockerham Fst', fontsize=40)
 				plt.tick_params(axis='x', length=0.01)
 
+			# Add legend with key values paired with the name of the contig.
+			legend_list=[]
+			for key, value in names.items():
+				temp = [key,value]
+				legend_list.append(temp)
+
+			plt.legend(legend_list,bbox_to_anchor=(1.01, 1), \
+						ncol=5, \
+						borderaxespad=0)
+			plt.tight_layout(pad=7)
+
 			# Save plot as pdf. 
-			plt.savefig("Fst_stats/Fst_plot.pdf")
+			plt.savefig("Fst_stats/Fst_plot_vcftools.pdf")
 def main():
 	# Making directory for Fst-results, 
 	# input-files to pandas and matplotlib.

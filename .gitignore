@@ -10,3 +10,5 @@ tmp/
 *~
 dev/*
 Bamboozle-alpha/OLD_bamboozle.py
+vilmas_pipeline/dev/*
+vilmas_pipeline/example_data/gff.db

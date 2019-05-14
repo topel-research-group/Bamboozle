@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 
-import sys
-import subprocess
 import argparse
-import fnmatch
-import os
 import time
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 from functools import reduce
 
@@ -111,15 +106,30 @@ def main(args):
 	new.to_csv('time.csv', index=False)
 
 	# Plot the results.
-	df = pd.DataFrame({'Temperature': temp, 'Location': loc, 'Time': time})
+	df = pd.DataFrame({'Temperature': temp, \
+			'Location': loc, \
+			'Time': time})
+
 	ax = df.plot(kind='box',
-		color=dict(boxes='r', whiskers='black', medians='r', caps='black'),
-		flierprops=dict(linestyle='-', linewidth=1.5),
-		medianprops=dict(linestyle='-', linewidth=1.5),
-		whiskerprops=dict(linestyle='-', linewidth=1.5),
-		capprops=dict(linestyle='-', linewidth=1.5),
-		showfliers=False, grid=False, rot=0)
-	ax.set_ylabel('Fst')
+		color=dict(boxes='black', \
+			whiskers='black', \
+			medians='r', \
+			caps='black'),
+		flierprops=dict(linestyle='-', \
+				linewidth=1.5),
+		medianprops=dict(linestyle='-', \
+				linewidth=1.5),
+		whiskerprops=dict(linestyle='-', \
+				linewidth=1.5),
+		capprops=dict(linestyle='-', \
+				linewidth=1.5),
+		showfliers=False, \
+		meanline=True, \
+		showmeans=True, \
+		grid=False, \
+		rot=0)
+
+	ax.set_ylabel('Value')
 	plt.savefig('environmental_' + fst_name + '_plot.png')
 
 if __name__ == "__main__":
