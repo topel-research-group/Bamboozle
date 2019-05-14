@@ -325,7 +325,7 @@ def annotation(args):
 			my_output = annotated_vcf
 			my_interval = ""
 			if args.gff and args.feature:
-				from modules.parse_gff_2 import main as parse
+				from parse_gff_2 import main as parse
 				parse(args.gff, args.feature, args.contigsizes)
 				out = add + 'out.gff'	
 				my_interval = "-fi %s" % out
