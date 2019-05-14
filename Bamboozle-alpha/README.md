@@ -7,13 +7,13 @@ Script for retrieving statistics or other types of sequence information from .ba
 Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage
 
 ```bash
-./bamboozle.py --mode coverage -b <BAMFILE> -c <CHROMOSOME/CONTIG> -t <THRESHOLD>
+./bamboozle.py --coverage --sortbam <BAMFILE> [-c <CONTIG>] [-d <THRESHOLD>]
 ```
 ```bash
-./bamboozle.py --mode coverage -b P8352_101_sorted.bam -c 000343F -t 25
+./bamboozle.py --coverage --sortbam P8352_101_sorted.bam -c 000343F -d 25
 ```
 * `-c` flag is optional; if not specified, analysis will be run on the whole assembly
-* `-t` flag is optional; if not specified, coverage of >= 20x will be reported
+* `-d` flag is optional; if not specified, coverage of >= 20x will be reported
 * Note: Requires a version of samtools which allows the `depth -aa` option
 * Note: percentage values are rounded to 3 decimal places
 
@@ -23,11 +23,12 @@ Retrieving a statistic for what percentage of bases in an assembly have >= Nx co
 Extracting consensus sequence of aligned reads from a specific region of the reference sequence.
 
 ```bash
-./bamboozle.py --mode consensus -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG> -a <RANGE>
+./bamboozle.py --consensus -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG> -a <RANGE>
 ```
 ```bash
-./bamboozle.py --mode consensus -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_150_sorted.bam -c 000028F -a 686188-691148
+./bamboozle.py --consensus -f Skeletonema_marinoi_Ref_v1.1.1.fst --sortbam P8352_150_sorted.bam -c 000028F -a 686188-691148
 ```
+* Note: this function needs fixing...
 
 
 ## Zero coverage
@@ -35,10 +36,10 @@ Extracting consensus sequence of aligned reads from a specific region of the ref
 Finding areas of zero coverage and printing the reference sequence, along with a GC percentage
 
 ```bash
-./bamboozle.py --mode zero -r <REFERENCE> -b <BAMFILE> -c <CHROMOSOME/CONTIG>
+./bamboozle.py --zero -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG>
 ```
 ```bash
-./bamboozle.py --mode zero -r Skeletonema_marinoi_Ref_v1.1.1.fst -b P8352_101_sorted.bam -c 000343F
+./bamboozle.py --zero -f Skeletonema_marinoi_Ref_v1.1.1.fst --sortbam P8352_101_sorted.bam -c 000343F
 ```
 * Note: percentage values are rounded to 3 decimal places
 
@@ -53,28 +54,26 @@ those events resulting in a frameshift
 
 * Mode 1 - prints every deletion position
 ```bash
-./bamboozle.py --mode deletion-1 -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+./bamboozle.py --deletion1 --sortbam <BAMFILE> [-c <CONTIG>]
 ```
 
 * Mode 2 - combine adjacent deletion positions into discrete events
 ```bash
-./bamboozle.py --mode deletion-2 -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+./bamboozle.py --deletion2 --sortbam <BAMFILE> [-c <CONTIG>]
 ```
 
 * Mode 3 - only report events which represent a frameshift (i.e. not divisible by 3)
 ```bash
-./bamboozle.py --mode deletion-3 -b <BAMFILE> [-c <CHROMOSOME/CONTIG>]
+./bamboozle.py --deletion3 --sortbam <BAMFILE> [-c <CONTIG>]
 ```
 
 ## Identify deletions within exons
 
-Finding deletions occurring within exons; requires a bed file of exons and a text file of deletions (the output
-of the above `deletion-2` and `deletion-3` modes)
-* Note: Both `-x` and `-m` are required
-* Note: This function will eventually be merged with the above `deletions` function
+Finding deletions occurring within exons
+* Note: Requires `-x` (bed file of exons)
 
 ```bash
-./bamboozle.py --mode deletion-x -x <EXONS> -m <MUTATIONS>
+./bamboozle.py --deletionx -x <EXONS> [-c <CONTIG>]
 ```
 
 ## Identify homozygous or heterozygous deletions
@@ -82,22 +81,21 @@ of the above `deletion-2` and `deletion-3` modes)
 Helping to identify whether a deletion is homozygous or heterozygous, by comparing coverage between the deletion
 and the previous base
 * Note: This currently generates an (automatically-deleted) intermediate file
-* Note: This function will eventually be merged with the above `deletions` function
 
 ```bash
-./bamboozle.py --mode homohetero -b <BAMFILE> -m <MUTATIONS>
+./bamboozle.py --homohetero --sortbam <BAMFILE> [-c <CONTIG>]
 ```
 
 ## Find regions which differ from the contig median by +/- 50%, and output them in .bed format
 
 ```bash
-./bamboozle.py --mode median-one -c <CONTIG> -b <BAMFILE> > <output.bed>
+./bamboozle.py --median --complex [-c <CONTIG>] --sortbam <BAMFILE> > <output.bed>
 ```
 
-## As above, but for each contig in the assembly
+## Output the median for one or all contigs, and output it/them in .txt format
 
 ```bash
-./bamboozle.py --mode median-all -b <BAMFILE> > <output.bed>
+./bamboozle.py --median --simple [-c <CONTIG>] --sortbam <BAMFILE> > <output.txt>
 ```
 
 ## Obtain a median per-contig coverage for the assembly
@@ -105,13 +103,13 @@ and the previous base
 This is a stripped-down version of the `median-all` function, providing a simplified list of only the contig medians
 
 ```bash
-./bamboozle.py --mode median_pc_coverage -b <BAMFILE> > <output.txt>
+./bamboozle.py --median_pc_coverage --sortbam <BAMFILE> > <output.txt>
 ```
 
 ## Identify the longest stretch in a given contig which has coverage between two specified limits
 
 ```bash
-./bamboozle.py --mode long-coverage -b <BAMFILE> -c <CONTIG> -l <LOWER LIMIT> <UPPER LIMIT>
+./bamboozle.py --long_coverage --sortbam <BAMFILE> -c <CONTIG> -l <LOWER LIMIT> <UPPER LIMIT>
 ```
 
 
@@ -125,10 +123,7 @@ This is a stripped-down version of the `median-all` function, providing a simpli
   deletions occur in one subset of the data but not another (e.g Warm vs. Cold results)
 * Refine handling of borderline deletion cases, i.e. a three bp heterozygous event where the first
   base is just outside the boundary of being reported (see P8352_101 - 000202F:6,205-6,207)
-* In exon_mutations function, find a way to pass the results of deletion function directly into
-  exon_mutations, rather than requiring an intermediate file
-* In HomoDel_or_Hetero function, find a way to pass the results of deletion function directly into
-  HomoDel_or_Hetero, rather than requiring two intermediate files
+* In HomoDel_or_Hetero function, find a way to eliminate the need for an intermediate file
 
 * Any way to speed things up when searching a contig later in the .bam file?
   * Is speed also an issue when reading through the output of bedtools?
@@ -138,6 +133,8 @@ This is a stripped-down version of the `median-all` function, providing a simpli
   * Can't speed up functions which use `bedtoools genomecov`, e.g. `--mode zero`
     * Speed is definitely an issue here...
 * Code can be simplified thanks to this flag...
+
+* Add function for giving MEAN average, instead of/as well as median
 
 ## Known bugs
 In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
