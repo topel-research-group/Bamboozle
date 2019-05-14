@@ -9,3 +9,4 @@ example/
 tmp/
 *~
 vilmas_pipeline/dev/*
+vilmas_pipeline/example_data/gff.db
