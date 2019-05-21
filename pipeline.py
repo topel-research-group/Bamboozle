@@ -312,6 +312,19 @@ def snpEff_test():
 	# Checks if there is a Skeletonema database, 
 	# if it doesn't exists the program will exit 
 	# and it has to be created using 'snpEff build'.
+
+	try:
+		subprocess.check_output('java -help', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("snpEff requires Java, please ensure Java is in your path.")
+		exit()
+
+	try:
+		subprocess.check_output('snpEff -version', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("Please ensure that snpEff is in your path.")
+		exit()
+
 	try:
 		cmdx = ('snpEff databases | grep "Skeletonema"')
 		processx = subprocess.check_output(cmdx, shell=True)

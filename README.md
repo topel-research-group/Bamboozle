@@ -7,6 +7,10 @@
 
 * Added a check for `bamparser.py` flags to eliminate the need for a `--bamparse` flag
   * There's probably a more elegant method, but it's functional
+  * This also removes the ambiguity of the `-b` flag for (unsorted) bam input
+
+* Add try/except statements to `pipeline.py` to ensure that, when snpEff is called,
+  both Java and snpEff itself are loaded
 
 * A few minor alterations to some of the `bamparser.py` functions, for clarity
 
@@ -23,6 +27,6 @@
 
 * Play with groupings in help file
 
-* Adjust ambiguous `-b` flag (ambiguous between `--bamfile` and `--bamparse`)
-
 * Enable `bamparser.py` functions to accept fastq or unsorted bam input
+
+* May need to add `shell=True` to get some of the mapping functions to work
