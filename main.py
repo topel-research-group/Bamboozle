@@ -50,9 +50,6 @@ parser.add_argument("-p", "--done", \
 #######################################################################
 
 group = parser.add_argument_group('Bamparser')
-group.add_argument('--bamparse', \
-			action="store_true", \
-			help ="Run bamparser")
 group.add_argument('--coverage', \
 			action="store_true", \
 			help='Print a statistic for what percentage of bases in an assembly have >=Nx coverage')
@@ -135,9 +132,21 @@ sortbam = args.sortbam
 
 #######################################################################
 
+# Determine whether the function derives from `bamparser.py`
+# Avoids the need for a `--bamparse` flag
+BamparseList = ["--coverage","--consensus","--zero","--deletion1","--deletion2","--deletion3",\
+		"--deletionx","--homohetero","--median","--long_coverage"]
+
+for item1 in BamparseList:
+	for item2 in sys.argv:
+		if item1 == item2:
+			bamparse = True
+
+#######################################################################
+
 # Run pipeline from beginning and if --bamparser run bamparser.py
 if args.ref and args.forward and args.reverse:
-	if args.bamparse:
+	if bamparse:
 		from pipeline import main
 		main()
 
@@ -150,7 +159,7 @@ if args.ref and args.forward and args.reverse:
 	
 # Run pipeline from bam_input (skips aligning steps) and if --bamparse run bamparser.py
 if args.ref and args.bamfile:
-	if args.bamparse:
+	if bamparse:
 		from pipeline import input_files,snpEff_test
 		snpEff_test()
 		input_files()	
@@ -164,7 +173,7 @@ if args.ref and args.bamfile:
 		input_files()	
 
 # If input is a sorted bam file and reference run pipeline, if not and --bamparse run bamparser.py
-if args.sortbam and args.bamparse:
+if args.sortbam and bamparse:
 	if args.ref:
 		from pipeline import input_files,snpEff_test
 		snpEff_test()
