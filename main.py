@@ -147,8 +147,16 @@ for item1 in BamparseList:
 # Run pipeline from beginning and if --bamparser run bamparser.py
 if args.ref and args.forward and args.reverse:
 	if bamparse:
-		from pipeline import main
-		main()
+#		from pipeline import main
+#		main()
+
+		from pipeline import bowtie2,samtools_view,bam_input,samtools_index
+#		from pipeline import bowtie2,samtools_view,samtools_sort,samtools_index
+		bowtie2(args)
+		samtools_view()
+#		samtools_sort()
+		bam_input(args)
+		samtools_index()
 
 		sortbam = 'Bowtie2/*_sorted.bam' 
 		from bamparser import main
@@ -158,11 +166,11 @@ if args.ref and args.forward and args.reverse:
 		main()
 	
 # Run pipeline from bam_input (skips aligning steps) and if --bamparse run bamparser.py
-if args.ref and args.bamfile:
+if args.bamfile:
 	if bamparse:
-		from pipeline import input_files,snpEff_test
-		snpEff_test()
-		input_files()	
+		from pipeline import bam_input,samtools_index
+		bam_input(args)
+		samtools_index()
 
 		sortbam = 'Bowtie2/*_sorted.bam' 
 		from bamparser import main 

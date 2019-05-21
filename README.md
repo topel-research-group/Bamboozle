@@ -14,19 +14,19 @@
 
 * A few minor alterations to some of the `bamparser.py` functions, for clarity
 
-## To do
+* `bamparser` can now accept an unsorted bam as input, and sort it before analysis
+  * Attempts to get it to work with fastq files are ongoing
 
-* Implement additional checks for presence of snpEff and Java
-  * See similar implementation for samtools
+## To do
 
 * Is it necessary to run snpEff for every function of `bamparser.py` that uses the `reference` flag?
 
 * `Bowtie2` and `Bcftools` directories don't need to be created if the script doesn't explicitly require them
+  * This can be fixed by running individual functions rather than `main` from the `pipeline.py` script
+  * Are all of the arguments being passed to `pipeline.py`? Even on 40 cores it seems to be slow...
 
 * `--homohetero` function bugs out if there is only one event in a given contig (`next` never assigned)
 
 * Play with groupings in help file
 
-* Enable `bamparser.py` functions to accept fastq or unsorted bam input
-
-* May need to add `shell=True` to get some of the mapping functions to work
+* Enable `bamparser.py` functions to accept fastq input
