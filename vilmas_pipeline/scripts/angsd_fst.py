@@ -9,11 +9,9 @@ import argparse
 import fnmatch
 import os
 import glob
+import time
 
 import pandas as pd
-import numpy as np
-from scipy.stats import uniform
-from scipy.stats import randint
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
@@ -59,42 +57,15 @@ fst_csv = 'angsd_fst_headers.csv'
 add = '../'
 if args.gff and args.feature:
 	fst_csv = 'angsd_fst_headers' + '_' + args.feature+ '.csv'
-#######################################################################
 
+#######################################################################
 
 def angsd():
 	# Make directory for angsd output. 
 	if not os.path.exists('ANGSD'):
 		os.makedirs('ANGSD')
 
-	if args.gff and args.feature:
-		import sys
-		sys.path.append('/proj/data11/vilma/Pipeline_vilma/')
-		from modules.parse_gff_2 import main as parse
-		parse(args.gff, args.feature, args.contigsizes)
-		out = add + 'out.gff'
-#		cmd_0 = ("cat %s \
-#			| cut -f1,4,5 \
-#			| sort -k1,1 -k2V \
-#			> region_file.txt") \
-#			% (out) 
-#		process_0 = subprocess.Popen(cmd_0, \
-#			stdout=subprocess.PIPE, \
-#			shell=True, \
-#			cwd='ANGSD')
-#		while process_0.wait() is None:
-#			pass
-#		process_0.stdout.close()
-
-		cmd_00 = ['angsd', 'sites', 'index', 'out.gff'] 
-		process_00 = subprocess.Popen(cmd_00, \
-			stdout=subprocess.PIPE, \
-			cwd='.')
-		while process_00.wait() is None:
-			pass
-		process_00.stdout.close()
-
-	directories1 = args.pop1 + '/*/Bowtie2/*.bam'
+	directories1 = args.pop1 + '/*/*/*.bam'
 	bam_list1 = glob.glob(directories1)
 	myfile = open("bam_list1.txt","w")
 	for n1 in bam_list1:
@@ -102,7 +73,7 @@ def angsd():
 
 	myfile.close()
 	
-	directories2 = args.pop2 + '/*/Bowtie2/*.bam'
+	directories2 = args.pop2 + '/*/*/*.bam'
 	bam_list2 = glob.glob(directories2)
 	myfile2 = open("bam_list2.txt","w")
 	for n2 in bam_list2:
@@ -111,13 +82,42 @@ def angsd():
 	myfile2.close()
 
 	if args.gff and args.feature:
+		import sys
+		#sys.path.append('/proj/data11/vilma/Bamboozle/vilmas_pipeline/')
+		from modules.parse_gff_2 import main as parse
+		parse(args.gff, args.feature, args.contigsizes)
+		out = add + 'out.gff'
+
+		cmd_0 = ('''awk '{print $1"\\t"$2+1"\\t"$3}' %s > region_file.txt''') \
+			% (out) 
+		process_0 = subprocess.Popen(cmd_0, \
+			shell=True, \
+			stdout=subprocess.PIPE, \
+			cwd='ANGSD')
+		if process_0.returncode == 0:
+			process_0.stdout.close()
+		else:
+			time.sleep(10)
+		process_0.stdout.close()
+
+		# Index filter file.
+		cmd_00 = ['angsd', 'sites', 'index', 'region_file.txt'] 
+		process_00 = subprocess.Popen(cmd_00, \
+			stdout=subprocess.PIPE, \
+			cwd='ANGSD')
+		while process_00.wait() is None:
+			pass
+		process_00.stdout.close()
+
 		# Calculate per pop site allele freq.
-		cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
+		cmd1 = ['angsd', \
+			'-P', '$NSLOTS', \
+			'-b', '../bam_list1.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop1', \
 			'-dosaf', '1', \
 			'-gl', '1', \
-			'-sites', out]	
+			'-sites', 'region_file.txt']	
 		process1 = subprocess.Popen(cmd1, \
 			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
@@ -125,12 +125,14 @@ def angsd():
 			pass
 		process1.stdout.close()
 
-		cmd2 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list2.txt', \
+		cmd2 = ['angsd', \
+			'-P', '$NSLOTS', \
+			'-b', '../bam_list2.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop2', \
 			'-dosaf', '1', \
 			'-gl', '1', \
-			'-sites', out]	
+			'-sites', 'region_file.txt']	
 		process2 = subprocess.Popen(cmd2, \
 			stdout=subprocess.PIPE, \
 			cwd='ANGSD')
@@ -139,7 +141,9 @@ def angsd():
 		process2.stdout.close()
 	else:
 		# Calculate per pop site allele freq.
-		cmd1 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list1.txt', \
+		cmd1 = ['angsd', \
+			'-P', '$NSLOTS', \
+			'-b', '../bam_list1.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop1', \
 			'-dosaf', '1', '-gl', \
@@ -151,7 +155,9 @@ def angsd():
 			pass
 		process1.stdout.close()
 
-		cmd2 = ['angsd', '-P', '$NSLOTS', '-b', '../bam_list2.txt', \
+		cmd2 = ['angsd', \
+			'-P', '$NSLOTS', \
+			'-b', '../bam_list2.txt', \
 			'-anc', add+ref, \
 			'-out', 'pop2', \
 			'-dosaf', '1', \
@@ -165,7 +171,8 @@ def angsd():
 
 	# Calculate 2dsfs prior.
 	cmd3 = ('realSFS \
-		pop1.saf.idx pop2.saf.idx -P %s > pop1.pop2.ml') % ('$NSLOTS')
+		pop1.saf.idx pop2.saf.idx -P %s > pop1.pop2.ml') \
+		% ('$NSLOTS')
 	process3 = subprocess.Popen(cmd3, \
 		stdout=subprocess.PIPE, \
 		shell=True, \
@@ -384,9 +391,13 @@ def plot():
 			df = read_and_optimized
 			df['code'] = chrom_cat.cat.codes
 
-			# Make plot of data.
 			df['ind'] = range(len(df))
 			df_grouped = df.groupby(('code'))
+
+			# Dict for the contig names and index number.
+			names = dict( enumerate(df['CHROM'].cat.categories ))
+
+			# Make plot of data.
 			fig = plt.figure(figsize=(80, 20))
 			ax = fig.add_subplot(111)
 			colors = ['green', 'turquoise', \
@@ -410,8 +421,20 @@ def plot():
 				ax.set_title('Weir and Cockerham Fst', fontsize=40)
 				plt.tick_params(axis='x', length=0.01)
 
+			# Add legend with key values paired with 
+			# the name of the contig.
+			legend_list=[]
+			for key, value in names.items():
+				temp = [key,value]
+				legend_list.append(temp)
+
+			plt.legend(legend_list,bbox_to_anchor=(1.01, 1), \
+						ncol=5, \
+						borderaxespad=0)
+			plt.tight_layout(pad=7)
+
 			# Save plot as png. 
-			plt.savefig("ANGSD/Fst_plot.png")
+			plt.savefig("ANGSD/Fst_plot_angsd.png")
 
 def main():
 	if args.window and args.step:

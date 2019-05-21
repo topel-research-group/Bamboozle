@@ -73,7 +73,7 @@ Finding deletions occurring within exons
 * Note: Requires `-x` (bed file of exons)
 
 ```bash
-./bamboozle.py --deletionx -x <EXONS> [-c <CONTIG>]
+./bamboozle.py --deletionx --sortbam <BAMFILE> -x <EXONS> [-c <CONTIG>]
 ```
 
 ## Identify homozygous or heterozygous deletions
@@ -96,14 +96,6 @@ and the previous base
 
 ```bash
 ./bamboozle.py --median --simple [-c <CONTIG>] --sortbam <BAMFILE> > <output.txt>
-```
-
-## Obtain a median per-contig coverage for the assembly
-
-This is a stripped-down version of the `median-all` function, providing a simplified list of only the contig medians
-
-```bash
-./bamboozle.py --median_pc_coverage --sortbam <BAMFILE> > <output.txt>
 ```
 
 ## Identify the longest stretch in a given contig which has coverage between two specified limits
@@ -130,12 +122,15 @@ This is a stripped-down version of the `median-all` function, providing a simpli
     * Try `mmap`? (https://www.quora.com/What-are-the-fastest-ways-to-read-text-lines-in-large-files-by-Python)
 
 * SPEED-UP CAN BE ACHIEVED USING `samtools depth -aa -r`
-  * Can't speed up functions which use `bedtoools genomecov`, e.g. `--mode zero`
+  * Can't speed up functions which use `bedtools genomecov`, e.g. `--mode zero`
     * Speed is definitely an issue here...
 * Code can be simplified thanks to this flag...
 
 * Add function for giving MEAN average, instead of/as well as median
 
 ## Known bugs
-In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
-together in the output
+* In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
+  together in the output
+
+* The homohetero function errors out if only one event occurs in a contig
+  (as the `next` variable is never assigned)

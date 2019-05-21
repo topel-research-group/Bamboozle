@@ -42,3 +42,4 @@ BAM file as input:
 ## More information  
 * [Wiki](https://github.com/topel-research-group/Pipeline_vilma/wiki)  
 
+# Merge with Bamboozle
