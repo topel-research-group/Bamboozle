@@ -9,16 +9,16 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 **The pipeline is also able to obtain various coverage-related statistics from read mapping results**
 
 ## Features  
-* This pipeline will give you a summary of the analysis in table format with effect prediction and annotated variants  
+* The pipeline will give you a summary of the analysis in table format with effect prediction and annotated variants  
 * Fst can be calculated using the utility scripts `vcftools_fst.py` or `angsd_fst.py`, this will give you a table with Fst values and a plot of the results
 * If you want to plot a specific contig use the additional program `make_plot.py`
 
 ## Usage examples
 |                   Function                   |                                        Example syntax                                         |                                              Notes                                              |
 |----------------------------------------------|-----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
-| FASTQ input                                  | `bamboozle.py -f <REFERENCE> -F <FORWARD READS> -R <REVERSE READS>`                           |
-| (Unsorted) BAM input                         | `bamboozle.py -f <REFERENCE> -b <BAMFILE>`                                                    |
-| (Sorted) BAM input                           | `bamboozle.py -f <REFERENCE> --sortedbam <SORTED BAMFILE>`                                    |
+| FASTQ input                                  | `bamboozle.py -f <REFERENCE> -F <FORWARD READS> -R <REVERSE READS>`                           | Run pipeline from beginning and align reads using Bowtie2
+| (Unsorted) BAM input                         | `bamboozle.py -f <REFERENCE> -b <BAMFILE>`                                                    | Skips aligning step and starts from the SAMtools step
+| (Sorted) BAM input                           | `bamboozle.py -f <REFERENCE> --sortedbam <SORTED BAMFILE>`                                    | Skips Bowtie2 and SAMtools, starts at BCFtools for SNP calling
 | Coverage statistics                          | `bamboozle.py --coverage --sortbam <BAMFILE> [-c <CONTIG>] [-d <THRESHOLD>]`                  | Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage          |
 | Consensus sequence                           | `bamboozle.py --consensus -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG> -a <RANGE>`          | Extracting consensus sequence of aligned reads from a specific region of the reference sequence |
 | Zero coverage                                | `bamboozle.py --zero -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG>`                          | Finding areas of zero coverage and printing the reference sequence, along with a GC percentage  |
@@ -34,15 +34,15 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 ***  
 | Utility script | Description |  
 |---|---|  
-|[`angsd_fst.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Fst statistics using BAM file from the SAMtools step as input. Uses genotype likelihoods to calculate Fst values, preferred if coverage is low or medium.|  
-|[`vcftools_fst.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Fst statistics using VCFtools --weir-fst-pop takes vcf files from the SnpEff step as input.|  
-|[`make_plot.py`](https://github.com/topel-research-group/Pipeline_vilma/wiki/Manual)| Makes an interactive plot of either the ANGSD csv results or the VCFtools csv results by specifying the contig you want to plot. Outputs a html file.|
+|[`angsd_fst.py`](https://github.com/topel-research-group/Bamboozle/wiki/Manual)| Fst statistics using BAM file from the SAMtools step as input. Uses genotype likelihoods to calculate Fst values, preferred if coverage is low or medium.|  
+|[`vcftools_fst.py`](https://github.com/topel-research-group/Bamboozle/wiki/Manual)| Fst statistics using VCFtools --weir-fst-pop takes vcf files from the SnpEff step as input.|  
+|[`make_plot.py`](https://github.com/topel-research-group/Bamboozle/wiki/Manual)| Makes an interactive plot of either the ANGSD csv results or the VCFtools csv results by specifying the contig you want to plot. Outputs a html file.|
 
 ## Dependencies
 
 |     Program      |                                                                  Versions used                                                                   |
 |------------------|--------------------------------------------------------------------------------------------------------------------------------------------------| 
-|`vilmas_pipeline` | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 <br/> Bedtools2/v2.27.1 <br/> Java (for snpEff) |
+|`Bamboozle` | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 <br/> Bedtools2/v2.27.1 <br/> Java (for snpEff) |
 |`angsd_fst`       | angsd/v0.918                                                                                                                                     |
 |`vcftools_fst`    | VCFtools/v0.1.13                                                                                                                                 |  
 |`make_plot`       | Highcharts/v6.2.0                                                                                                                                |  
