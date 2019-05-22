@@ -9,6 +9,7 @@ from functools import reduce
 from functools import wraps
 from time import time
 import datetime
+import glob
 
 #######################################################################
 
@@ -93,13 +94,13 @@ group.add_argument('-d', '--threshold', \
 			nargs='?', \
 			const='1', \
 			default='20', \
-			help='Threshold for calculating coverage percentage; default 20')
+			help='Threshold for calculating the coverage percentage; default 20')
 group.add_argument("-a", "--range", \
 			help="somethingsomsing")
 group.add_argument("-m", "--mutations", \
 			help="List of mutation events; currently requires output from bamboozle deletion function")
 group.add_argument("-x", "--exons", \
-			help="Bed file containing exon coordinates (0-based); -m also required")
+			help="Bed file containing exon coordinates (0-based); requires -m")
 group.add_argument("-l", "--limits", \
 			type=int, \
 			nargs=2, \
@@ -144,23 +145,27 @@ for item1 in BamparseList:
 
 #######################################################################
 
+# Ensure no bam files are present in the Bowtie2 directory before beginning,
+# as this will confuse the glob steps downstream
+
+if glob.glob("Bowtie2/*.bam"):
+	print("Please remove bam files from the Bowtie2 directory before retrying.")
+	exit()
+
+#######################################################################
+
 # Run pipeline from beginning and if --bamparser run bamparser.py
 if args.ref and args.forward and args.reverse:
 	if bamparse:
-#		from pipeline import main
-#		main()
-
-		from pipeline import bowtie2,samtools_view,bam_input,samtools_index
-#		from pipeline import bowtie2,samtools_view,samtools_sort,samtools_index
+		from pipeline import bowtie2,samtools_view,samtools_sort,samtools_index
 		bowtie2(args)
 		samtools_view()
-#		samtools_sort()
-		bam_input(args)
+		samtools_sort()
 		samtools_index()
 
-		sortbam = 'Bowtie2/*_sorted.bam' 
+		sortbam = glob.glob("Bowtie2/*_sorted.bam")
 		from bamparser import main
-		main(sortbam)
+		main(sortbam[0])
 	else:
 		from pipeline import main
 		main()
@@ -172,10 +177,10 @@ if args.bamfile:
 		bam_input(args)
 		samtools_index()
 
-		sortbam = 'Bowtie2/*_sorted.bam' 
+		sortbam = glob.glob("Bowtie2/*_sorted.bam")
 		from bamparser import main 
-		main(sortbam)
-	else:
+		main(sortbam[0])
+	elif args.ref:
 		from pipeline import input_files,snpEff_test
 		snpEff_test()
 		input_files()	
