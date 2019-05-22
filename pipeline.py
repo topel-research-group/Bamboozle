@@ -34,7 +34,6 @@ import datetime
 
 parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
 parser.add_argument("-f", "--ref", \
-			required=True, \
 			help="Reference")
 parser.add_argument("-F", "--forward", \
 			nargs='*', \
@@ -67,12 +66,38 @@ parser.add_argument("-r", "--clean", \
 parser.add_argument("-p", "--done", \
 			action="store_true", \
 			help="Add an empty file to mark the directory as done")
+
+#######################################################################
+
+parser.add_argument('--bamparse', action="store_true", help ="Run bamparser")
+parser.add_argument('--coverage', action="store_true", help='Print a statistic for what percentage of bases in an assembly have >=Nx coverage')
+parser.add_argument('--consensus', action="store_true", help='Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)')
+parser.add_argument('--zero', action="store_true", help='Find areas of zero coverage and print the reference sequence, along with a GC percentage')
+parser.add_argument('--deletion1', action="store_true", help='Find deletions')
+parser.add_argument('--deletion2', action="store_true", help='Find deletion events')
+parser.add_argument('--deletion3', action="store_true", help='Find frameshift deletion events')
+parser.add_argument('--deletionx', action="store_true", help='Find deletions occurring within exons')
+parser.add_argument('--homohetero', action="store_true", help='Attempt to determine whether a deletion is homozygous or heterozygous')
+parser.add_argument('--median', action="store_true", help='Find regions differing from contig median by +/- 50%%, or just contig medians')
+parser.add_argument('--long_coverage', action="store_true", help='Find the longest region between given coverage limits for a given contig')
+
+parser.add_argument('--complex', action="store_true", help='Print full bed output for median')
+parser.add_argument('--simple', action="store_true", help='Print median coverage only for median')
+parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
+parser.add_argument('-d', '--threshold', type=int, nargs='?', const='1', default='20', help='Threshold for calculating coverage percentage; default 20')
+parser.add_argument("-a", "--range", help="somethingsomsing")
+parser.add_argument("-m", "--mutations", help="List of mutation events; currently requires output from bamboozle deletion function")
+parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based); -m also required")
+parser.add_argument("-l", "--limits", type=int, nargs=2, help="Specify lower and upper limits for long_coverage function; two arguments required")
+parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
+parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
+
 args = parser.parse_args()
 
 if args.feature and args.gff is None:
-	parser.error("--feature requires --gff")
+        parser.error("--feature requires --gff")
 elif args.gff and args.feature is None:
-	parser.error("--feature requires --gff")
+        parser.error("--feature requires --gff")
 
 #######################################################################
 
@@ -287,6 +312,19 @@ def snpEff_test():
 	# Checks if there is a Skeletonema database, 
 	# if it doesn't exists the program will exit 
 	# and it has to be created using 'snpEff build'.
+
+	try:
+		subprocess.check_output('java -help', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("snpEff requires Java, please ensure Java is in your path.")
+		exit()
+
+	try:
+		subprocess.check_output('snpEff -version', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("Please ensure that snpEff is in your path.")
+		exit()
+
 	try:
 		cmdx = ('snpEff databases | grep "Skeletonema"')
 		processx = subprocess.check_output(cmdx, shell=True)
