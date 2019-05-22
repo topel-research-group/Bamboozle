@@ -1,5 +1,5 @@
 # Modules  
-Modules used in `vilmas_pipeline.py`  
+Modules used in `bamboozle.py`  
 
 
 
