@@ -153,46 +153,46 @@ if glob.glob("Bowtie2/*.bam"):
 # Run pipeline from beginning and if --bamparser run bamparser.py
 if args.ref and args.forward and args.reverse:
 	if bamparse:
-		from pipeline import bowtie2,samtools_view,samtools_sort,samtools_index
+		from modules.pipeline import bowtie2,samtools_view,samtools_sort,samtools_index
 		bowtie2(args)
 		samtools_view()
 		samtools_sort()
 		samtools_index()
 
 		sortbam = glob.glob("Bowtie2/*_sorted.bam")
-		from bamparser import main
+		from modules.bamparser import main
 		main(sortbam[0])
 	else:
-		from pipeline import main
+		from modules.pipeline import main
 		main()
 	
 # Run pipeline from bam_input (skips aligning steps) and if --bamparse run bamparser.py
 # DevNote - args.ref has been moved within this section, please move it back if required
 if args.bamfile:
 	if bamparse:
-		from pipeline import bam_input,samtools_index
+		from modules.pipeline import bam_input,samtools_index
 		bam_input(args)
 		samtools_index()
 
 		sortbam = glob.glob("Bowtie2/*_sorted.bam")
-		from bamparser import main 
+		from modules.bamparser import main 
 		main(sortbam[0])
 	elif args.ref:
-		from pipeline import input_files,snpEff_test
+		from modules.pipeline import input_files,snpEff_test
 		snpEff_test()
 		input_files()	
 
 # If input is a sorted bam file and reference run pipeline, if not and --bamparse run bamparser.py
-if args.sortbam and bamparse:
-	if args.ref:
-		from pipeline import input_files,snpEff_test
+if args.sortbam:
+	if bamparse:
+		from modules.pipeline import input_files,snpEff_test
 		snpEff_test()
 		input_files()
 
-		from bamparser import main
+		from modules.bamparser import main
 		main(args.sortbam)
-	else:
-		from bamparser import main
+	elif args.ref:
+		from modules.bamparser import main
 		main(args.sortbam)
 
 #######################################################################
