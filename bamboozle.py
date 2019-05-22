@@ -1,5 +1,24 @@
 #!/usr/bin/env python3
 
+#	Bamboozle v1.0
+#
+#	Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
+#       Copyright (C) 2018 Matthew Pinder. matt_pinder13@hotmail.com
+#
+#       This program is free software: you can redistribute it and/or modify
+#       it under the terms of the GNU General Public License as published by
+#       the Free Software Foundation, either version 3 of the License, or
+#       (at your option) any later version.
+#
+#       This program is distributed in the hope that it will be useful,
+#       but WITHOUT ANY WARRANTY; without even the implied warranty of
+#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#       GNU General Public License for more details.
+#
+#       You should have received a copy of the GNU General Public License
+#       along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import sys
 import os
 import argparse
@@ -153,46 +172,46 @@ if glob.glob("Bowtie2/*.bam"):
 # Run pipeline from beginning and if --bamparser run bamparser.py
 if args.ref and args.forward and args.reverse:
 	if bamparse:
-		from pipeline import bowtie2,samtools_view,samtools_sort,samtools_index
+		from modules.pipeline import bowtie2,samtools_view,samtools_sort,samtools_index
 		bowtie2(args)
 		samtools_view()
 		samtools_sort()
 		samtools_index()
 
 		sortbam = glob.glob("Bowtie2/*_sorted.bam")
-		from bamparser import main
+		from modules.bamparser import main
 		main(sortbam[0])
 	else:
-		from pipeline import main
+		from modules.pipeline import main
 		main()
 	
 # Run pipeline from bam_input (skips aligning steps) and if --bamparse run bamparser.py
 # DevNote - args.ref has been moved within this section, please move it back if required
 if args.bamfile:
 	if bamparse:
-		from pipeline import bam_input,samtools_index
+		from modules.pipeline import bam_input,samtools_index
 		bam_input(args)
 		samtools_index()
 
 		sortbam = glob.glob("Bowtie2/*_sorted.bam")
-		from bamparser import main 
+		from modules.bamparser import main 
 		main(sortbam[0])
 	elif args.ref:
-		from pipeline import input_files,snpEff_test
+		from modules.pipeline import input_files,snpEff_test
 		snpEff_test()
 		input_files()	
 
 # If input is a sorted bam file and reference run pipeline, if not and --bamparse run bamparser.py
-if args.sortbam and bamparse:
-	if args.ref:
-		from pipeline import input_files,snpEff_test
+if args.sortbam:
+	if bamparse:
+		from modules.pipeline import input_files,snpEff_test
 		snpEff_test()
 		input_files()
 
-		from bamparser import main
+		from modules.bamparser import main
 		main(args.sortbam)
-	else:
-		from bamparser import main
+	elif args.ref:
+		from modules.bamparser import main
 		main(args.sortbam)
 
 #######################################################################
