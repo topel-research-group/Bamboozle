@@ -9,10 +9,8 @@ example/
 tmp/
 *~
 dev/*
-Bamboozle-alpha/OLD_bamboozle.py
-vilmas_pipeline/dev/*
-vilmas_pipeline/example_data/gff.db
+Bamboozle-alpha/*
+vilmas_pipeline/*
 pipeline.log
 time.log
-vilmas_pipeline/Skeletonema_marinoi_adaptation_to_warming_project_refv.1.1.1/
 runTestMain.sge
