@@ -48,7 +48,7 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 |`make_plot`       | Highcharts/v6.2.0                                                                                                                                |  
 
 ## More information  
-* [Wiki](https://github.com/topel-research-group/Pipeline_vilma/wiki)  
+* [Wiki](https://github.com/topel-research-group/Bamboozle/wiki)  
 
 
 ## Additional notes
