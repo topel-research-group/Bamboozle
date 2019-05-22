@@ -32,6 +32,6 @@
 
 * `--homohetero` function bugs out if there is only one event in a given contig (`next` never assigned)
 
-* Is `sortbam = args.sortbam` redundant? Can `args.sortbam` be passed directly to functions?
-
 * Play with groupings in help file
+
+* Add a flag to include the `snpEff` functions in the `bamparse` parts of the pipeline?

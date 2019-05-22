@@ -129,10 +129,6 @@ if args.dev == True:
 
 #######################################################################
 
-sortbam = args.sortbam
-
-#######################################################################
-
 # Determine whether the function derives from `bamparser.py`
 # Avoids the need for a `--bamparse` flag
 BamparseList = ["--coverage","--consensus","--zero","--deletion1","--deletion2","--deletion3",\
@@ -171,6 +167,7 @@ if args.ref and args.forward and args.reverse:
 		main()
 	
 # Run pipeline from bam_input (skips aligning steps) and if --bamparse run bamparser.py
+# DevNote - args.ref has been moved within this section, please move it back if required
 if args.bamfile:
 	if bamparse:
 		from pipeline import bam_input,samtools_index
@@ -193,10 +190,10 @@ if args.sortbam and bamparse:
 		input_files()
 
 		from bamparser import main
-		main(sortbam)
+		main(args.sortbam)
 	else:
 		from bamparser import main
-		main(sortbam)
+		main(args.sortbam)
 
 #######################################################################
 
