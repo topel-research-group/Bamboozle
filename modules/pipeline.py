@@ -222,10 +222,13 @@ def samtools_view():
 @timing
 def samtools_sort():
 	log_file=open('pipeline.log','a')
+	if glob.glob("Bowtie2/*sorted.bam"):
+		print("Please remove sorted bam files from the Bowtie2 directory before retrying.")
+		exit()
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', \
-				'-@', '$NSLOTS', \
+				'-@', threads, \
 				bam, \
 				'-o', sorted_bam_out]
 			process4 = subprocess.Popen(cmd4, \
@@ -241,8 +244,11 @@ def samtools_sort():
 @timing
 def bam_input(args):
 	log_file=open('pipeline.log','a')
+	if glob.glob("Bowtie2/*sorted.bam"):
+		print("Please remove sorted bam files from the Bowtie2 directory before retrying.")
+		exit()
 	cmd5 = ['samtools', 'sort', \
-		'-@', '$NSLOTS', \
+		'-@', threads, \
 		add+args.bamfile, \
 		'-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, \
