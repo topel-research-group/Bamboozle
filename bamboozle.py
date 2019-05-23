@@ -191,21 +191,21 @@ if bamparse:
 			print("Please ensure that a reference [-f] and contig [-c] are given.")
 			exit()
 	elif args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
-		deletion(args.sortbam)
+		bp.deletion(args.sortbam)
 	elif args.deletionx:
 		if args.exons:
-			deletion(args.sortbam)
+			bp.deletion(args.sortbam)
 		else:
 			print("Please ensure that a bed file of exons [-x] is given.")
 			exit()
 	elif args.median:
 		if args.simple or args.complex:
-			median_deviation(args.sortbam)
+			bp.median_deviation(args.sortbam)
 		else:
 			print("Please specify --simple for medians only or --complex for full output")
 			exit()
 	elif args.long_coverage:
-		coverage_limits(args.sortbam)
+		bp.coverage_limits(args.sortbam)
 	else:
 		parser.print_help(sys.stderr)
 		exit()
