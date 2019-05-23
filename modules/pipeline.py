@@ -222,6 +222,9 @@ def samtools_view():
 @timing
 def samtools_sort():
 	log_file=open('pipeline.log','a')
+	if glob.glob("Bowtie2/*sorted.bam"):
+		print("Please remove sorted bam files from the Bowtie2 directory before retrying.")
+		exit()
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', \
