@@ -225,7 +225,7 @@ def samtools_sort():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', \
-				'-@', '$NSLOTS', \
+				'-@', threads, \
 				bam, \
 				'-o', sorted_bam_out]
 			process4 = subprocess.Popen(cmd4, \
@@ -242,7 +242,7 @@ def samtools_sort():
 def bam_input(args):
 	log_file=open('pipeline.log','a')
 	cmd5 = ['samtools', 'sort', \
-		'-@', '$NSLOTS', \
+		'-@', threads, \
 		add+args.bamfile, \
 		'-o', sorted_bam_out]
 	process5 = subprocess.Popen(cmd5, \
