@@ -244,6 +244,9 @@ def samtools_sort():
 @timing
 def bam_input(args):
 	log_file=open('pipeline.log','a')
+	if glob.glob("Bowtie2/*sorted.bam"):
+		print("Please remove sorted bam files from the Bowtie2 directory before retrying.")
+		exit()
 	cmd5 = ['samtools', 'sort', \
 		'-@', threads, \
 		add+args.bamfile, \
