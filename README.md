@@ -103,15 +103,9 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 
 * Add function for giving MEAN average, instead of/as well as median
 
-* Should the try/except statements for Java and snpEff in `pipeline.py` be moved into `annotation()`?
-
-* Does the `samtools_view()` function get `args.threads` passed to it?
-
 * `--homohetero` function bugs out if there is only one event in a given contig (`next` never assigned)
 
 * Play with groupings in help file
-
-* Add a flag to include the `snpEff` functions in the `bamparse` parts of the pipeline?
 
 ## Known bugs
 * In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
