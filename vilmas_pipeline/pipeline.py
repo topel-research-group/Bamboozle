@@ -25,6 +25,7 @@ import os
 import argparse
 import subprocess
 import fnmatch
+import glob
 from functools import reduce 
 from functools import wraps
 from time import time
@@ -222,13 +223,15 @@ def samtools_view():
 @timing
 def samtools_sort():
 	log_file=open('pipeline.log','a')
+	if glob.glob("Bowtie2/*sorted.bam"):
+		print("Please remove bam files from the Bowtie2 directory before retrying.")
+		exit()
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', \
 				'-@', threads, \
 				bam, \
 				'-o', sorted_bam_out]
-			print(cmd4)
 			process4 = subprocess.Popen(cmd4, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -242,6 +245,9 @@ def samtools_sort():
 @timing
 def bam_input(args):
 	log_file=open('pipeline.log','a')
+	if glob.glob("Bowtie2/*sorted.bam"):
+		print("Please remove bam files from the Bowtie2 directory before retrying.")
+		exit()
 	cmd5 = ['samtools', 'sort', \
 		'-@', threads, \
 		add+args.bamfile, \
