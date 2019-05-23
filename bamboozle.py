@@ -169,50 +169,53 @@ if glob.glob("Bowtie2/*.bam"):
 
 #######################################################################
 
-# Run pipeline from beginning and if --bamparser run bamparser.py
-if args.ref and args.forward and args.reverse:
-	if bamparse:
-		from modules.pipeline import bowtie2,samtools_view,samtools_sort,samtools_index
-		bowtie2(args)
-		samtools_view()
-		samtools_sort()
-		samtools_index()
+# VILMA'S 'FASTQ -> BAM -> SORTED BAM' CODE
 
-		sortbam = glob.glob("Bowtie2/*_sorted.bam")
-		from modules.bamparser import main
-		main(sortbam[0])
+######################################################################
+
+if bamparse:
+	import modules.bamparser as bp
+
+	if args.coverage:
+		bp.coverage_stats(args.sortbam)
+	elif args.consensus:
+		if args.ref and args.contig and args.range:
+			bp.extract_sequence(args.sortbam)
+		else:
+			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
+			exit()
+	elif args.zero:
+		if args.ref and args.contig:
+			bp.zero_regions(args.sortbam)
+		else:
+			print("Please ensure that a reference [-f] and contig [-c] are given.")
+			exit()
+	elif args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
+		deletion(args.sortbam)
+	elif args.deletionx:
+		if args.exons:
+			deletion(args.sortbam)
+		else:
+			print("Please ensure that a bed file of exons [-x] is given.")
+			exit()
+	elif args.median:
+		if args.simple or args.complex:
+			median_deviation(args.sortbam)
+		else:
+			print("Please specify --simple for medians only or --complex for full output")
+			exit()
+	elif args.long_coverage:
+		coverage_limits(args.sortbam)
 	else:
-		from modules.pipeline import main
-		main()
-	
-# Run pipeline from bam_input (skips aligning steps) and if --bamparse run bamparser.py
-# DevNote - args.ref has been moved within this section, please move it back if required
-if args.bamfile:
-	if bamparse:
-		from modules.pipeline import bam_input,samtools_index
-		bam_input(args)
-		samtools_index()
+		parser.print_help(sys.stderr)
+		exit()
 
-		sortbam = glob.glob("Bowtie2/*_sorted.bam")
-		from modules.bamparser import main 
-		main(sortbam[0])
-	elif args.ref:
-		from modules.pipeline import input_files,snpEff_test
-		snpEff_test()
-		input_files()	
+## DevNote - Add more appropriate syntax for the pipeline.py section below
 
-# If input is a sorted bam file and reference run pipeline, if not and --bamparse run bamparser.py
-if args.sortbam:
-	if bamparse:
-		from modules.pipeline import input_files,snpEff_test
-		snpEff_test()
-		input_files()
+else:
+	import modules.pipeline as pl
 
-		from modules.bamparser import main
-		main(args.sortbam)
-	elif args.ref:
-		from modules.bamparser import main
-		main(args.sortbam)
+	pl.main()
 
 #######################################################################
 
