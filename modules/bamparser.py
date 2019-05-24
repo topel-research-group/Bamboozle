@@ -1,15 +1,33 @@
 #!/usr/bin/env python3
 
+
+#	Pipeline for retrieving coverage-related statistics from BAM files.
+#
+#	Copyright (C) 2018 Matthew Pinder. matt_pinder13@hotmail.com
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import sys
 import subprocess
 import argparse
-import time
 import os.path
 from statistics import median
 
 #######################################################################
 
-parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
+parser = argparse.ArgumentParser(prog="BamParser")
 parser.add_argument("-f", "--ref", \
                         help="Reference")
 parser.add_argument("-F", "--forward", \
@@ -77,10 +95,6 @@ elif args.gff and args.feature is None:
 
 #######################################################################
 
-# For determining how long functions take to run
-if args.dev == True:
-	start_time = time.time()
-
 # Ensure correct version of samtools
 def check_samtools():
 	try:
@@ -91,29 +105,29 @@ def check_samtools():
 
 #######################################################################
 
-sortbam = args.sortbam
+#sortbam = args.sortbam
 
 #######################################################################
 
 # Calculate percentage of positions in assembly/contig with read coverage >= a given threshold (default: 20x)
-def coverage_stats(sortbam):
+def coverage_stats(args):
 
 	check_samtools()
 
 	if args.contig:
-		cmd = ["samtools depth -aa %s -r %s" % (sortbam, args.contig)]
+		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
 		sequence = "contig"
 	else:
-		cmd = ["samtools depth -aa %s" % sortbam]
+		cmd = ["samtools depth -aa %s" % args.sortbam]
 		sequence = "assembly"
 
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	if args.verbose == True:
 		if args.contig:
-			print("Obtaining stats for ",args.contig," in ",os.path.basename(sortbam),"; coverage >+",args.threshold,"x.",sep="")
+			print("Obtaining stats for ",args.contig," in ",os.path.basename(args.sortbam),"; coverage >+",args.threshold,"x.",sep="")
 		else:
-			print("Obtaining whole-genome stats for ",os.path.basename(sortbam),"; coverage >+",args.threshold,"x.",sep="")
+			print("Obtaining whole-genome stats for ",os.path.basename(args.sortbam),"; coverage >+",args.threshold,"x.",sep="")
 	cov_stats = {}
 	num_lines = 0
 	with process.stdout as result:
@@ -135,7 +149,7 @@ def coverage_stats(sortbam):
 # Fasta parsing from Biopython, fp.py and http://stackoverflow.com/questions/7654971/parsing-a-fasta-file-using-a-generator-python
 ## DevNote - Add try/except statement for bedtools
 ## DevNote - How to ensure that bam is sorted?
-def zero_regions(sortbam):
+def zero_regions(args):
 
 	def read_fasta(fasta):
 		name, seq = None, []
@@ -171,14 +185,14 @@ def zero_regions(sortbam):
 							print(args.contig,zero_range,round(get_gc(seq[key:zeroes[key]]), 3),seq[key:zeroes[key]],sep="\t")
 		exit()
 
-	if not args.contig or not args.ref or not sortbam:
+	if not args.contig or not args.ref or not args.sortbam:
 		print("Please ensure all required flags are specified; see readme file")
 		exit()
 
 	if args.verbose == True:
 		print("Finding zero coverage areas in contig",args.contig)
 
-	cmd = ["bedtools genomecov -bga -ibam %s" % sortbam]
+	cmd = ["bedtools genomecov -bga -ibam %s" % args.sortbam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	zeroes = {}
 	correct_contig = 0
@@ -197,7 +211,7 @@ def zero_regions(sortbam):
 
 # Scan for potential heterozygous/deletion sites - per base, discrete events, or frameshifts
 ## DevNote - currently skips first position
-def deletion(sortbam):
+def deletion(args):
 
 	check_samtools()
 
@@ -225,9 +239,9 @@ def deletion(sortbam):
 			print("Determining potentially homozygous/heterozygous deletions in",args.contig)
 
 	if args.contig and args.contig != "assembly":
-		cmd = ["samtools depth -aa %s -r %s" % (sortbam, args.contig)]
+		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
 	else:
-		cmd = ["samtools depth -aa %s" % sortbam]
+		cmd = ["samtools depth -aa %s" % args.sortbam]
 
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	
@@ -331,9 +345,9 @@ def HomoDel_or_Hetero(mutation_list):
 	# Compare the coverage 
 
 	if args.contig:
-		cmd = ["samtools depth -aa -b %s -r %s %s" % (temp_bed, args.contig, sortbam)]
+		cmd = ["samtools depth -aa -b %s -r %s %s" % (temp_bed, args.contig, args.sortbam)]
 	else:
-		cmd = ["samtools depth -aa -b %s %s" % (temp_bed, sortbam)]
+		cmd = ["samtools depth -aa -b %s %s" % (temp_bed, args.sortbam)]
 
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
@@ -343,6 +357,8 @@ def HomoDel_or_Hetero(mutation_list):
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
 			coverage.append(row)
+
+	print("Contig","Position","% cov. difference", sep="\t")
 
 	while len(coverage) >= 2:
 		before = coverage[0]
@@ -369,7 +385,7 @@ def HomoDel_or_Hetero(mutation_list):
 # Simple and contig flags: Obtain a per-contig median average coverage for the specified contig
 # Simple flag only: Obtain a per-contig median average coverage
 ## DevNote - Shows funky behaviour at stretches hovering around the threshold...
-def median_deviation(sortbam):
+def median_deviation(args):
 
 	def make_bed(contig_lib,this_contig):	# Generate a bed file of results
 		median_cov = median(contig_lib.values())
@@ -409,7 +425,7 @@ def median_deviation(sortbam):
 
 	if args.contig:
 
-		cmd = ["samtools depth -aa %s -r %s" % (sortbam, args.contig)]
+		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
 		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 		cov_stats = {}
@@ -428,7 +444,7 @@ def median_deviation(sortbam):
 
 	else:
 
-		cmd = ["samtools depth -aa %s" % sortbam]
+		cmd = ["samtools depth -aa %s" % args.sortbam]
 		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 		cov_stats = {}
@@ -461,11 +477,11 @@ def median_deviation(sortbam):
 				print(current_contig,median(cov_stats.values()),sep="\t")
 
 # Identify the longest continuous region of a contig where all positions fall between defined coverage limits
-def coverage_limits(sortbam):
+def coverage_limits(args):
 
 	check_samtools()
 
-	command = ["samtools depth -aa %s -r %s" % (sortbam, args.contig)]
+	command = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
 	if args.limits[0] < args.limits[1]:
@@ -511,7 +527,7 @@ def coverage_limits(sortbam):
 ## DevNote - This function needs fixing
 def extract_sequence(args):
 	command = ("samtools mpileup -uf %s %s -r %s:%s | bcftools view -cg -") \
-	% (args.ref, sortbam, args.contig, args.range)
+	% (args.ref, args.sortbam, args.contig, args.range)
 	bam = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 	header = ">" + args.contig + ":" + args.range
 	seq = ""
@@ -527,45 +543,3 @@ def extract_sequence(args):
 				seq += row.split("\t")[4]
 		print(header)
 		print(seq)
-
-
-def main(sortbam):
-	if args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
-		deletion(sortbam)
-	elif args.deletionx:
-		if args.exons:
-			deletion(sortbam)
-		else:
-			print("Please ensure that a bed file of exons [-x] is given.")
-			exit()
-	elif args.zero:
-		if args.ref and args.contig:
-			zero_regions(sortbam)
-		else:
-			print("Please ensure that a reference [-f] and contig [-c] are given.")
-			exit()
-	elif args.consensus:
-		if args.ref and args.contig and args.range:
-			extract_sequence(sortbam)
-		else:
-			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
-			exit()
-	elif args.median:
-		if args.simple or args.complex:
-			median_deviation(sortbam)
-		else:
-			print("Please specify --simple for medians only or --complex for full output")
-			exit()
-	elif args.coverage:
-		coverage_stats(sortbam)
-	elif args.long_coverage:
-		coverage_limits(sortbam)
-	else:
-		parser.print_help(sys.stderr)
-		exit()
-
-if __name__ == "__main__":
-	main(sortbam)
-
-if args.dev == True:
-	print("Time taken =",(time.time() - start_time),"seconds.")
