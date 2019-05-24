@@ -361,7 +361,7 @@ def exit():
 	sys.exit()
 
 def input_files():
-	import pipeline_2 as pl
+	import modules.pipeline as pl
 	pl.snpEff_test(args)
 
 	if args.sortbam:
@@ -452,17 +452,17 @@ else:
 
 # Check the functionality of the section below
 
-if __name__ == "__main__":
-        input_files()
-# Use gff parser without running whole pipeline.
-#       if args.gff and args.feature:
-#               try:
-#                       annotation()
-#               except:
-#                       main()
-#               else:
-#                       main()
+#if __name__ == "__main__":
+#	input_files()
 
+# Use gff parser without running whole pipeline.
+#	if args.gff and args.feature:
+#		try:
+#			annotation()
+#		except:
+#			main()
+#		else:
+#			main()
 
 
 #######################################################################
