@@ -95,24 +95,8 @@ elif args.gff and args.feature is None:
 
 #######################################################################
 
-# Ensure correct version of samtools
-def check_samtools():
-	try:
-		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
-
-#######################################################################
-
-#sortbam = args.sortbam
-
-#######################################################################
-
 # Calculate percentage of positions in assembly/contig with read coverage >= a given threshold (default: 20x)
 def coverage_stats(args):
-
-	check_samtools()
 
 	if args.contig:
 		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
@@ -212,8 +196,6 @@ def zero_regions(args):
 # Scan for potential heterozygous/deletion sites - per base, discrete events, or frameshifts
 ## DevNote - currently skips first position
 def deletion(args):
-
-	check_samtools()
 
 	mutation_list = []
 
@@ -421,8 +403,6 @@ def median_deviation(args):
 		if LastLow != 0:
 			print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
 
-	check_samtools()
-
 	if args.contig:
 
 		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
@@ -478,8 +458,6 @@ def median_deviation(args):
 
 # Identify the longest continuous region of a contig where all positions fall between defined coverage limits
 def coverage_limits(args):
-
-	check_samtools()
 
 	command = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)

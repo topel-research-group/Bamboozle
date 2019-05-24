@@ -170,6 +170,16 @@ if glob.glob("Bowtie2/*.bam"):
 
 #######################################################################
 
+# Ensure correct version of samtools
+def check_samtools():
+	try:
+		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
+#######################################################################
+
 current_directory = os.getcwd()
 name = os.path.basename(current_directory)
 add = '../'
@@ -271,6 +281,7 @@ def bowtie2():
 # Converting SAM to BAM using samtools view.
 @timing
 def samtools_view():
+	check_samtools()
 	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
@@ -292,6 +303,7 @@ def samtools_view():
 # Sort BAM files.
 @timing
 def samtools_sort():
+	check_samtools()
 	log_file=open('pipeline.log','a')
 	if glob.glob("Bowtie2/*sorted.bam"):
 		print("Please remove bam files from the Bowtie2 directory before retrying.")
@@ -314,6 +326,7 @@ def samtools_sort():
 # BAM input file by using the '-b' flag.
 @timing
 def bam_input():
+	check_samtools()
 	log_file=open('pipeline.log','a')
 	if glob.glob("Bowtie2/*sorted.bam"):
 		print("Please remove bam files from the Bowtie2 directory before retrying.")
@@ -334,6 +347,7 @@ def bam_input():
 # Index sorted BAM files.
 @timing
 def samtools_index():
+	check_samtools()
 	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
@@ -433,6 +447,7 @@ if bamparse:
 	import modules.bamparser as bp
 
 	if args.coverage:
+		check_samtools()
 		bp.coverage_stats(args)
 	elif args.consensus:
 		if args.ref and args.contig and args.range:
@@ -447,20 +462,25 @@ if bamparse:
 			print("Please ensure that a reference [-f] and contig [-c] are given.")
 			exit()
 	elif args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
+		check_samtools()
 		bp.deletion(args)
 	elif args.deletionx:
+		check_samtools()
 		if args.exons:
+			check_samtools()
 			bp.deletion(args)
 		else:
 			print("Please ensure that a bed file of exons [-x] is given.")
 			exit()
 	elif args.median:
+		check_samtools()
 		if args.simple or args.complex:
 			bp.median_deviation(args)
 		else:
 			print("Please specify --simple for medians only or --complex for full output")
 			exit()
 	elif args.long_coverage:
+		check_samtools()
 		bp.coverage_limits(args)
 	else:
 		parser.print_help(sys.stderr)
