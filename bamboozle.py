@@ -253,7 +253,6 @@ def bowtie2():
 		stdout=subprocess.PIPE, \
 		stderr = log_file, \
 		cwd='Bowtie2')
-	print(cmd1)
 	while process1.wait() is None:
 		pass
 	process1.stdout.close()
@@ -383,35 +382,35 @@ def done():
 def exit():
 	sys.exit()
 
-def input_files():
-	import modules.pipeline as pl
-	pl.snpEff_test(args)
-
-	if args.sortbam:
-		pl.bcftools(args,threads)
-		pl.annotation(args)
-
-	elif args.bamfile:
-		bam_input()
-		samtools_index()
-		pl.bcftools(args,threads)
-		pl.annotation(args)
-	else:
-		bowtie2()
-		samtools_view()
-		samtools_sort()
-		samtools_index()
-		pl.bcftools(args,threads)
-		pl.annotation(args)
-
-	if args.snpsift:
-		pl.snpsift(args)
-
-	if args.clean:
-		clean()
-
-	if args.done:
-		done()
+#def input_files():
+#	import modules.pipeline as pl
+#	pl.snpEff_test(args)
+#
+#	if args.sortbam:
+#		pl.bcftools(args,threads)
+#		pl.annotation(args)
+#
+#	elif args.bamfile:
+#		bam_input()
+#		samtools_index()
+#		pl.bcftools(args,threads)
+#		pl.annotation(args)
+#	else:
+#		bowtie2()
+#		samtools_view()
+#		samtools_sort()
+#		samtools_index()
+#		pl.bcftools(args,threads)
+#		pl.annotation(args)
+#
+#	if args.snpsift:
+#		pl.snpsift(args)
+#
+#	if args.clean:
+#		clean()
+#
+#	if args.done:
+#		done()
 
 ######################################################################
 
@@ -427,23 +426,24 @@ def input_files():
 
 ######################################################################
 
-# DevNote - The file conversion should be universal for both bamparser.py
-#		and pipeline.py; adjustments should be made
+# Ensure that, if the files are not in sorted bam format, they are converted into this format
+
+if args.ref and args.forward and args.reverse:
+	bowtie2()
+	samtools_view()
+	samtools_sort()
+	samtools_index()
+
+if args.bamfile:
+	bam_input()
+	samtools_index()
+
+if not args.sortbam:
+	args.sortbam = glob.glob("Bowtie2/*.bam")[0]
+
+######################################################################
 
 if bamparse:
-	if args.ref and args.forward and args.reverse:
-		bowtie2()
-		samtools_view()
-		samtools_sort()
-		samtools_index()
-
-	if args.bamfile:
-		bam_input()
-		samtools_index()
-
-	if not args.sortbam:
-		args.sortbam = glob.glob("Bowtie2/*.bam")[0]
-
 	import modules.bamparser as bp
 
 	if args.coverage:
@@ -486,10 +486,20 @@ if bamparse:
 		parser.print_help(sys.stderr)
 		exit()
 
-## DevNote - Add more appropriate syntax for the pipeline.py section below
-
 else:
-	input_files()
+	import modules.pipeline as pl
+	pl.snpEff_test(args)
+	pl.bcftools(args,threads)
+	pl.annotation(args)
+
+if args.snpsift:
+	pl.snpsift(args)
+
+if args.clean:
+	clean()
+
+if args.done:
+	done()
 
 #######################################################################
 

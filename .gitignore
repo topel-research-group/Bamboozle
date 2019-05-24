@@ -13,3 +13,4 @@ pipeline.log
 time.log
 runTestMain.sge*
 OldVersions/
+Bowtie2/
