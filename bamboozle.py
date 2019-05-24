@@ -186,8 +186,6 @@ else:
 
 sorted_bam_bai = name + '_sorted.bam.bai'
 
-#######################################################################
-
 # Time decorator.
 def timing(function):
 	@wraps(function)
@@ -208,12 +206,18 @@ def timing(function):
 	return wrapper
 
 # Makes new directory 'Bowtie2' if it doesn't exists.
-if not os.path.exists('Bowtie2'):
+if not args.sortbam and not os.path.exists('Bowtie2'):
 	os.makedirs('Bowtie2')
 
 # Running bowtie2-build to index reference genome and bowtie2 to align.
 @timing
 def bowtie2():
+	try:
+		subprocess.check_output('bowtie2 --help', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("Please ensure that Bowtie2 is in your path.")
+		exit()
+
 	log_file=open('pipeline.log','a')
 	# Selected input files using forward and reverse flags,
 	# the flags can take several input files.
@@ -233,11 +237,13 @@ def bowtie2():
 
 	# Bowtie2-build, inputs are reference in fasta format and
 	# base name for index files, the output are the index files.
+
 	cmd1 = ['bowtie2-build', add+args.ref, base]
 	process1 = subprocess.Popen(cmd1, \
 		stdout=subprocess.PIPE, \
 		stderr = log_file, \
 		cwd='Bowtie2')
+	print(cmd1)
 	while process1.wait() is None:
 		pass
 	process1.stdout.close()
@@ -268,11 +274,11 @@ def samtools_view():
 	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
-			cmd3 = ('samtools view \
-				-@ %s \
-				-Sb %s \
-				> %s') \
-				% (args.threads, sam, bam)
+			cmd3 = ('samtools view -@ %s \
+				-b \
+				-o %s \
+				%s') \
+				% (args.threads, bam, sam)
 			process3 = subprocess.Popen(cmd3, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -281,7 +287,7 @@ def samtools_view():
 			while process3.wait() is None:
 				pass
 			process3.stdout.close()
-		log_file.close()
+	log_file.close()
 
 # Sort BAM files.
 @timing
@@ -304,6 +310,7 @@ def samtools_sort():
 				pass
 			process4.stdout.close()
 	log_file.close()
+
 # BAM input file by using the '-b' flag.
 @timing
 def bam_input():
@@ -331,7 +338,9 @@ def samtools_index():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*_sorted.bam'):
 			cmd6 = ['samtools','index', \
-				sorted_bam_out, sorted_bam_bai]
+				'-@', threads, \
+				sorted_bam_out, \
+				sorted_bam_bai]
 			process6 = subprocess.Popen(cmd6, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
@@ -399,12 +408,28 @@ def input_files():
 # If args.sortbam hasn't been specified (i.e. if the input was fastq or unsorted bam),
 # set args.sortbam to the newly created sorted bam in the Bowtie2 directory
 
-if not args.sortbam:
-	args.sortbam = glob.glob("Bowtie2/*.bam")[0]
+#if not args.sortbam:
+#	args.sortbam = glob.glob("Bowtie2/*.bam")[0]
 
 ######################################################################
 
+# DevNote - The file conversion should be universal for both bamparser.py
+#		and pipeline.py; adjustments should be made
+
 if bamparse:
+	if args.ref and args.forward and args.reverse:
+		bowtie2()
+		samtools_view()
+		samtools_sort()
+		samtools_index()
+
+	if args.bamfile:
+		bam_input()
+		samtools_index()
+
+	if not args.sortbam:
+		args.sortbam = glob.glob("Bowtie2/*.bam")[0]
+
 	import modules.bamparser as bp
 
 	if args.coverage:
@@ -444,9 +469,7 @@ if bamparse:
 ## DevNote - Add more appropriate syntax for the pipeline.py section below
 
 else:
-	import modules.pipeline as pl
-
-	pl.main()
+	input_files()
 
 #######################################################################
 

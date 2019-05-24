@@ -11,5 +11,5 @@ tmp/
 dev/*
 pipeline.log
 time.log
-runTestMain.sge
+runTestMain.sge*
 OldVersions/
