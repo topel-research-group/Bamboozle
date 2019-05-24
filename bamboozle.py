@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
-#	Bamboozle v1.0
+
+#       Bamboozle v1.0
+#       Pipeline that performs bioinformatic analysis including SNP calling 
+#       and effect prediction of fastq files or BAM file. 
 #
-#	Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
+#       Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
 #       Copyright (C) 2018 Matthew Pinder. matt_pinder13@hotmail.com
 #
 #       This program is free software: you can redistribute it and/or modify
@@ -24,11 +27,11 @@ import os
 import argparse
 import subprocess
 import fnmatch
+import glob
 from functools import reduce
 from functools import wraps
 from time import time
 import datetime
-import glob
 
 #######################################################################
 
@@ -66,8 +69,6 @@ parser.add_argument("-r", "--clean", \
 parser.add_argument("-p", "--done", \
                         action="store_true", \
                         help="Add an empty file to mark the directory as done")
-
-#######################################################################
 
 group = parser.add_argument_group('Bamparser')
 group.add_argument('--coverage', \
@@ -169,7 +170,228 @@ if glob.glob("Bowtie2/*.bam"):
 
 #######################################################################
 
-# VILMA'S 'FASTQ -> BAM -> SORTED BAM' CODE
+current_directory = os.getcwd()
+name = os.path.basename(current_directory)
+add = '../'
+add2 = '../Bowtie2/'
+threads = str(args.threads)
+base = name + '.contigs'
+sam = name + '.sam'
+bam = name + '.bam'
+
+if args.sortbam:
+	sorted_bam_out = add + str(args.sortbam)
+else:
+	sorted_bam_out = add2 + name + '_sorted.bam'
+
+sorted_bam_bai = name + '_sorted.bam.bai'
+
+#######################################################################
+
+# Time decorator.
+def timing(function):
+	@wraps(function)
+	def wrapper(*args, **kwargs):
+		now = datetime.datetime.now()
+		start = time()
+		result = function(*args, **kwargs)
+		end = time()
+		fh = open("time.log", "a")
+		lines_of_text = now.strftime("%Y-%m-%d %H:%M") \
+			+ ' Function: ' \
+			+ function.__name__ \
+			+ ' Elapsed time: {}'.format(end-start) \
+			+ ' seconds \n'
+		fh.writelines(lines_of_text)
+		fh.close()
+		return result
+	return wrapper
+
+# Makes new directory 'Bowtie2' if it doesn't exists.
+if not os.path.exists('Bowtie2'):
+	os.makedirs('Bowtie2')
+
+# Running bowtie2-build to index reference genome and bowtie2 to align.
+@timing
+def bowtie2():
+	log_file=open('pipeline.log','a')
+	# Selected input files using forward and reverse flags,
+	# the flags can take several input files.
+	file1 = ''
+	file2 = ''
+	if args.forward:
+		f1 = []
+		for name in args.forward:
+			f1.append(add+name)
+		file1 += ','.join(map(str, f1))
+
+	if args.reverse:
+		f2 = []
+		for name2 in args.reverse:
+			f2.append(add+name2)
+		file2 += ','.join(map(str, f2))
+
+	# Bowtie2-build, inputs are reference in fasta format and
+	# base name for index files, the output are the index files.
+	cmd1 = ['bowtie2-build', add+args.ref, base]
+	process1 = subprocess.Popen(cmd1, \
+		stdout=subprocess.PIPE, \
+		stderr = log_file, \
+		cwd='Bowtie2')
+	while process1.wait() is None:
+		pass
+	process1.stdout.close()
+
+	# Bowtie2 align step, input are the index files from Bowtie2-build,
+	# fastq files (forward and reverse) the output is a SAM file.
+	for file in os.listdir('Bowtie2'):
+		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
+			cmd2 = ['bowtie2', \
+				'-p', threads, \
+				'--no-unal', \
+				'--very-sensitive', \
+				'-x', base, \
+				'-1', file1, \
+				'-2', file2, \
+				'-S', sam]
+			process2 = subprocess.Popen(cmd2, \
+				stdout=subprocess.PIPE, \
+				stderr = log_file, \
+				cwd='Bowtie2')
+			while process2.wait() is None:
+				pass
+			process2.stdout.close()
+	log_file.close()
+# Converting SAM to BAM using samtools view.
+@timing
+def samtools_view():
+	log_file=open('pipeline.log','a')
+	for file in os.listdir('Bowtie2'):
+		if fnmatch.fnmatch(file, '*.sam'):
+			cmd3 = ('samtools view \
+				-@ %s \
+				-Sb %s \
+				> %s') \
+				% (args.threads, sam, bam)
+			process3 = subprocess.Popen(cmd3, \
+				stdout=subprocess.PIPE, \
+				stderr = log_file, \
+				shell=True, \
+				cwd='Bowtie2')
+			while process3.wait() is None:
+				pass
+			process3.stdout.close()
+		log_file.close()
+
+# Sort BAM files.
+@timing
+def samtools_sort():
+	log_file=open('pipeline.log','a')
+	if glob.glob("Bowtie2/*sorted.bam"):
+		print("Please remove bam files from the Bowtie2 directory before retrying.")
+		exit()
+	for file in os.listdir('Bowtie2'):
+		if fnmatch.fnmatch(file, '*.bam'):
+			cmd4 = ['samtools', 'sort', \
+				'-@', threads, \
+				bam, \
+				'-o', sorted_bam_out]
+			process4 = subprocess.Popen(cmd4, \
+				stdout=subprocess.PIPE, \
+				stderr = log_file, \
+				cwd='Bowtie2')
+			while process4.wait() is None:
+				pass
+			process4.stdout.close()
+	log_file.close()
+# BAM input file by using the '-b' flag.
+@timing
+def bam_input():
+	log_file=open('pipeline.log','a')
+	if glob.glob("Bowtie2/*sorted.bam"):
+		print("Please remove bam files from the Bowtie2 directory before retrying.")
+		exit()
+	cmd5 = ['samtools', 'sort', \
+		'-@', threads, \
+		add+args.bamfile, \
+		'-o', sorted_bam_out]
+	process5 = subprocess.Popen(cmd5, \
+		stdout=subprocess.PIPE, \
+		stderr = log_file, \
+		cwd='Bowtie2')
+	while process5.wait() is None:
+		pass
+	process5.stdout.close()
+	log_file.close()
+
+# Index sorted BAM files.
+@timing
+def samtools_index():
+	log_file=open('pipeline.log','a')
+	for file in os.listdir('Bowtie2'):
+		if fnmatch.fnmatch(file, '*_sorted.bam'):
+			cmd6 = ['samtools','index', \
+				sorted_bam_out, sorted_bam_bai]
+			process6 = subprocess.Popen(cmd6, \
+				stdout=subprocess.PIPE, \
+				stderr = log_file, \
+				cwd='Bowtie2')
+			while process6.wait() is None:
+				pass
+			process6.stdout.close()
+	log_file.close()
+
+# Remove SAM and BAM files.
+def clean():
+	if args.clean:
+		for samfile in os.listdir('Bowtie2'):
+			if fnmatch.fnmatch(samfile, '*.sam'):
+				os.remove('Bowtie2/' + samfile)
+
+		for bamfile in os.listdir('Bowtie2'):
+			if fnmatch.fnmatch(bamfile, name + '.bam'):
+				os.remove('Bowtie2/' + bamfile)
+
+# Add empty file when the pipeline is done.
+def done():
+	open("pipeline.done", 'a').close()
+
+# Exit program.
+def exit():
+	sys.exit()
+
+def input_files():
+	import pipeline_2 as pl
+	pl.snpEff_test(args)
+
+	if args.sortbam:
+		pl.bcftools(args,threads)
+		pl.annotation(args)
+
+	elif args.bamfile:
+		bam_input()
+		samtools_index()
+		pl.bcftools(args,threads)
+		pl.annotation(args)
+	else:
+		bowtie2()
+		samtools_view()
+		samtools_sort()
+		samtools_index()
+		pl.bcftools(args,threads)
+		pl.annotation(args)
+
+	if args.snpsift:
+		pl.snpsift(args)
+
+	if args.clean:
+		clean()
+
+	if args.done:
+		done()
+
+######################################################################
+
 # DevNote - ensure that there is also a .bai file present
 
 ######################################################################
@@ -225,6 +447,23 @@ else:
 	import modules.pipeline as pl
 
 	pl.main()
+
+#######################################################################
+
+# Check the functionality of the section below
+
+if __name__ == "__main__":
+        input_files()
+# Use gff parser without running whole pipeline.
+#       if args.gff and args.feature:
+#               try:
+#                       annotation()
+#               except:
+#                       main()
+#               else:
+#                       main()
+
+
 
 #######################################################################
 
