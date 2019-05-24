@@ -170,6 +170,15 @@ if glob.glob("Bowtie2/*.bam"):
 #######################################################################
 
 # VILMA'S 'FASTQ -> BAM -> SORTED BAM' CODE
+# DevNote - ensure that there is also a .bai file present
+
+######################################################################
+
+# If args.sortbam hasn't been specified (i.e. if the input was fastq or unsorted bam),
+# set args.sortbam to the newly created sorted bam in the Bowtie2 directory
+
+if not args.sortbam:
+	args.sortbam = glob.glob("Bowtie2/*.bam")[0]
 
 ######################################################################
 
@@ -177,35 +186,35 @@ if bamparse:
 	import modules.bamparser as bp
 
 	if args.coverage:
-		bp.coverage_stats(args.sortbam)
+		bp.coverage_stats(args)
 	elif args.consensus:
 		if args.ref and args.contig and args.range:
-			bp.extract_sequence(args.sortbam)
+			bp.extract_sequence(args)
 		else:
 			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
 			exit()
 	elif args.zero:
 		if args.ref and args.contig:
-			bp.zero_regions(args.sortbam)
+			bp.zero_regions(args)
 		else:
 			print("Please ensure that a reference [-f] and contig [-c] are given.")
 			exit()
 	elif args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
-		bp.deletion(args.sortbam)
+		bp.deletion(args)
 	elif args.deletionx:
 		if args.exons:
-			bp.deletion(args.sortbam)
+			bp.deletion(args)
 		else:
 			print("Please ensure that a bed file of exons [-x] is given.")
 			exit()
 	elif args.median:
 		if args.simple or args.complex:
-			bp.median_deviation(args.sortbam)
+			bp.median_deviation(args)
 		else:
 			print("Please specify --simple for medians only or --complex for full output")
 			exit()
 	elif args.long_coverage:
-		bp.coverage_limits(args.sortbam)
+		bp.coverage_limits(args)
 	else:
 		parser.print_help(sys.stderr)
 		exit()
