@@ -38,7 +38,6 @@ name = os.path.basename(current_directory)
 add = '../'
 add2 = '../Bowtie2/'
 
-sorted_bam_out = add2 + name + '_sorted.bam'
 sorted_bam_bai = name + '_sorted.bam.bai'
 bcftools_out = name + '.bcftools_filtered.vcf.gz'
 annotated_vcf = name + '.snpeff_annotated.vcf'
@@ -70,25 +69,23 @@ def timing(function):
 # output file is a gzipped vcf file, 
 # makes new directory 'Bcftools' if it doesn't exists.
 @timing
-def bcftools(args,threads):
+def bcftools(args,threads,sorted_bam_out):
 	log_file=open('pipeline.log','a')
 	if not os.path.exists('Bcftools'):
 		os.makedirs('Bcftools')
 
-	for file in os.listdir('Bowtie2'):
-		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s \
-				| bcftools call --threads %s -Ou -mv \
-	 			| bcftools filter -s LowQual -e 'QUAL<20' -Oz -o %s") \
-			% (threads, add+args.ref, sorted_bam_out, threads, bcftools_out)
-			process7 = subprocess.Popen(cmd7, \
-				stdout=subprocess.PIPE, \
-				stderr = log_file, \
-				shell=True, \
-				cwd='Bcftools')
-			while process7.wait() is None:
-				pass
-			process7.stdout.close()
+	cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s \
+		| bcftools call --threads %s -Ou -mv \
+		| bcftools filter -s LowQual -e 'QUAL<20' -Oz -o %s") \
+	% (threads, add+args.ref, sorted_bam_out, threads, bcftools_out)
+	process7 = subprocess.Popen(cmd7, \
+		stdout=subprocess.PIPE, \
+		stderr = log_file, \
+		shell=True, \
+		cwd='Bcftools')
+	while process7.wait() is None:
+		pass
+	process7.stdout.close()
 	log_file.close()
 				
 # Checks for dependencies required for snpEff. 
