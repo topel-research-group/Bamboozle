@@ -154,6 +154,7 @@ if args.dev == True:
 BamparseList = ["--coverage","--consensus","--zero","--deletion1","--deletion2","--deletion3",\
 		"--deletionx","--homohetero","--median","--long_coverage"]
 
+bamparse = None
 for item1 in BamparseList:
 	for item2 in sys.argv:
 		if item1 == item2:
@@ -164,9 +165,13 @@ for item1 in BamparseList:
 # Ensure no bam files are present in the Bowtie2 directory before beginning,
 # as this will confuse the glob steps downstream
 
-if glob.glob("Bowtie2/*.bam"):
-	print("Please remove bam files from the Bowtie2 directory before retrying.")
-	exit()
+# The gff parser sometimes only go through the last annotation (if the analysis was done
+# and then you want to add exons and introns you don't have to run it all over).
+# In that case there will be bam files present but they will not be over run.  
+
+#if glob.glob("Bowtie2/*.bam"):
+#	print("Please remove bam files from the Bowtie2 directory before retrying.")
+#	exit()
 
 #######################################################################
 
@@ -189,6 +194,7 @@ base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam'
 
+sorted_bam_out = ""
 if args.sortbam:
 	sorted_bam_out = add + str(args.sortbam)
 else:
@@ -216,7 +222,7 @@ def timing(function):
 	return wrapper
 
 # Makes new directory 'Bowtie2' if it doesn't exists.
-if not args.sortbam and not os.path.exists('Bowtie2'):
+if not os.path.exists('Bowtie2'):
 	os.makedirs('Bowtie2')
 
 # Running bowtie2-build to index reference genome and bowtie2 to align.
@@ -304,9 +310,9 @@ def samtools_view():
 def samtools_sort():
 	check_samtools()
 	log_file=open('pipeline.log','a')
-	if glob.glob("Bowtie2/*sorted.bam"):
-		print("Please remove bam files from the Bowtie2 directory before retrying.")
-		exit()
+#	if glob.glob("Bowtie2/*sorted.bam"):
+#		print("Please remove bam files from the Bowtie2 directory before retrying.")
+#		exit()
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.bam'):
 			cmd4 = ['samtools', 'sort', \
@@ -327,9 +333,9 @@ def samtools_sort():
 def bam_input():
 	check_samtools()
 	log_file=open('pipeline.log','a')
-	if glob.glob("Bowtie2/*sorted.bam"):
-		print("Please remove bam files from the Bowtie2 directory before retrying.")
-		exit()
+#	if glob.glob("Bowtie2/*sorted.bam"):
+#		print("Please remove bam files from the Bowtie2 directory before retrying.")
+#		exit()
 	cmd5 = ['samtools', 'sort', \
 		'-@', threads, \
 		add+args.bamfile, \
@@ -382,35 +388,35 @@ def done():
 def exit():
 	sys.exit()
 
-#def input_files():
-#	import modules.pipeline as pl
-#	pl.snpEff_test(args)
-#
-#	if args.sortbam:
-#		pl.bcftools(args,threads)
-#		pl.annotation(args)
-#
-#	elif args.bamfile:
-#		bam_input()
-#		samtools_index()
-#		pl.bcftools(args,threads)
-#		pl.annotation(args)
-#	else:
-#		bowtie2()
-#		samtools_view()
-#		samtools_sort()
-#		samtools_index()
-#		pl.bcftools(args,threads)
-#		pl.annotation(args)
-#
-#	if args.snpsift:
-#		pl.snpsift(args)
-#
-#	if args.clean:
-#		clean()
-#
-#	if args.done:
-#		done()
+def input_files():
+	import modules.pipeline as pl
+	pl.snpEff_test(args)
+
+	if args.sortbam:
+		pl.bcftools(args,threads,sorted_bam_out)
+		pl.annotation(args)
+
+	elif args.bamfile:
+		bam_input()
+		samtools_index()
+		pl.bcftools(args,threads,sorted_bam_out)
+		pl.annotation(args)
+	else:
+		bowtie2()
+		samtools_view()
+		samtools_sort()
+		samtools_index()
+		pl.bcftools(args,threads,sorted_bam_out)
+		pl.annotation(args)
+
+	if args.snpsift:
+		pl.snpsift(args)
+
+	if args.clean:
+		clean()
+
+	if args.done:
+		done()
 
 ######################################################################
 
@@ -428,23 +434,28 @@ def exit():
 
 # Ensure that, if the files are not in sorted bam format, they are converted into this format
 
-if args.ref and args.forward and args.reverse:
-	bowtie2()
-	samtools_view()
-	samtools_sort()
-	samtools_index()
+#if args.ref and args.forward and args.reverse:
+#	bowtie2()
+#	samtools_view()
+#	samtools_sort()
+#	samtools_index()
 
-if args.bamfile:
-	bam_input()
-	samtools_index()
+#if args.bamfile:
+#	bam_input()
+#	samtools_index()
 
-if not args.sortbam:
-	args.sortbam = glob.glob("Bowtie2/*.bam")[0]
+#if not args.sortbam:
+#	args.sortbam = glob.glob("Bowtie2/*.bam")[0]
 
 ######################################################################
 
-if bamparse:
+def bamparse_func():
 	import modules.bamparser as bp
+
+	input_files()
+
+	if not args.sortbam:
+		args.sortbam = "Bowtie2/*sorted.bam" 
 
 	if args.coverage:
 		check_samtools()
@@ -486,39 +497,24 @@ if bamparse:
 		parser.print_help(sys.stderr)
 		exit()
 
-else:
-	import modules.pipeline as pl
-	pl.snpEff_test(args)
-	pl.bcftools(args,threads)
-	pl.annotation(args)
+def main():
+	if bamparse:
+		bamparse_func()
+		
+	if args.gff and args.feature:
+		import modules.pipeline as pl
+		try:
+			pl.annotation(args)
+		except:
+			input_files()
 
-if args.snpsift:
-	pl.snpsift(args)
-
-if args.clean:
-	clean()
-
-if args.done:
-	done()
-
-#######################################################################
-
-# Check the functionality of the section below
-
-#if __name__ == "__main__":
-#	input_files()
-
-# Use gff parser without running whole pipeline.
-#	if args.gff and args.feature:
-#		try:
-#			annotation()
-#		except:
-#			main()
-#		else:
-#			main()
-
+	if not bamparse:
+		input_files()
 
 #######################################################################
 
 if args.dev == True:
 	print("Time taken =",(time() - start_time),"seconds.")
+
+if __name__ == "__main__":
+	main()
