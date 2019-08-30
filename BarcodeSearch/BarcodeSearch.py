@@ -84,13 +84,12 @@ def BarFind(infile,outdict):
 		for row in rows:
 			if not row.startswith("#"):
 				SNP_loci.append(row.split("\t")[1])
-	print(SNP_loci)
+#	print(SNP_loci)
 
 	# Start stepping through the file
 
 	outdict = {}
 	window_coords = []
-	saved_window = (0,0,0,0)
 
 	for window_start in range(1,(contig_length - args.window),args.step):
 		window_stop = int(window_start + args.window)
@@ -109,24 +108,54 @@ def BarFind(infile,outdict):
 				unsuitable += 1
 				break
 
-	# If the forward primer site overlaps with the previous entry, extend previous entry
+		# If no variants in primer sites, save the coordinates
 		if unsuitable == 0:
-			if window_coords[0] in range(saved_window[0],saved_window[1]):
-				saved_window = (saved_window[0],window_coords[1],saved_window[2],window_coords[3])
+			outdict[window_coords[0]] = window_coords
 
-	# Otherwise start new window
-			else:
-				if saved_window != (0,0,0,0):
-					outdict[saved_window[0]] = saved_window
-				saved_window = window_coords
-	print(outdict)
-	print("\n###")
+	return(outdict)
 
 #######################################################################
 
+all_files = {}
+
+# Generate dictionary of dictionaries of lists, representing all suitable loci in all samples
 for n in range(len(args.BAMs)):
 	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
-	BarFind(args.BAMs[n],os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+	all_files[os.path.splitext(os.path.basename(args.BAMs[n]))[0]] = BarFind(args.BAMs[n],os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+
+print(all_files)
+
+# If key appears in all sub-dictionaries, save list to master dictionary
+for key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]]:
+	if key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[1]))[0]]:
+		print(key1)
+
+## FIND ELEGANT WAY TO ITERATE THROUGH ALL SUB-DICTIONARIES
+
+
+#for n in range(len(args.BAMs)):
+#	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+
+
+#	# If the forward primer site overlaps with the previous entry, extend previous entry
+#		if unsuitable == 0:
+#			if window_coords[0] in range(saved_window[0],saved_window[1]):
+#				saved_window = (saved_window[0],window_coords[1],saved_window[2],window_coords[3])
+#
+#	# Otherwise start new window
+#			else:
+#				if saved_window != (0,0,0,0):
+#					outdict[saved_window[0]] = saved_window
+#				saved_window = window_coords
+
+
+
+
+
+
+
+
+
 
 
 
