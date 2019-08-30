@@ -8,6 +8,7 @@
 
 import argparse
 import subprocess
+import os
 
 #######################################################################
 
@@ -66,11 +67,14 @@ with process2.stdout as result2:
 		if row2.split("\t")[0] == args.contig:
 			contig_length = int(row2.split("\t")[1])
 
-# Parse BAM files
-for n in range(len(args.BAMs)):
+#######################################################################
+
+def BarFind(infile,outdict):
+	
+	# Parse BAM files
 	SNP_loci = []
 	cmd = ["bcftools mpileup --threads %s --fasta-ref %s -r %s %s | bcftools call --threads %s -mv" % \
-		(args.threads, args.ref, args.contig, args.BAMs[n], args.threads)]
+		(args.threads, args.ref, args.contig, infile, args.threads)]
 
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
@@ -84,7 +88,7 @@ for n in range(len(args.BAMs)):
 
 	# Start stepping through the file
 
-	suitable_window = {}
+	outdict = {}
 	window_coords = []
 	saved_window = (0,0,0,0)
 
@@ -113,9 +117,18 @@ for n in range(len(args.BAMs)):
 	# Otherwise start new window
 			else:
 				if saved_window != (0,0,0,0):
-					suitable_window[saved_window[0]] = saved_window
+					outdict[saved_window[0]] = saved_window
 				saved_window = window_coords
-	print(suitable_window)
+	print(outdict)
+	print("\n###")
+
+#######################################################################
+
+for n in range(len(args.BAMs)):
+	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+	BarFind(args.BAMs[n],os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+
+
 
 
 ## INDELS COULD PRESENT A PROBLEM
