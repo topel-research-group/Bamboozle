@@ -14,3 +14,5 @@ time.log
 runTestMain.sge*
 OldVersions/
 Bowtie2/
+BarcodeSearch/*.vcf
+BarcodeSearch/*.sge
