@@ -123,53 +123,50 @@ for n in range(len(args.BAMs)):
 	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
 	all_files[os.path.splitext(os.path.basename(args.BAMs[n]))[0]] = BarFind(args.BAMs[n],os.path.splitext(os.path.basename(args.BAMs[n]))[0])
 
-print(all_files)
+master_dict = {}
 
 # If key appears in all sub-dictionaries, save list to master dictionary
+	# For every key in subdictionary 1...
 for key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]]:
-	if key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[1]))[0]]:
-		print(key1)
+	occurences = 1
+	# ... for each sub-dictionary in the rest of the main dictionary...
+	for dict1 in range(1,len(args.BAMs)):
+	# ... check whether key1 appears...
+		if key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[dict1]))[0]]:
+			occurences += 1
+	# ... and if it appears in all sub-dictionaries...
+	if occurences == len(args.BAMs):
+	# ... add it to the master dictionary
+		master_dict[key1] = all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]][key1]
 
-## FIND ELEGANT WAY TO ITERATE THROUGH ALL SUB-DICTIONARIES
+#print(master_dict)
+
+#######################################################################
+
+# Merge overlapping windows
+
+final_dict = {}
+
+saved_window = (0,0,0,0)
+
+for key2 in master_dict:
+	if saved_window == (0,0,0,0):
+		saved_window = master_dict[key2]
+	elif master_dict[key2][0] in range(saved_window[0],saved_window[1]):
+		saved_window = (saved_window[0],master_dict[key2][1],saved_window[2],master_dict[key2][3])
+	else:
+		final_dict[saved_window[0]] = saved_window
+		saved_window = master_dict[key2]
+
+for key3 in final_dict:
+	print(final_dict[key3])
+
+#######################################################################
 
 
-#for n in range(len(args.BAMs)):
-#	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
-
-
-#	# If the forward primer site overlaps with the previous entry, extend previous entry
-#		if unsuitable == 0:
-#			if window_coords[0] in range(saved_window[0],saved_window[1]):
-#				saved_window = (saved_window[0],window_coords[1],saved_window[2],window_coords[3])
-#
-#	# Otherwise start new window
-#			else:
-#				if saved_window != (0,0,0,0):
-#					outdict[saved_window[0]] = saved_window
-#				saved_window = window_coords
-
-
-
-
-
-
-
-
-
-
-
+# How many variants per region?
+# What is the consensus?
+#(vcfutils.pl vcf2fq)
 
 
 ## INDELS COULD PRESENT A PROBLEM
-
-
-
-## Does the region have adequate coverage *and* adequate variation vs. reference?
-## Coverage should be dealt with in BCFtools step
-
-## Move on to next sample and repeat process, checking only coordinates saved in the first round
-## Save coordinates to new list, and use this to check sample 3
-
-## Repeat the above until all samples have been checked
-
-## Start with a single contig, but extend to full assembly in future
