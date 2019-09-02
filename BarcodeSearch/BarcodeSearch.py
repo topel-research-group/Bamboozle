@@ -12,7 +12,7 @@ import os
 
 #######################################################################
 
-## Arguments - define reference, input bams, window size, step size, and primer site size
+## Arguments - define reference, input bams, window size, and primer site size
 
 parser = argparse.ArgumentParser(prog="BarcodeSearch")
 
@@ -25,10 +25,6 @@ parser.add_argument("--window", \
 			type=int, \
 			default="5000", \
 			help="Window size for barcode search")
-parser.add_argument("--step", \
-			type=int, \
-			default="1", \
-			help="Step size for barcode search")
 parser.add_argument("--primer_size", \
 			type=int, \
 			default="21", \
@@ -53,9 +49,9 @@ args = parser.parse_args()
 
 #######################################################################
 
-print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
+#print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
 
-## ENSURE CORRECT MODULES ARE LOADED
+## ENSURE CORRECT MODULES ARE LOADED - SAMTOOLS + BCFTOOLS
 
 # Record length of contig of interest
 cmd2 = ["samtools idxstats %s" % (args.BAMs[0])]
@@ -69,10 +65,15 @@ with process2.stdout as result2:
 
 #######################################################################
 
+all_SNPs = []
+all_indels = []
+
 def BarFind(infile,outdict):
 	
 	# Parse BAM files
 	SNP_loci = []
+	sample_SNPs = []
+	sample_indels = []
 	cmd = ["bcftools mpileup --threads %s --fasta-ref %s -r %s %s | bcftools call --threads %s -mv" % \
 		(args.threads, args.ref, args.contig, infile, args.threads)]
 
@@ -84,20 +85,23 @@ def BarFind(infile,outdict):
 		for row in rows:
 			if not row.startswith("#"):
 				SNP_loci.append(row.split("\t")[1])
-#	print(SNP_loci)
+				if "INDEL" in row.split("\t")[7]:
+					all_indels.append(row.split("\t")[1])
+				else:
+					all_SNPs.append(row.split("\t")[1])
 
 	# Start stepping through the file
 
 	outdict = {}
 	window_coords = []
 
-	for window_start in range(1,(contig_length - args.window),args.step):
+	# Assign start and stop locations for window and primers
+	for window_start in range(1,(contig_length - args.window)):
 		window_stop = int(window_start + args.window)
 		primer1_stop = int(window_start + args.primer_size)
 		primer2_start = int(window_stop - args.primer_size)
 		window_coords = (window_start,primer1_stop,primer2_start,window_stop)
 		unsuitable = 0
-		window_SNPS = 0
 
 		# If any variants fall within primer sites, skip the window
 		for SNP in SNP_loci:
@@ -120,8 +124,11 @@ all_files = {}
 
 # Generate dictionary of dictionaries of lists, representing all suitable loci in all samples
 for n in range(len(args.BAMs)):
-	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+#	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
 	all_files[os.path.splitext(os.path.basename(args.BAMs[n]))[0]] = BarFind(args.BAMs[n],os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+
+#print(all_SNPs)
+#print(all_indels)
 
 master_dict = {}
 
@@ -138,8 +145,6 @@ for key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]]:
 	if occurences == len(args.BAMs):
 	# ... add it to the master dictionary
 		master_dict[key1] = all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]][key1]
-
-#print(master_dict)
 
 #######################################################################
 
@@ -158,15 +163,24 @@ for key2 in master_dict:
 		final_dict[saved_window[0]] = saved_window
 		saved_window = master_dict[key2]
 
-for key3 in final_dict:
-	print(final_dict[key3])
-
 #######################################################################
 
+# Count variants
 
-# How many variants per region?
-# What is the consensus?
-#(vcfutils.pl vcf2fq)
+print("P1_1\tP1_2\tP2_1\tP2_2\tSNPs\tIndels")
 
+for key3 in final_dict:
 
-## INDELS COULD PRESENT A PROBLEM
+	window_SNPs = 0
+	window_indels = 0
+
+	for indel in all_indels:
+		if int(indel) in range((final_dict[key3][1] + 1),(final_dict[key3][2] - 1)):
+			window_indels += 1
+	for SNP in all_SNPs:
+		if int(SNP) in range((final_dict[key3][1] + 1),(final_dict[key3][2] - 1)):
+			window_SNPs += 1
+
+	print(final_dict[key3][0],final_dict[key3][1],final_dict[key3][2],final_dict[key3][3],window_SNPs,window_indels,sep="\t")
+
+# How should bcftools consensus be used here?
