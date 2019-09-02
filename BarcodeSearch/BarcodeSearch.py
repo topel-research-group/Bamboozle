@@ -9,6 +9,8 @@
 import argparse
 import subprocess
 import os
+import sys
+import io
 
 #######################################################################
 
@@ -21,7 +23,7 @@ parser.add_argument("-f", "--ref", \
 parser.add_argument("-B", "--BAMs", \
 			nargs="+", \
 			help="BAM files of samples")
-parser.add_argument("--window", \
+parser.add_argument("--window_size", \
 			type=int, \
 			default="5000", \
 			help="Window size for barcode search")
@@ -29,27 +31,33 @@ parser.add_argument("--primer_size", \
 			type=int, \
 			default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode")
-parser.add_argument("--coverage", \
-			type=int, \
-			default="100", \
-			help="Minimum coverage required in the potential barcode region")
-parser.add_argument("--minvar", \
-			type=int, \
-			default="1", \
-			help="Minimum number of desired variant bases per barcode")
-
 parser.add_argument("-t", "--threads", \
 			default=1, \
 			help="Threads")
-
 parser.add_argument("-c", "--contig", \
 			help="Specify contig to investigate")
+parser.add_argument("-o", "--out_prefix", \
+			help="Prefix for output files")
+
+parser.add_argument("--consensus", \
+			action="store_true", \
+			help="Generate a consensus sequence for each parsed BAM file")
 
 args = parser.parse_args()
 
 #######################################################################
 
-#print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
+outFile_windows = str(args.out_prefix + "_windows.txt")
+outFile_consensus = str(args.out_prefix + "_consensus.fa")
+
+if os.path.isfile(outFile_windows) == True:
+	print("Warning: Output file",outFile_windows,"already exists. Please choose another output prefix.")
+	sys.exit(0)
+elif os.path.isfile(outFile_consensus) == True :
+	print("Warning: Output file",outFile_consensus,"already exists. Please choose another output prefix.")
+	sys.exit(0)
+
+print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
 
 ## ENSURE CORRECT MODULES ARE LOADED - SAMTOOLS + BCFTOOLS
 
@@ -64,6 +72,9 @@ with process2.stdout as result2:
 			contig_length = int(row2.split("\t")[1])
 
 #######################################################################
+
+# This ensures that window starts and stops align as intended
+primer_size = args.primer_size - 1
 
 all_SNPs = []
 all_indels = []
@@ -96,8 +107,9 @@ def BarFind(infile,outdict):
 	window_coords = []
 
 	# Assign start and stop locations for window and primers
-	for window_start in range(1,(contig_length - args.window)):
-		window_stop = int(window_start + args.window)
+	for window in range(0,(contig_length - args.window_size)):
+		window_start = int(window + 1)
+		window_stop = int(window_start + args.window_size)
 		primer1_stop = int(window_start + args.primer_size)
 		primer2_start = int(window_stop - args.primer_size)
 		window_coords = (window_start,primer1_stop,primer2_start,window_stop)
@@ -105,10 +117,10 @@ def BarFind(infile,outdict):
 
 		# If any variants fall within primer sites, skip the window
 		for SNP in SNP_loci:
-			if int(SNP) in range(window_start,(primer1_stop + 1)):
+			if window_start <= int(SNP) <= primer1_stop:
 				unsuitable += 1
 				break
-			elif int(SNP) in range(primer2_start,(window_stop + 1)):
+			elif primer2_start <= int(SNP) <= window_stop:
 				unsuitable += 1
 				break
 
@@ -124,11 +136,9 @@ all_files = {}
 
 # Generate dictionary of dictionaries of lists, representing all suitable loci in all samples
 for n in range(len(args.BAMs)):
-#	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
-	all_files[os.path.splitext(os.path.basename(args.BAMs[n]))[0]] = BarFind(args.BAMs[n],os.path.splitext(os.path.basename(args.BAMs[n]))[0])
-
-#print(all_SNPs)
-#print(all_indels)
+	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+	all_files[os.path.splitext(os.path.basename(args.BAMs[n]))[0]] = \
+		BarFind(args.BAMs[n],os.path.splitext(os.path.basename(args.BAMs[n]))[0])
 
 master_dict = {}
 
@@ -136,6 +146,7 @@ master_dict = {}
 	# For every key in subdictionary 1...
 for key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]]:
 	occurences = 1
+	# CHECK NUMBERING BELOW!
 	# ... for each sub-dictionary in the rest of the main dictionary...
 	for dict1 in range(1,len(args.BAMs)):
 	# ... check whether key1 appears...
@@ -157,7 +168,7 @@ saved_window = (0,0,0,0)
 for key2 in master_dict:
 	if saved_window == (0,0,0,0):
 		saved_window = master_dict[key2]
-	elif master_dict[key2][0] in range(saved_window[0],saved_window[1]):
+	elif saved_window[0] <= master_dict[key2][0] <= saved_window[1]:
 		saved_window = (saved_window[0],master_dict[key2][1],saved_window[2],master_dict[key2][3])
 	else:
 		final_dict[saved_window[0]] = saved_window
@@ -165,22 +176,83 @@ for key2 in master_dict:
 
 #######################################################################
 
-# Count variants
+# Count variants and report results
 
-print("P1_1\tP1_2\tP2_1\tP2_2\tSNPs\tIndels")
+with open(outFile_windows, "a") as output_file:
+	output_file.write("P1_1\tP1_2\tP2_1\tP2_2\tSNPs\tIndels\n")
 
-for key3 in final_dict:
+	for key3 in final_dict:
 
-	window_SNPs = 0
-	window_indels = 0
+		window_SNPs = 0
+		window_indels = 0
 
-	for indel in all_indels:
-		if int(indel) in range((final_dict[key3][1] + 1),(final_dict[key3][2] - 1)):
-			window_indels += 1
-	for SNP in all_SNPs:
-		if int(SNP) in range((final_dict[key3][1] + 1),(final_dict[key3][2] - 1)):
-			window_SNPs += 1
+		for SNP in all_SNPs:
+			if final_dict[key3][1] < int(SNP) < final_dict[key3][2]:
+				window_SNPs += 1
+		for indel in all_indels:
+			if final_dict[key3][1] < int(indel) < final_dict[key3][2]:
+				window_indels += 1
 
-	print(final_dict[key3][0],final_dict[key3][1],final_dict[key3][2],final_dict[key3][3],window_SNPs,window_indels,sep="\t")
+		result = str(final_dict[key3][0]) + "\t" + str(final_dict[key3][1]) + "\t" + \
+			str(final_dict[key3][2]) + "\t" + str(final_dict[key3][3]) + "\t" + \
+			str(window_SNPs) + "\t" + str(window_indels) + "\n"
+		output_file.write(result)
 
-# How should bcftools consensus be used here?
+	output_file.close()
+
+#######################################################################
+
+# If desired, generate consensus sequence for the parsed BAM files using `bcftools consensus`
+# Note - this will require the generation of temporary index files
+
+if args.consensus:
+	print("Writing consensus sequences...")
+	with open(outFile_consensus, "a") as output_file:
+		for file in args.BAMs:
+			# Write contig name to [output].fa
+			fasta_header = ">" + os.path.splitext(os.path.basename(file))[0] + "_" + args.contig + "\n"
+			output_file.write(fasta_header)
+
+#			call_cmd = ["bcftools mpileup --threads %s --fasta-ref %s -r %s %s | \
+#					bcftools call --threads %s -mv -Oz" \
+#					% (args.threads, args.ref, args.contig, file, args.threads)]
+#			call_process = subprocess.Popen(call_cmd, stdout=subprocess.PIPE, shell=True)
+#
+#			with call_process.stdout as call_result:
+#
+#				index_cmd = ["bcftools index %s" % (call_result)]
+#				index_process = subprocess.Popen(index_cmd, stdout=subprocess.PIPE, shell=True)
+#
+#				with index_process.stdout as index_result:
+#
+#					consensus_cmd = ["samtools faidx %s %s | bcftools consensus %s##idx##%s" % (args.ref, args.contig, call_result, index_result)]
+#					consensus_process = subprocess.Popen(consensus_cmd, stdout=subprocess.PIPE, shell=True)
+#
+#					with consensus_process.stdout as consensus_result:
+#						final_result = str(consensus_result)
+#						output_file.write(final_result)
+#						output_file.write("\n")
+
+			call_cmd = ["bcftools mpileup --threads %s --fasta-ref %s -r %s %s | bcftools call --threads %s -mv -Ov" \
+					% (args.threads, args.ref, args.contig, file, args.threads)]
+			call_process = subprocess.Popen(call_cmd, stdout=subprocess.PIPE, shell=True)
+
+			with call_process.stdout as call_result:
+#			with io.BufferedReader(call_process.stdout) as call_result:
+
+			# HOW TO OVERCOME <_io.BufferedReader name=4> ERROR?
+			# OR IS PIPING IMPOSSIBLE IN THIS SITUATION?
+
+				consensus_cmd = ["samtools faidx %s %s | bcftools consensus %s" % (args.ref, args.contig, call_result)]
+				consensus_process = subprocess.Popen(consensus_cmd, stdout=subprocess.PIPE, shell=True)
+
+				with consensus_process.stdout as consensus_result:
+					final_result = str(consensus_result)
+					output_file.write(final_result)
+					output_file.write("\n")
+
+	output_file.close()
+
+
+
+# (Note that files with non-standard index names can be accessed as e.g. "bcftools view -r X:2928329 file.vcf.gz##idx##non-standard-index-name".)
