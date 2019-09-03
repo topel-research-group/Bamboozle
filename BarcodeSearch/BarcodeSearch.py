@@ -12,6 +12,9 @@ import os
 import sys
 import io
 
+from time import time
+import datetime
+
 #######################################################################
 
 ## Arguments - define reference, input bams, window size, and primer site size
@@ -36,22 +39,30 @@ parser.add_argument("-t", "--threads", \
 			help="Threads")
 parser.add_argument("-c", "--contig", \
 			help="Specify contig to investigate")
-parser.add_argument("-o", "--out_prefix", \
-			help="Prefix for output files")
+parser.add_argument("-o", "--outfile", \
+			help="Output filename")
+
+parser.add_argument("--dev", \
+			help=argparse.SUPPRESS, action="store_true")
 
 args = parser.parse_args()
 
 #######################################################################
 
-outFile_windows = str(args.out_prefix + "_windows.txt")
+# For determining how long functions take to run
+if args.dev == True:
+	start_time = time()
 
-if os.path.isfile(outFile_windows) == True:
-	print("Warning: Output file",outFile_windows,"already exists. Please choose another output prefix.")
+#######################################################################
+
+if os.path.isfile(args.outfile) == True:
+	print("Warning: Output file",args.outfile,"already exists. Please choose another output prefix.")
 	sys.exit(0)
 
 print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
 
-## ENSURE CORRECT MODULES ARE LOADED - SAMTOOLS + BCFTOOLS
+## DevNote - ENSURE CORRECT MODULES ARE LOADED - SAMTOOLS + BCFTOOLS
+## THIS CAN BE HANDLED WHEN MERGED WITH BAMBOOZLE
 
 # Record length of contig of interest
 cmd2 = ["samtools idxstats %s" % (args.BAMs[0])]
@@ -70,6 +81,8 @@ primer_size = args.primer_size - 1
 
 all_SNPs = []
 all_indels = []
+
+# DevNote - LET THE SCRIPT PARSE THE WHOLE ASSEMBLY, NOT JUST A SINGLE CONTIG
 
 def BarFind(infile,outdict):
 	
@@ -138,14 +151,19 @@ master_dict = {}
 	# For every key in subdictionary 1...
 for key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]]:
 	occurences = 1
+
 	# CHECK NUMBERING BELOW!
+
 	# ... for each sub-dictionary in the rest of the main dictionary...
 	for dict1 in range(1,len(args.BAMs)):
+
 	# ... check whether key1 appears...
 		if key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[dict1]))[0]]:
 			occurences += 1
+
 	# ... and if it appears in all sub-dictionaries...
 	if occurences == len(args.BAMs):
+
 	# ... add it to the master dictionary
 		master_dict[key1] = all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]][key1]
 
@@ -158,38 +176,51 @@ final_dict = {}
 saved_window = (0,0,0,0)
 
 for key2 in master_dict:
+
 	if saved_window == (0,0,0,0):
 		saved_window = master_dict[key2]
+
 	elif saved_window[0] <= master_dict[key2][0] <= saved_window[1]:
 		saved_window = (saved_window[0],master_dict[key2][1],saved_window[2],master_dict[key2][3])
+
 	else:
 		final_dict[saved_window[0]] = saved_window
 		saved_window = master_dict[key2]
 
 #######################################################################
 
-# Count variants and report results
+# Report results in BED format
 
-with open(outFile_windows, "a") as output_file:
-	output_file.write("P1_1\tP1_2\tP2_1\tP2_2\tSNPs\tIndels\n")
+with open(args.outfile, "a") as output_file:
+	output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
+
+	window_number = 0
 
 	for key3 in final_dict:
 
+		window_number += 1
 		window_SNPs = 0
 		window_indels = 0
 
 		for SNP in all_SNPs:
 			if final_dict[key3][1] < int(SNP) < final_dict[key3][2]:
 				window_SNPs += 1
+
 		for indel in all_indels:
 			if final_dict[key3][1] < int(indel) < final_dict[key3][2]:
 				window_indels += 1
 
-		result = str(final_dict[key3][0]) + "\t" + str(final_dict[key3][1]) + "\t" + \
-			str(final_dict[key3][2]) + "\t" + str(final_dict[key3][3]) + "\t" + \
-			str(window_SNPs) + "\t" + str(window_indels) + "\n"
-		output_file.write(result)
+		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
+
+		window = str(args.contig) + "\t" + str(final_dict[key3][0] - 1) + "\t" + str(final_dict[key3][3]) + "\t" + \
+				"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
+				"\t0\t.\t" + str(final_dict[key3][1]) + "\t" + str(final_dict[key3][2] - 1) + "\n"
+
+		output_file.write(window)
 
 	output_file.close()
 
 #######################################################################
+
+if args.dev == True:
+	print("Time taken =",(time() - start_time),"seconds.")
