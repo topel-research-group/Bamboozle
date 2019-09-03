@@ -39,22 +39,14 @@ parser.add_argument("-c", "--contig", \
 parser.add_argument("-o", "--out_prefix", \
 			help="Prefix for output files")
 
-parser.add_argument("--consensus", \
-			action="store_true", \
-			help="Generate a consensus sequence for each parsed BAM file")
-
 args = parser.parse_args()
 
 #######################################################################
 
 outFile_windows = str(args.out_prefix + "_windows.txt")
-outFile_consensus = str(args.out_prefix + "_consensus.fa")
 
 if os.path.isfile(outFile_windows) == True:
 	print("Warning: Output file",outFile_windows,"already exists. Please choose another output prefix.")
-	sys.exit(0)
-elif os.path.isfile(outFile_consensus) == True :
-	print("Warning: Output file",outFile_consensus,"already exists. Please choose another output prefix.")
 	sys.exit(0)
 
 print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
@@ -201,58 +193,3 @@ with open(outFile_windows, "a") as output_file:
 	output_file.close()
 
 #######################################################################
-
-# If desired, generate consensus sequence for the parsed BAM files using `bcftools consensus`
-# Note - this will require the generation of temporary index files
-
-if args.consensus:
-	print("Writing consensus sequences...")
-	with open(outFile_consensus, "a") as output_file:
-		for file in args.BAMs:
-			# Write contig name to [output].fa
-			fasta_header = ">" + os.path.splitext(os.path.basename(file))[0] + "_" + args.contig + "\n"
-			output_file.write(fasta_header)
-
-#			call_cmd = ["bcftools mpileup --threads %s --fasta-ref %s -r %s %s | \
-#					bcftools call --threads %s -mv -Oz" \
-#					% (args.threads, args.ref, args.contig, file, args.threads)]
-#			call_process = subprocess.Popen(call_cmd, stdout=subprocess.PIPE, shell=True)
-#
-#			with call_process.stdout as call_result:
-#
-#				index_cmd = ["bcftools index %s" % (call_result)]
-#				index_process = subprocess.Popen(index_cmd, stdout=subprocess.PIPE, shell=True)
-#
-#				with index_process.stdout as index_result:
-#
-#					consensus_cmd = ["samtools faidx %s %s | bcftools consensus %s##idx##%s" % (args.ref, args.contig, call_result, index_result)]
-#					consensus_process = subprocess.Popen(consensus_cmd, stdout=subprocess.PIPE, shell=True)
-#
-#					with consensus_process.stdout as consensus_result:
-#						final_result = str(consensus_result)
-#						output_file.write(final_result)
-#						output_file.write("\n")
-
-			call_cmd = ["bcftools mpileup --threads %s --fasta-ref %s -r %s %s | bcftools call --threads %s -mv -Ov" \
-					% (args.threads, args.ref, args.contig, file, args.threads)]
-			call_process = subprocess.Popen(call_cmd, stdout=subprocess.PIPE, shell=True)
-
-			with call_process.stdout as call_result:
-#			with io.BufferedReader(call_process.stdout) as call_result:
-
-			# HOW TO OVERCOME <_io.BufferedReader name=4> ERROR?
-			# OR IS PIPING IMPOSSIBLE IN THIS SITUATION?
-
-				consensus_cmd = ["samtools faidx %s %s | bcftools consensus %s" % (args.ref, args.contig, call_result)]
-				consensus_process = subprocess.Popen(consensus_cmd, stdout=subprocess.PIPE, shell=True)
-
-				with consensus_process.stdout as consensus_result:
-					final_result = str(consensus_result)
-					output_file.write(final_result)
-					output_file.write("\n")
-
-	output_file.close()
-
-
-
-# (Note that files with non-standard index names can be accessed as e.g. "bcftools view -r X:2928329 file.vcf.gz##idx##non-standard-index-name".)
