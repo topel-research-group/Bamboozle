@@ -61,37 +61,41 @@ if os.path.isfile(args.outfile) == True:
 
 print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
 
-## DevNote - ENSURE CORRECT MODULES ARE LOADED - SAMTOOLS + BCFTOOLS
-## THIS CAN BE HANDLED WHEN MERGED WITH BAMBOOZLE
-
 # Record length of contig of interest
+
+contig_lengths = {}
+
 cmd2 = ["samtools idxstats %s" % (args.BAMs[0])]
 process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 
 with process2.stdout as result2:
 	rows2 = (line2.decode() for line2 in result2)
 	for row2 in rows2:
-		if row2.split("\t")[0] == args.contig:
-			contig_length = int(row2.split("\t")[1])
+		if row2.split("\t")[0] != "*":
+			contig_lengths[row2.split("\t")[0]] = row2.split("\t")[1]
 
 #######################################################################
 
 # This ensures that window starts and stops align as intended
 primer_size = args.primer_size - 1
 
-all_SNPs = []
-all_indels = []
+all_SNPs = {}
+all_indels = {}
 
 # DevNote - LET THE SCRIPT PARSE THE WHOLE ASSEMBLY, NOT JUST A SINGLE CONTIG
+
+def FileName(long_name):
+	return(os.path.splitext(os.path.basename(long_name))[0])
 
 def BarFind(infile,outdict):
 	
 	# Parse BAM files
-	SNP_loci = []
-	sample_SNPs = []
-	sample_indels = []
-	cmd = ["bcftools mpileup --threads %s --fasta-ref %s -r %s %s | bcftools call --threads %s -mv" % \
-		(args.threads, args.ref, args.contig, infile, args.threads)]
+	variant_loci = {}
+	sample_SNPs = {}
+	sample_indels = {}
+
+	cmd = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv" % \
+		(args.threads, args.ref, infile, args.threads)]
 
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
@@ -100,11 +104,22 @@ def BarFind(infile,outdict):
 		rows = (line.decode() for line in result)
 		for row in rows:
 			if not row.startswith("#"):
-				SNP_loci.append(row.split("\t")[1])
+				contig_name = row.split("\t")[0]
+				variant_position = row.split("\t")[1]
+
+				if not contig_name in variant_loci.keys():
+					variant_loci[contig_name] = []
+				variant_loci[contig_name].append(variant_position)
+
 				if "INDEL" in row.split("\t")[7]:
-					all_indels.append(row.split("\t")[1])
+					if not contig_name in sample_indels.keys():
+						sample_indels[contig_name] = []
+					sample_indels[contig_name].append(variant_position)
+
 				else:
-					all_SNPs.append(row.split("\t")[1])
+					if not contig_name in sample_SNPs.keys():
+						sample_SNPs[contig_name] = []
+					sample_SNPs[contig_name].append(variant_position)
 
 	# Start stepping through the file
 
@@ -112,26 +127,32 @@ def BarFind(infile,outdict):
 	window_coords = []
 
 	# Assign start and stop locations for window and primers
-	for window in range(0,(contig_length - args.window_size)):
-		window_start = int(window + 1)
-		window_stop = int(window_start + args.window_size)
-		primer1_stop = int(window_start + args.primer_size)
-		primer2_start = int(window_stop - args.primer_size)
-		window_coords = (window_start,primer1_stop,primer2_start,window_stop)
-		unsuitable = 0
+	for contig in contig_lengths:
 
-		# If any variants fall within primer sites, skip the window
-		for SNP in SNP_loci:
-			if window_start <= int(SNP) <= primer1_stop:
-				unsuitable += 1
-				break
-			elif primer2_start <= int(SNP) <= window_stop:
-				unsuitable += 1
-				break
+		outdict[contig] = {}
 
-		# If no variants in primer sites, save the coordinates
-		if unsuitable == 0:
-			outdict[window_coords[0]] = window_coords
+		for window in range(0,(int(contig_lengths[contig]) - args.window_size)):
+			window_start = int(window + 1)
+			window_stop = int(window_start + args.window_size)
+			primer1_stop = int(window_start + args.primer_size)
+			primer2_start = int(window_stop - args.primer_size)
+			window_coords = (window_start,primer1_stop,primer2_start,window_stop)
+			unsuitable = 0
+
+			# If any variants fall within primer sites, skip the window
+			# ADD HANDLING FOR WHEN A CONTIG CONTAINS NO SNPS!
+			for variant in variant_loci[contig]:
+				if variant_loci[contig]:
+					if window_start <= int(variant) <= primer1_stop:
+						unsuitable += 1
+						break
+					elif primer2_start <= int(variant) <= window_stop:
+						unsuitable += 1
+						break
+
+			# If no variants in primer sites, save the coordinates
+			if unsuitable == 0:
+				outdict[contig][window_coords[0]] = window_coords
 
 	return(outdict)
 
@@ -140,85 +161,90 @@ def BarFind(infile,outdict):
 all_files = {}
 
 # Generate dictionary of dictionaries of lists, representing all suitable loci in all samples
-for n in range(len(args.BAMs)):
-	print(os.path.splitext(os.path.basename(args.BAMs[n]))[0])
-	all_files[os.path.splitext(os.path.basename(args.BAMs[n]))[0]] = \
-		BarFind(args.BAMs[n],os.path.splitext(os.path.basename(args.BAMs[n]))[0])
+for bam in args.BAMs:
+	print(FileName(bam))
+	all_files[FileName(bam)] = BarFind(bam,FileName(bam))
 
 master_dict = {}
 
 # If key appears in all sub-dictionaries, save list to master dictionary
-	# For every key in subdictionary 1...
-for key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]]:
-	occurences = 1
 
-	# CHECK NUMBERING BELOW!
+# For every key (contig) in subdictionary 1 (first BAM file parsed)...
+for contig in all_files[FileName(args.BAMs[0])]:
 
-	# ... for each sub-dictionary in the rest of the main dictionary...
-	for dict1 in range(1,len(args.BAMs)):
+	# ... and for every window in that bam...
+	for key in contig:
+		occurences = 1
 
-	# ... check whether key1 appears...
-		if key1 in all_files[os.path.splitext(os.path.basename(args.BAMs[dict1]))[0]]:
-			occurences += 1
+			# CHECK NUMBERING BELOW!
 
-	# ... and if it appears in all sub-dictionaries...
-	if occurences == len(args.BAMs):
+			# ... for each sub-dictionary in the rest of the main dictionary...
+		for dict1 in range(1,len(args.BAMs)):
 
-	# ... add it to the master dictionary
-		master_dict[key1] = all_files[os.path.splitext(os.path.basename(args.BAMs[0]))[0]][key1]
+			# ... check whether the contig/window pair appears...
+			if key in all_files[FileName(dict1)][contig]:
+				occurences += 1
+
+		# ... and if it appears in all sub-dictionaries...
+		if occurences == len(args.BAMs):
+
+			# ... add it to the master dictionary
+			master_dict[key] = all_files[FileName(args.BAMs[0])][contig][key]
+
+print(master_dict)
 
 #######################################################################
 
 # Merge overlapping windows
 
-final_dict = {}
-
-saved_window = (0,0,0,0)
-
-for key2 in master_dict:
-
-	if saved_window == (0,0,0,0):
-		saved_window = master_dict[key2]
-
-	elif saved_window[0] <= master_dict[key2][0] <= saved_window[1]:
-		saved_window = (saved_window[0],master_dict[key2][1],saved_window[2],master_dict[key2][3])
-
-	else:
-		final_dict[saved_window[0]] = saved_window
-		saved_window = master_dict[key2]
+#final_dict = {}
+#
+#saved_window = []
+#
+#for key2 in master_dict:
+#
+#	if not saved_window:
+#		saved_window = master_dict[key2]
+#
+#	elif saved_window[0] <= master_dict[key2][0] <= saved_window[1]:
+#		saved_window = [saved_window[0],master_dict[key2][1],saved_window[2],master_dict[key2][3]]
+#
+#	else:
+#		final_dict[saved_window[0]] = saved_window
+#		saved_window = master_dict[key2]
 
 #######################################################################
 
 # Report results in BED format
 
-with open(args.outfile, "a") as output_file:
-	output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
-
-	window_number = 0
-
-	for key3 in final_dict:
-
-		window_number += 1
-		window_SNPs = 0
-		window_indels = 0
-
-		for SNP in all_SNPs:
-			if final_dict[key3][1] < int(SNP) < final_dict[key3][2]:
-				window_SNPs += 1
-
-		for indel in all_indels:
-			if final_dict[key3][1] < int(indel) < final_dict[key3][2]:
-				window_indels += 1
-
-		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-
-		window = str(args.contig) + "\t" + str(final_dict[key3][0] - 1) + "\t" + str(final_dict[key3][3]) + "\t" + \
-				"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
-				"\t0\t.\t" + str(final_dict[key3][1]) + "\t" + str(final_dict[key3][2] - 1) + "\n"
-
-		output_file.write(window)
-
-	output_file.close()
+#with open(args.outfile, "a") as output_file:
+#	output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
+#
+#	window_number = 0
+#
+#	for key3 in final_dict:
+#
+#		window_number += 1
+#		window_SNPs = 0
+#		window_indels = 0
+#
+#		for SNP in all_SNPs:
+#			if final_dict[key3][1] < int(SNP) < final_dict[key3][2]:
+#				window_SNPs += 1
+#
+#		for indel in all_indels:
+#			if final_dict[key3][1] < int(indel) < final_dict[key3][2]:
+#				window_indels += 1
+#
+#		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
+#
+#		window = str(args.contig) + "\t" + str(final_dict[key3][0] - 1) + "\t" + str(final_dict[key3][3]) + "\t" + \
+#				"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
+#				"\t0\t.\t" + str(final_dict[key3][1]) + "\t" + str(final_dict[key3][2] - 1) + "\n"
+#
+#		output_file.write(window)
+#
+#	output_file.close()
 
 #######################################################################
 
