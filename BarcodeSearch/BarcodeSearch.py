@@ -54,12 +54,16 @@ if args.dev == True:
 	start_time = time()
 
 #######################################################################
+# HOUSEKEEPING
+#######################################################################
+
+# Ensure the output BED file doesn't already exist
 
 if os.path.isfile(args.outfile) == True:
 	print("Warning: Output file",args.outfile,"already exists. Please choose another output prefix.")
 	sys.exit(0)
 
-print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
+#######################################################################
 
 # Record length of contig of interest
 
@@ -77,16 +81,84 @@ with process2.stdout as result2:
 #######################################################################
 
 # This ensures that window starts and stops align as intended
+
 primer_size = args.primer_size - 1
 
-# DevNote - LET THE SCRIPT PARSE THE WHOLE ASSEMBLY, NOT JUST A SINGLE CONTIG
+#######################################################################
+
+# Get a reasonable name for each sample
 
 def FileName(long_name):
 	return(os.path.splitext(os.path.basename(long_name))[0])
 
+#######################################################################
+
+## Define a class to use for SNPs and indels
+#
+#class Variant:
+#	def __init__(self, contig, position):
+#		self.contig = contig
+#		self.position = position
+#	def getVariant(self):
+#		return self.contig, self.position
+#	def setContig(self, contig):
+#		self.contig = contig
+#	def setPosition(self, position):
+#		self.position = position
+#	def __eq__(self, other):
+#		return (self.contig, self.position) == (other.contig, other.position)
+
+#######################################################################
+
+# Define a class to use for windows
+
+class Window:
+	def __init__(self, contig, win_start, p1_stop, p2_start, win_stop, validity):
+		self.contig = contig
+		self.win_start = win_start
+		self.p1_stop = p1_stop
+		self.p2_start = p2_start
+		self.win_stop = win_stop
+		self.validity = validity
+	def getWindow(self):
+		return self.contig, self.win_start, self.p1_stop, self.p2_start, self.win_stop, self.validity
+	def setWin_start(self, win_start):
+		self.win_start = win_start
+	def setP1_stop(self, p1_stop):
+		self.p1_stop = p1_stop
+	def setP2_start(self, p2_start):
+		self.p2_start = p2_start
+	def setWin_stop(self, win_stop):
+		self.win_stop = win_stop
+	def setValidity(self, validity):
+		self.validity = validity
+	def __eq__(self, other):
+		return (self.contig, self.win_start, self.p1_stop, self.p2_start, self.win_stop, self.validity) \
+			== (other.contig, other.win_start, other.p1_stop, other.p2_start, other.win_stop, other.validity)
+
+#######################################################################
+
+# Set initial global lists/dictionaries
+
 all_SNPs = {}
+for contig in contig_lengths:
+	all_SNPs[contig] = []
+
 all_indels = {}
+for contig in contig_lengths:
+	all_indels[contig] = []
+
 all_files = {}
+
+master_list = []
+final_list = []
+
+#######################################################################
+# MAIN CODE
+#######################################################################
+
+print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
+
 
 for bam in args.BAMs:
 
@@ -103,6 +175,9 @@ for bam in args.BAMs:
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 	# Generate a list of loci where variants occur
+
+	print("Finding variants...")
+
 	with process.stdout as result:
 		rows = (line.decode() for line in result)
 		for row in rows:
@@ -111,6 +186,7 @@ for bam in args.BAMs:
 				variant_position = row.split("\t")[1]
 
 				if not contig_name in variant_loci.keys():
+					print(contig_name)
 					variant_loci[contig_name] = []
 				variant_loci[contig_name].append(variant_position)
 
@@ -124,143 +200,133 @@ for bam in args.BAMs:
 						sample_SNPs[contig_name] = []
 					sample_SNPs[contig_name].append(variant_position)
 
+	print("Adding variants to list...")
 	for contig in sample_SNPs:
-		if not contig in all_SNPs.keys():
-			all_SNPs[contig] = []
-		for position in sample_SNPs[contig]:
-			if position not in all_SNPs[contig]:
-				all_SNPs[contig].append(position)
+		for SNP in sample_SNPs[contig]:
+			if not SNP in all_SNPs[contig]:
+				all_SNPs[contig].append(SNP)
 
 	for contig in sample_indels:
-		if not contig in all_indels.keys():
-			all_indels[contig] = []
-		for position in sample_indels[contig]:
-			if position not in all_indels[contig]:
-				all_indels[contig].append(position)
+		for indel in sample_indels[contig]:
+			if not indel in all_indels[contig]:
+				all_indels[contig].append(indel)
 
 	# Start stepping through the file
 
-	outdict = {}
-	window_coords = []
+	outlist = []
 
 	# Assign start and stop locations for window and primers
-	for contig in variant_loci:
 
-		outdict[contig] = {}
+	print("Checking windows...")
 
+	for contig in contig_lengths:
+
+		print(contig)
 		for window in range(0,(int(contig_lengths[contig]) - args.window_size)):
 			window_start = int(window + 1)
 			window_stop = int(window_start + args.window_size)
 			primer1_stop = int(window_start + args.primer_size)
 			primer2_start = int(window_stop - args.primer_size)
-			window_coords = (window_start,primer1_stop,primer2_start,window_stop)
-			unsuitable = 0
+			window_coords = Window(contig,window_start,primer1_stop,primer2_start,window_stop,"true")
 
 			# If any variants fall within primer sites, skip the window
 			for variant in variant_loci[contig]:
-				if window_start <= int(variant) <= primer1_stop:
-					unsuitable += 1
-					break
-				elif primer2_start <= int(variant) <= window_stop:
-					unsuitable += 1
+				if (window_start <= int(variant) <= primer1_stop) or \
+				(primer2_start <= int(variant) <= window_stop):
+					window_coords.setValidity("false")
 					break
 
 			# If no variants in primer sites, save the coordinates
-			if unsuitable == 0:
-				outdict[contig][window_coords[0]] = window_coords
+			if window_coords.validity == "true":
+				outlist.append(window_coords)
 
-	all_files[FileName(bam)] = outdict
-
-print(all_SNPs)
-print(all_indels)
+	all_files[FileName(bam)] = outlist
 
 #######################################################################
-
-master_dict = {}
+# 	CHECK THIS BLOCK AND DOWN!
+#######################################################################
 
 # If key appears in all sub-dictionaries, save list to master dictionary
 
-# For every key (contig) in subdictionary 1 (first BAM file parsed)...
+# For every valid window identified in the first BAM file parsed...
 
-print(all_files[FileName(args.BAMs[0])])
-for contig in all_files[FileName(args.BAMs[0])]:
-	print(contig)
+print("Checking valid windows for presence in every sample...")
+for window in all_files[FileName(args.BAMs[0])]:
 
-	# ... and for every window in that bam...
-	for key in all_files[FileName(args.BAMs[0])][contig]:
-		occurences = 1
+	occurences = 1
 
-			# CHECK NUMBERING BELOW!
+	# CHECK NUMBERING BELOW!
 
-			# ... for each sub-dictionary in the rest of the main dictionary...
-		for bam in range(1,len(args.BAMs)):
+		# ... for each sub-dictionary in the rest of the main dictionary...
+	for bam in range(1,len(args.BAMs)):
 
-			# ... check whether the contig/window pair appears...
-			if key in all_files[FileName(args.BAMs[bam])][contig]:
-			
-				occurences += 1
+		# ... check whether the contig/window pair appears...
+		if window in all_files[FileName(args.BAMs[bam])]:
+			occurences += 1
 
-		# ... and if it appears in all sub-dictionaries...
-		if occurences == len(args.BAMs):
+	# ... and if it appears in all sub-dictionaries...
+	if occurences == len(args.BAMs):
 
-			# ... add it to the master dictionary
-			master_dict[key] = all_files[FileName(args.BAMs[0])][contig][key]
+		# ... add it to the master dictionary
+		print(window)
+		master_list.append(window)
 
-print(master_dict)
+for window in master_list:
+	print(window.getWindow())
 
 #######################################################################
-
-# Merge overlapping windows
-
-final_dict = {}
-
-saved_window = []
-
-for key2 in master_dict:
-
-	if not saved_window:
-		saved_window = master_dict[key2]
-
-	elif saved_window[0] <= master_dict[key2][0] <= saved_window[1]:
-		saved_window = [saved_window[0],master_dict[key2][1],saved_window[2],master_dict[key2][3]]
-
-	else:
-		final_dict[saved_window[0]] = saved_window
-		saved_window = master_dict[key2]
-
+#
+## Merge overlapping windows
+#
+#saved_window = []
+#
+#for key2 in master_list:
+#
+#	if not saved_window:
+#		saved_window = master_list[key2]
+#
+#	elif saved_window[0] <= master_list[key2][0] <= saved_window[1]:
+#		saved_window = [saved_window[0],master_list[key2][1],saved_window[2],master_list[key2][3]]
+#
+#	else:
+#		final_list[saved_window[0]] = saved_window
+#		saved_window = master_list[key2]
+#
 #######################################################################
-
+#
 # Report results in BED format
-
-with open(args.outfile, "a") as output_file:
-	output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
-
-	window_number = 0
-
-	for key3 in final_dict:
-
-		window_number += 1
-		window_SNPs = 0
-		window_indels = 0
-
-		for SNP in all_SNPs:
-			if final_dict[key3][1] < int(SNP) < final_dict[key3][2]:
-				window_SNPs += 1
-
-		for indel in all_indels:
-			if final_dict[key3][1] < int(indel) < final_dict[key3][2]:
-				window_indels += 1
-
-		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-
-		window = str(args.contig) + "\t" + str(final_dict[key3][0] - 1) + "\t" + str(final_dict[key3][3]) + "\t" + \
-				"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
-				"\t0\t.\t" + str(final_dict[key3][1]) + "\t" + str(final_dict[key3][2] - 1) + "\n"
-
-		output_file.write(window)
-
-	output_file.close()
-
+#
+#with open(args.outfile, "a") as output_file:
+#	output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
+#
+#	for contig in final_list:
+#
+#		window_number = 0
+#
+#		for key3 in final_list[contig]:
+#
+#			window_number += 1
+#			window_SNPs = 0
+#			window_indels = 0
+#
+#			for SNP in all_SNPs[contig]:
+#				if final_list[key3][1] < int(SNP) < final_list[key3][2]:
+#					window_SNPs += 1
+#
+#			for indel in all_indels:
+#				if final_list[key3][1] < int(indel) < final_list[key3][2]:
+#					window_indels += 1
+#
+#			# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
+#
+#			window = str(contig) + "\t" + str(final_list[key3][0] - 1) + "\t" + str(final_list[key3][3]) + "\t" + \
+#					"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
+#					"\t0\t.\t" + str(final_list[key3][1]) + "\t" + str(final_list[key3][2] - 1) + "\n"
+#
+#			output_file.write(window)
+#
+#	output_file.close()
+#
 #######################################################################
 
 if args.dev == True:
