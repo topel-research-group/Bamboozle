@@ -93,35 +93,18 @@ def FileName(long_name):
 
 #######################################################################
 
-## Define a class to use for SNPs and indels
-#
-#class Variant:
-#	def __init__(self, contig, position):
-#		self.contig = contig
-#		self.position = position
-#	def getVariant(self):
-#		return self.contig, self.position
-#	def setContig(self, contig):
-#		self.contig = contig
-#	def setPosition(self, position):
-#		self.position = position
-#	def __eq__(self, other):
-#		return (self.contig, self.position) == (other.contig, other.position)
-
-#######################################################################
-
 # Define a class to use for windows
 
 class Window:
-	def __init__(self, contig, win_start, p1_stop, p2_start, win_stop, validity):
+	def __init__(self, contig, win_start, p1_stop, p2_start, win_stop, instances):
 		self.contig = contig
 		self.win_start = win_start
 		self.p1_stop = p1_stop
 		self.p2_start = p2_start
 		self.win_stop = win_stop
-		self.validity = validity
+		self.instances = instances
 	def getWindow(self):
-		return self.contig, self.win_start, self.p1_stop, self.p2_start, self.win_stop, self.validity
+		return self.contig, self.win_start, self.p1_stop, self.p2_start, self.win_stop, self.instances
 	def setWin_start(self, win_start):
 		self.win_start = win_start
 	def setP1_stop(self, p1_stop):
@@ -130,11 +113,11 @@ class Window:
 		self.p2_start = p2_start
 	def setWin_stop(self, win_stop):
 		self.win_stop = win_stop
-	def setValidity(self, validity):
-		self.validity = validity
+	def setInstances(self, instances):
+		self.instances = instances
 	def __eq__(self, other):
-		return (self.contig, self.win_start, self.p1_stop, self.p2_start, self.win_stop, self.validity) \
-			== (other.contig, other.win_start, other.p1_stop, other.p2_start, other.win_stop, other.validity)
+		return (self.contig, self.win_start, self.p1_stop, self.p2_start, self.win_stop, self.instances) \
+			== (other.contig, other.win_start, other.p1_stop, other.p2_start, other.win_stop, other.instances)
 
 #######################################################################
 
@@ -149,20 +132,27 @@ for contig in contig_lengths:
 	all_indels[contig] = []
 
 all_files = {}
+for contig in contig_lengths:
+	all_files[contig] = []
 
-master_list = []
-final_list = []
+master_list = {}
+for contig in contig_lengths:
+	master_list[contig] = {}
+
+final_list = {}
+for contig in contig_lengths:
+	final_list[contig] = {}
 
 #######################################################################
 # MAIN CODE
 #######################################################################
 
-print("Searching for potential barcodes in",len(args.BAMs),"file(s).\n")
+print("Searching for potential barcodes in",len(args.BAMs),"file(s).")
 
 
 for bam in args.BAMs:
 
-	print(FileName(bam))
+	print("\n" + FileName(bam))
 
 	# Parse BAM files
 	variant_loci = {}
@@ -176,7 +166,7 @@ for bam in args.BAMs:
 
 	# Generate a list of loci where variants occur
 
-	print("Finding variants...")
+	print("\nFinding variants...")
 
 	with process.stdout as result:
 		rows = (line.decode() for line in result)
@@ -200,7 +190,7 @@ for bam in args.BAMs:
 						sample_SNPs[contig_name] = []
 					sample_SNPs[contig_name].append(variant_position)
 
-	print("Adding variants to list...")
+	print("\nAdding variants to list...")
 	for contig in sample_SNPs:
 		for SNP in sample_SNPs[contig]:
 			if not SNP in all_SNPs[contig]:
@@ -213,11 +203,9 @@ for bam in args.BAMs:
 
 	# Start stepping through the file
 
-	outlist = []
-
 	# Assign start and stop locations for window and primers
 
-	print("Checking windows...")
+	print("\nChecking windows...")
 
 	for contig in contig_lengths:
 
@@ -227,106 +215,103 @@ for bam in args.BAMs:
 			window_stop = int(window_start + args.window_size)
 			primer1_stop = int(window_start + args.primer_size)
 			primer2_start = int(window_stop - args.primer_size)
-			window_coords = Window(contig,window_start,primer1_stop,primer2_start,window_stop,"true")
+			window_coords = (window_start,primer1_stop,primer2_start,window_stop,1)
 
-			# If any variants fall within primer sites, skip the window
-			for variant in variant_loci[contig]:
-				if (window_start <= int(variant) <= primer1_stop) or \
-				(primer2_start <= int(variant) <= window_stop):
-					window_coords.setValidity("false")
-					break
+			# DevNote - stop iterating through variant list when position > window_stop
 
-			# If no variants in primer sites, save the coordinates
-			if window_coords.validity == "true":
-				outlist.append(window_coords)
+			if bam == args.BAMs[0]:
+				# If any variants fall within primer sites, skip the window
+				for variant in variant_loci[contig]:
+					validity = "true"
+					if int(variant) > window_stop:
+						break
+					elif ((window_start <= int(variant) <= primer1_stop) or \
+					(primer2_start <= int(variant) <= window_stop)):
+						validity = "false"
+						break
+				# If no variants in primer sites, save the coordinates
+				if validity == "true":
+					master_list[contig][window_start] = window_coords
 
-	all_files[FileName(bam)] = outlist
-
-#######################################################################
-# 	CHECK THIS BLOCK AND DOWN!
-#######################################################################
-
-# If key appears in all sub-dictionaries, save list to master dictionary
-
-# For every valid window identified in the first BAM file parsed...
-
-print("Checking valid windows for presence in every sample...")
-for window in all_files[FileName(args.BAMs[0])]:
-
-	occurences = 1
-
-	# CHECK NUMBERING BELOW!
-
-		# ... for each sub-dictionary in the rest of the main dictionary...
-	for bam in range(1,len(args.BAMs)):
-
-		# ... check whether the contig/window pair appears...
-		if window in all_files[FileName(args.BAMs[bam])]:
-			occurences += 1
-
-	# ... and if it appears in all sub-dictionaries...
-	if occurences == len(args.BAMs):
-
-		# ... add it to the master dictionary
-		print(window)
-		master_list.append(window)
-
-for window in master_list:
-	print(window.getWindow())
+			elif window_start in master_list[contig].keys():
+				# If any variants fall within primer sites, skip the window
+				for variant in variant_loci[contig]:
+					validity = "true"
+					if int(variant) > window_stop:
+						break
+					elif ((window_start <= int(variant) <= primer1_stop) or \
+					(primer2_start <= int(variant) <= window_stop)):
+						validity = "false"
+						break
+				# If no variants in primer sites, increase instances by 1
+				if validity == "true":
+					master_list[contig][window_start] = \
+					[window_start,primer1_stop,primer2_start,window_stop,(master_list[contig][window_start][4] + 1)]
 
 #######################################################################
-#
-## Merge overlapping windows
-#
-#saved_window = []
-#
-#for key2 in master_list:
-#
-#	if not saved_window:
-#		saved_window = master_list[key2]
-#
-#	elif saved_window[0] <= master_list[key2][0] <= saved_window[1]:
-#		saved_window = [saved_window[0],master_list[key2][1],saved_window[2],master_list[key2][3]]
-#
-#	else:
-#		final_list[saved_window[0]] = saved_window
-#		saved_window = master_list[key2]
-#
+
+# Merge overlapping windows
+
+print("\nMerging overlapping windows...")
+
+for contig in master_list:
+	saved_window = []
+
+	print(contig)
+	for window_start in master_list[contig]:
+		if master_list[contig][window_start][4] == len(args.BAMs):
+			if not saved_window:
+				saved_window = master_list[contig][window_start]
+
+			elif saved_window[0] <= master_list[contig][window_start][0] <= saved_window[1]:
+				saved_window = [saved_window[0],master_list[contig][window_start][1],\
+					saved_window[2],master_list[contig][window_start][3]]
+
+			else:
+				final_list[contig][saved_window[0]] = \
+				[saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
+
+				saved_window = master_list[contig][window_start]
+
+	final_list[contig][saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
+
 #######################################################################
-#
+
 # Report results in BED format
-#
-#with open(args.outfile, "a") as output_file:
-#	output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
-#
-#	for contig in final_list:
-#
-#		window_number = 0
-#
-#		for key3 in final_list[contig]:
-#
-#			window_number += 1
-#			window_SNPs = 0
-#			window_indels = 0
-#
-#			for SNP in all_SNPs[contig]:
-#				if final_list[key3][1] < int(SNP) < final_list[key3][2]:
-#					window_SNPs += 1
-#
-#			for indel in all_indels:
-#				if final_list[key3][1] < int(indel) < final_list[key3][2]:
-#					window_indels += 1
-#
-#			# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-#
-#			window = str(contig) + "\t" + str(final_list[key3][0] - 1) + "\t" + str(final_list[key3][3]) + "\t" + \
-#					"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
-#					"\t0\t.\t" + str(final_list[key3][1]) + "\t" + str(final_list[key3][2] - 1) + "\n"
-#
-#			output_file.write(window)
-#
-#	output_file.close()
-#
+
+print("\nGenerating BED file...")
+
+with open(args.outfile, "a") as output_file:
+	output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
+
+	for contig in final_list:
+
+		window_number = 0
+
+		for window in final_list[contig]:
+
+			window_number += 1
+			window_SNPs = 0
+			window_indels = 0
+
+			for SNP in all_SNPs[contig]:
+				if final_list[contig][window][1] < int(SNP) < final_list[contig][window][2]:
+					window_SNPs += 1
+
+			for indel in all_indels[contig]:
+				if final_list[contig][window][1] < int(indel) < final_list[contig][window][2]:
+					window_indels += 1
+
+			# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
+
+			window_out = str(contig) + "\t" + str(final_list[contig][window][0] - 1) + "\t" + str(final_list[contig][window][3]) + "\t" + \
+					"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
+					"\t0\t.\t" + str(final_list[contig][window][1]) + "\t" + str(final_list[contig][window][2] - 1) + "\n"
+
+			output_file.write(window_out)
+
+	output_file.close()
+
 #######################################################################
 
 if args.dev == True:
