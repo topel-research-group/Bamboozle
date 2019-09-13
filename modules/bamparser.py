@@ -4,6 +4,7 @@
 #	Pipeline for retrieving coverage-related statistics from BAM files.
 #
 #	Copyright (C) 2018 Matthew Pinder. matt_pinder13@hotmail.com
+#	Copyright (C) 2018 Mats Topel. mats.topel@marine.gu.se
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by

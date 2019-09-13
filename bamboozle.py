@@ -7,6 +7,7 @@
 #
 #       Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
 #       Copyright (C) 2018 Matthew Pinder. matt_pinder13@hotmail.com
+#	Copyright (C) 2018 Mats Topel. mats.topel@marine.gu.se
 #
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -131,6 +132,24 @@ group.add_argument("-v", "--verbose", \
 group.add_argument('--dev', \
 			help=argparse.SUPPRESS, action="store_true")
 
+barcode = parser.add_argument_group('BarcodeSearch')
+barcode.add_argument("--barcode", \
+			action="store_true", \
+			help="Search the input (sorted) BAM files for suitable barcode regions")
+barcode.add_argument("-B", "--BAMs", \
+			nargs="+", \
+			help="BAM files of samples")
+barcode.add_argument("--window_size", \
+			type=int, \
+			default="5000", \
+			help="Window size for barcode search")
+barcode.add_argument("--primer_size", \
+			type=int, \
+			default="21", \
+			help="Desired size of conserved regions at beginning and end of barcode")
+barcode.add_argument("-o", "--outfile", \
+			help="Output filename")
+
 args = parser.parse_args()
 
 if args.feature and args.gff is None:
@@ -221,9 +240,9 @@ def timing(function):
 		return result
 	return wrapper
 
-# Makes new directory 'Bowtie2' if it doesn't exists.
-if not os.path.exists('Bowtie2'):
-	os.makedirs('Bowtie2')
+## Makes new directory 'Bowtie2' if it doesn't exists.
+#if not os.path.exists('Bowtie2'):
+#	os.makedirs('Bowtie2')
 
 # Running bowtie2-build to index reference genome and bowtie2 to align.
 @timing
@@ -233,6 +252,10 @@ def bowtie2():
 	except subprocess.CalledProcessError:
 		print("Please ensure that Bowtie2 is in your path.")
 		exit()
+
+	# Makes new directory 'Bowtie2' if it doesn't exists.
+	if not os.path.exists('Bowtie2'):
+		os.makedirs('Bowtie2')
 
 	log_file=open('pipeline.log','a')
 	# Selected input files using forward and reverse flags,
@@ -500,6 +523,10 @@ def bamparse_func():
 def main():
 	if bamparse:
 		bamparse_func()
+
+	if args.barcode:
+		import modules.barcodesearch as bcs
+		bcs.barcode(args)
 		
 	if args.gff and args.feature:
 		import modules.pipeline as pl
@@ -508,13 +535,13 @@ def main():
 		except:
 			input_files()
 
-	if not bamparse:
+	if not bamparse and not args.barcode:
 		input_files()
 
 #######################################################################
 
-if args.dev == True:
-	print("Time taken =",(time() - start_time),"seconds.")
-
 if __name__ == "__main__":
 	main()
+
+if args.dev == True:
+	print("Time taken =",(time() - start_time),"seconds.")

@@ -71,13 +71,15 @@ def timing(function):
 @timing
 def bcftools(args,threads,sorted_bam_out):
 	log_file=open('pipeline.log','a')
+	ref_path = add + str(args.ref)
 	if not os.path.exists('Bcftools'):
 		os.makedirs('Bcftools')
 
 	cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s \
 		| bcftools call --threads %s -Ou -mv \
 		| bcftools filter -s LowQual -e 'QUAL<20' -Oz -o %s") \
-	% (threads, add+args.ref, sorted_bam_out, threads, bcftools_out)
+	% (threads, ref_path, sorted_bam_out, threads, bcftools_out)
+#	% (threads, add+args.ref, sorted_bam_out, threads, bcftools_out)
 	process7 = subprocess.Popen(cmd7, \
 		stdout=subprocess.PIPE, \
 		stderr = log_file, \
