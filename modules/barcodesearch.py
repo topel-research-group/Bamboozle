@@ -1,65 +1,32 @@
 #!/usr/bin/env python3
 
-# Look for ~5,000 bp regions with conserved ends and a variable centre versus the reference
-# Then check whether this region is also variable in subsequent samples
-# This will allow identification of barcodes flanked by conserved primer sites
+#	Look for ~5,000 bp regions with conserved ends and a variable centre versus the reference
+#	Then check whether this region is also variable in subsequent samples
+#	This will allow identification of barcodes flanked by conserved primer sites
+#
+#	Copyright (C) 2019 Matthew Pinder. matt_pinder13@hotmail.com
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 ## Imports
 
-import argparse
 import subprocess
 import os
 import sys
 import io
 
-from time import time
-import datetime
-
-#######################################################################
-
-## Arguments - define reference, input bams, window size, and primer site size
-
-parser = argparse.ArgumentParser(prog="BarcodeSearch")
-
-parser.add_argument("-f", "--ref", \
-			help="Reference")
-parser.add_argument("-B", "--BAMs", \
-			nargs="+", \
-			help="BAM files of samples")
-parser.add_argument("--window_size", \
-			type=int, \
-			default="5000", \
-			help="Window size for barcode search")
-parser.add_argument("--primer_size", \
-			type=int, \
-			default="21", \
-			help="Desired size of conserved regions at beginning and end of barcode")
-parser.add_argument("-t", "--threads", \
-			default=1, \
-			help="Threads")
-parser.add_argument("-o", "--outfile", \
-			help="Output filename")
-
-parser.add_argument("--barcode", \
-			action="store_true", \
-			help="Search the input (sorted) BAM files for suitable barcode regions")
-
-parser.add_argument("--dev", \
-			help=argparse.SUPPRESS, action="store_true")
-
-args = parser.parse_args()
-
-#######################################################################
-
-## For determining how long functions take to run
-#if args.dev == True:
-#	start_time = time()
-
-def barcode(args):
-
 #######################################################################
 # HOUSEKEEPING
 #######################################################################
+
+def barcode(args):
 
 # Ensure the output BED file doesn't already exist
 
@@ -69,7 +36,7 @@ def barcode(args):
 
 #######################################################################
 
-# Record length of contig of interest
+# Record all contig lengths
 
 	contig_lengths = {}
 
@@ -111,13 +78,13 @@ def barcode(args):
 	for contig in contig_lengths:
 		all_files[contig] = []
 
-	master_list = {}
+	master_dict = {}
 	for contig in contig_lengths:
-		master_list[contig] = {}
+		master_dict[contig] = {}
 
-	final_list = {}
+	final_dict = {}
 	for contig in contig_lengths:
-		final_list[contig] = {}
+		final_dict[contig] = {}
 
 #######################################################################
 # MAIN CODE
@@ -131,7 +98,7 @@ def barcode(args):
 
 		print("\n" + FileName(bam))
 
-	# Parse BAM files
+# Parse BAM files
 		variant_loci = {}
 		for contig in contig_lengths:
 			variant_loci[contig] = []
@@ -144,7 +111,7 @@ def barcode(args):
 
 		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
-	# Generate a list of loci where variants occur
+# Generate a list of loci where variants occur
 
 		print("\nFinding variants...")
 
@@ -185,9 +152,9 @@ def barcode(args):
 				if not indel in all_indels[contig]:
 					all_indels[contig].append(indel)
 
-	# Start stepping through the file
+# Start stepping through the file
 
-	# Assign start and stop locations for window and primers
+# Assign start and stop locations for window and primers
 
 		print("\nChecking windows...")
 
@@ -212,9 +179,9 @@ def barcode(args):
 							break
 				# If no variants in primer sites, save the coordinates
 					if validity == "true":
-						master_list[contig][window_start] = window_coords
+						master_dict[contig][window_start] = window_coords
 
-				elif window_start in master_list[contig].keys() and master_list[contig][window_start][4] == file_number:
+				elif window_start in master_dict[contig].keys() and master_dict[contig][window_start][4] == file_number:
 				# If any variants fall within primer sites, skip the window
 					for variant in variant_loci[contig]:
 						validity = "true"
@@ -225,8 +192,8 @@ def barcode(args):
 							break
 				# If no variants in primer sites, increase instances by 1
 					if validity == "true":
-						master_list[contig][window_start] = \
-						[window_start,primer1_stop,primer2_start,window_stop,(master_list[contig][window_start][4] + 1)]
+						master_dict[contig][window_start] = \
+						[window_start,primer1_stop,primer2_start,window_stop,(master_dict[contig][window_start][4] + 1)]
 
 		file_number += 1
 
@@ -236,28 +203,28 @@ def barcode(args):
 
 	print("\nMerging overlapping windows...")
 
-	for contig in master_list:
-		if master_list[contig]:
+	for contig in master_dict:
+		if master_dict[contig]:
 
 			saved_window = []
 
 			print(contig)
-			for window_start in master_list[contig]:
-				if master_list[contig][window_start][4] == len(args.BAMs):
+			for window_start in master_dict[contig]:
+				if master_dict[contig][window_start][4] == len(args.BAMs):
 					if not saved_window:
-						saved_window = master_list[contig][window_start]
+						saved_window = master_dict[contig][window_start]
 
-					elif saved_window[0] <= master_list[contig][window_start][0] <= saved_window[1]:
-						saved_window = [saved_window[0],master_list[contig][window_start][1],\
-							saved_window[2],master_list[contig][window_start][3]]
+					elif saved_window[0] <= master_dict[contig][window_start][0] <= saved_window[1]:
+						saved_window = [saved_window[0],master_dict[contig][window_start][1],\
+							saved_window[2],master_dict[contig][window_start][3]]
 
 					else:
-						final_list[contig][saved_window[0]] = \
+						final_dict[contig][saved_window[0]] = \
 						[saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
 
-						saved_window = master_list[contig][window_start]
+						saved_window = master_dict[contig][window_start]
 
-			final_list[contig][saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
+			final_dict[contig][saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
 
 #######################################################################
 
@@ -268,35 +235,30 @@ def barcode(args):
 	with open(args.outfile, "a") as output_file:
 		output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
 
-		for contig in final_list:
+		for contig in final_dict:
 
 			window_number = 0
 
-			for window in final_list[contig]:
+			for window in final_dict[contig]:
 
 				window_number += 1
 				window_SNPs = 0
 				window_indels = 0
 
 				for SNP in all_SNPs[contig]:
-					if final_list[contig][window][1] < int(SNP) < final_list[contig][window][2]:
+					if final_dict[contig][window][1] < int(SNP) < final_dict[contig][window][2]:
 						window_SNPs += 1
 
 				for indel in all_indels[contig]:
-					if final_list[contig][window][1] < int(indel) < final_list[contig][window][2]:
+					if final_dict[contig][window][1] < int(indel) < final_dict[contig][window][2]:
 						window_indels += 1
 
 			# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
 
-				window_out = str(contig) + "\t" + str(final_list[contig][window][0] - 1) + "\t" + str(final_list[contig][window][3]) + "\t" + \
+				window_out = str(contig) + "\t" + str(final_dict[contig][window][0] - 1) + "\t" + str(final_dict[contig][window][3]) + "\t" + \
 						"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
-						"\t0\t.\t" + str(final_list[contig][window][1]) + "\t" + str(final_list[contig][window][2] - 1) + "\n"
+						"\t0\t.\t" + str(final_dict[contig][window][1]) + "\t" + str(final_dict[contig][window][2] - 1) + "\n"
 
 				output_file.write(window_out)
 
 		output_file.close()
-
-#######################################################################
-
-#if args.dev == True:
-#	print("Time taken =",(time() - start_time),"seconds.")

@@ -194,12 +194,32 @@ for item1 in BamparseList:
 
 #######################################################################
 
-# Ensure correct version of samtools
+# Ensure that dependencies are loaded
+
 def check_samtools():
+	try:
+		subprocess.check_output('samtools --help', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("Please ensure that Samtools is in your PATH.")
+		exit()
 	try:
 		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
 		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
+		exit()
+
+def check_bcftools():
+	try:
+		subprocess.check_output('bcftools --help', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("Please ensure that BCFtools is in your PATH.")
+		exit()
+
+def check_bedtools():
+	try:
+		subprocess.check_output('bedtools --help', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		print("Please ensure that bedtools is in your PATH.")
 		exit()
 
 #######################################################################
@@ -239,10 +259,6 @@ def timing(function):
 		fh.close()
 		return result
 	return wrapper
-
-## Makes new directory 'Bowtie2' if it doesn't exists.
-#if not os.path.exists('Bowtie2'):
-#	os.makedirs('Bowtie2')
 
 # Running bowtie2-build to index reference genome and bowtie2 to align.
 @timing
@@ -455,27 +471,10 @@ def input_files():
 
 ######################################################################
 
-# Ensure that, if the files are not in sorted bam format, they are converted into this format
-
-#if args.ref and args.forward and args.reverse:
-#	bowtie2()
-#	samtools_view()
-#	samtools_sort()
-#	samtools_index()
-
-#if args.bamfile:
-#	bam_input()
-#	samtools_index()
-
-#if not args.sortbam:
-#	args.sortbam = glob.glob("Bowtie2/*.bam")[0]
-
-######################################################################
-
 def bamparse_func():
 	import modules.bamparser as bp
 
-	input_files()
+#	input_files()
 
 	if not args.sortbam:
 		args.sortbam = "Bowtie2/*sorted.bam" 
@@ -490,6 +489,7 @@ def bamparse_func():
 			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
 			exit()
 	elif args.zero:
+		check_bedtools()
 		if args.ref and args.contig:
 			bp.zero_regions(args)
 		else:
@@ -526,6 +526,8 @@ def main():
 
 	if args.barcode:
 		import modules.barcodesearch as bcs
+		check_samtools()
+		check_bcftools()
 		bcs.barcode(args)
 		
 	if args.gff and args.feature:

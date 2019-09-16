@@ -19,6 +19,7 @@
 #	You should have received a copy of the GNU General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+## Imports
 
 import sys
 import subprocess
@@ -27,76 +28,11 @@ import os.path
 from statistics import median
 
 #######################################################################
-
-parser = argparse.ArgumentParser(prog="BamParser")
-parser.add_argument("-f", "--ref", \
-                        help="Reference")
-parser.add_argument("-F", "--forward", \
-                        nargs='*', \
-                        help="Forward reads")
-parser.add_argument("-R", "--reverse", \
-                        nargs='*', \
-                        help="Reverse reads")
-parser.add_argument("-b", "--bamfile", \
-                        help="BAM infile")
-parser.add_argument("--sortbam", \
-                        help="Sorted BAM infile")
-parser.add_argument("--gff", \
-                        help="gff infile")
-parser.add_argument("--contigsizes", \
-                        help="Contig sizes for gff parser")
-parser.add_argument("--feature", \
-                        help="Feature for gff parser")
-parser.add_argument("-t", "--threads", \
-                        default=1, \
-                        help="Threads")
-parser.add_argument("-e", "--snpeff", \
-                        nargs='*', \
-                        help="Input options for snpeff, without the '-' before")
-parser.add_argument("-s", "--snpsift", \
-                        action="store_true", \
-                        help="Run snpSift")
-parser.add_argument("-r", "--clean", \
-                        action="store_true", \
-                        help="Removes the SAM and BAM files")
-parser.add_argument("-p", "--done", \
-                        action="store_true", \
-                        help="Add an empty file to mark the directory as done")
-
-#######################################################################
-parser.add_argument('--bamparse', action="store_true", help ="Run bamparser")
-parser.add_argument('--coverage', action="store_true", help='Print a statistic for what percentage of bases in an assembly have >=Nx coverage')
-parser.add_argument('--consensus', action="store_true", help='Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)')
-parser.add_argument('--zero', action="store_true", help='Find areas of zero coverage and print the reference sequence, along with a GC percentage')
-parser.add_argument('--deletion1', action="store_true", help='Find deletions')
-parser.add_argument('--deletion2', action="store_true", help='Find deletion events')
-parser.add_argument('--deletion3', action="store_true", help='Find frameshift deletion events')
-parser.add_argument('--deletionx', action="store_true", help='Find deletions occurring within exons')
-parser.add_argument('--homohetero', action="store_true", help='Attempt to determine whether a deletion is homozygous or heterozygous')
-parser.add_argument('--median', action="store_true", help='Find regions differing from contig median by +/- 50%%, or just contig medians')
-parser.add_argument('--long_coverage', action="store_true", help='Find the longest region between given coverage limits for a given contig')
-
-parser.add_argument('--complex', action="store_true", help='Print full bed output for median')
-parser.add_argument('--simple', action="store_true", help='Print median coverage only for median')
-parser.add_argument('-c', '--contig', help='Gives per-contig coverage stats')
-parser.add_argument('-d', '--threshold', type=int, nargs='?', const='1', default='20', help='Threshold for calculating coverage percentage; default 20')
-parser.add_argument("-a", "--range", help="somethingsomsing")
-parser.add_argument("-m", "--mutations", help="List of mutation events; currently requires output from bamboozle deletion function")
-parser.add_argument("-x", "--exons", help="Bed file containing exon coordinates (0-based); -m also required")
-parser.add_argument("-l", "--limits", type=int, nargs=2, help="Specify lower and upper limits for long_coverage function; two arguments required")
-parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
-parser.add_argument('--dev', help=argparse.SUPPRESS, action="store_true")
-
-args = parser.parse_args()
-
-if args.feature and args.gff is None:
-        parser.error("--feature requires --gff")
-elif args.gff and args.feature is None:
-        parser.error("--feature requires --gff")
-
+# COVERAGE STATS
+#	Calculate percentage of positions in assembly/contig with
+#	read coverage >= a given threshold (default: 20x)
 #######################################################################
 
-# Calculate percentage of positions in assembly/contig with read coverage >= a given threshold (default: 20x)
 def coverage_stats(args):
 
 	if args.contig:
@@ -129,11 +65,17 @@ def coverage_stats(args):
 		value = 100.0 / num_lines * sum(cov_stats.values())
 		print(round(value, 3),"% of the " + sequence + " with >=",args.threshold,"x coverage.",sep="")
 
+#######################################################################
+# ZERO REGIONS
+#	Identify regions of 0x coverage in specified contig,
+#	then print reference sequence and GC content at these coordinates
+#	Fasta parsing from Biopython, fp.py and
+#	http://stackoverflow.com/questions/7654971/parsing-a-fasta-file-using-a-generator-python
+#######################################################################
 
-# Identify regions of 0x coverage in specified contig, then print reference sequence and GC content at these coordinates
-# Fasta parsing from Biopython, fp.py and http://stackoverflow.com/questions/7654971/parsing-a-fasta-file-using-a-generator-python
 ## DevNote - Add try/except statement for bedtools
 ## DevNote - How to ensure that bam is sorted?
+
 def zero_regions(args):
 
 	def read_fasta(fasta):
@@ -194,8 +136,14 @@ def zero_regions(args):
 				zero_print()
 	zero_print()
 
-# Scan for potential heterozygous/deletion sites - per base, discrete events, or frameshifts
+#######################################################################
+# DELETION
+#	Scan for potential heterozygous/deletion sites -
+#	per base, discrete events, or frameshifts
+#######################################################################
+
 ## DevNote - currently skips first position
+
 def deletion(args):
 
 	mutation_list = []
@@ -277,7 +225,11 @@ def deletion(args):
 	if args.homohetero:
 		HomoDel_or_Hetero(mutation_list)
 
-# Find deletions occurring within exons
+#######################################################################
+# EXON MUTATIONS
+#	Find deletions occurring within exons
+#######################################################################
+
 def exon_mutations(mutation_list):
 
 	frameshifts = 0
@@ -307,9 +259,14 @@ def exon_mutations(mutation_list):
 
 	print("Total number of frameshifts in exons:",frameshifts)
 
+#######################################################################
+# HOMOZYGOUS DELETION OR HETEROZYGOTE
+#	Calculate percentage coverage difference between first base in a mutation
+#	and the base before it, to determine homo/heterozygosity
+#######################################################################
 
-# Calculate percentage coverage difference between first base in a mutation and the base before it, to determine homo/heterozygosity
 ## DevNote - Any way to remove the need for a temporary file?
+
 def HomoDel_or_Hetero(mutation_list):
 
 	# Read in each line of args.mutations, then print out an altered version to a temporary .bed file
@@ -363,11 +320,21 @@ def HomoDel_or_Hetero(mutation_list):
 
 	os.remove(temp_bed)	# Delete the temporary file
 
-# Complex and contig flags: Calculate median coverage of contig, and identify regions deviating by +/- 50%; output in bed format
-# Complex flag only: Calculate median coverage of each contig in assembly, and identify regions deviating by +/- 50%; output in bed format
-# Simple and contig flags: Obtain a per-contig median average coverage for the specified contig
-# Simple flag only: Obtain a per-contig median average coverage
+#######################################################################
+# MEDIAN DEVIATION
+#	Complex and contig flags: Calculate median coverage of contig,
+#	and identify regions deviating by +/- 50%; output in bed format
+#
+#	Complex flag only: Calculate median coverage of each contig in assembly,
+#	and identify regions deviating by +/- 50%; output in bed format
+#
+#	Simple and contig flags: Obtain a per-contig median average coverage for the specified contig
+#
+#	Simple flag only: Obtain a per-contig median average coverage
+#######################################################################
+
 ## DevNote - Shows funky behaviour at stretches hovering around the threshold...
+
 def median_deviation(args):
 
 	def make_bed(contig_lib,this_contig):	# Generate a bed file of results
@@ -457,7 +424,12 @@ def median_deviation(args):
 			elif args.simple:
 				print(current_contig,median(cov_stats.values()),sep="\t")
 
-# Identify the longest continuous region of a contig where all positions fall between defined coverage limits
+#######################################################################
+# COVERAGE LIMITS
+#	Identify the longest continuous region of a contig where
+#	all positions fall between defined coverage limits
+#######################################################################
+
 def coverage_limits(args):
 
 	command = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
@@ -502,8 +474,14 @@ def coverage_limits(args):
 	print("Longest stretch between " + str(lower) + "x and " + str(upper) + \
 	"x coverage on " + args.contig + "\t" + str(longest) + "\t" + str(start) + "-" + str(stop))
 
-# This function extracts the sequence of the mapped reads from a part of the reference sequence specified by args.range
+#######################################################################
+# EXTRACT SEQUENCE
+#	This function extracts the sequence of the mapped reads from
+#	a part of the reference sequence specified by args.range
+#######################################################################
+
 ## DevNote - This function needs fixing
+
 def extract_sequence(args):
 	command = ("samtools mpileup -uf %s %s -r %s:%s | bcftools view -cg -") \
 	% (args.ref, args.sortbam, args.contig, args.range)
