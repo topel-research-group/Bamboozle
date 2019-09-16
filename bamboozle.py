@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-#       Bamboozle v1.0
+#       Bamboozle v1.1
 #       Pipeline that performs bioinformatic analysis including SNP calling 
 #       and effect prediction of fastq files or BAM file. 
 #
@@ -38,38 +38,39 @@ import datetime
 
 parser = argparse.ArgumentParser(prog="Bamboozle")
 parser.add_argument("-f", "--ref", \
-                        help="Reference")
+			help="Reference")
 parser.add_argument("-F", "--forward", \
-                        nargs='*', \
-                        help="Forward reads")
+			nargs='*', \
+			help="Forward reads")
 parser.add_argument("-R", "--reverse", \
-                        nargs='*', \
-                        help="Reverse reads")
+			nargs='*', \
+			help="Reverse reads")
 parser.add_argument("-b", "--bamfile", \
-                        help="BAM infile")
+			help="BAM infile")
 parser.add_argument("--sortbam", \
-                        help="Sorted BAM infile")
+			nargs='*', \
+			help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
 parser.add_argument("--gff", \
-                        help="gff infile")
+			help="gff infile")
 parser.add_argument("--contigsizes", \
-                        help="Contig sizes for gff parser")
+			help="Contig sizes for gff parser")
 parser.add_argument("--feature", \
-                        help="Feature for gff parser")
+			help="Feature for gff parser")
 parser.add_argument("-t", "--threads", \
-                        default=1, \
-                        help="Threads")
+			default=1, \
+			help="Threads")
 parser.add_argument("-e", "--snpeff", \
-                        nargs='*', \
-                        help="Input options for snpeff, without the '-' before")
+			nargs='*', \
+			help="Input options for snpeff, without the '-' before")
 parser.add_argument("-s", "--snpsift", \
-                        action="store_true", \
-                        help="Run snpSift")
+			action="store_true", \
+			help="Run snpSift")
 parser.add_argument("-r", "--clean", \
-                        action="store_true", \
-                        help="Removes the SAM and BAM files")
+			action="store_true", \
+			help="Removes the SAM and BAM files")
 parser.add_argument("-p", "--done", \
-                        action="store_true", \
-                        help="Add an empty file to mark the directory as done")
+			action="store_true", \
+			help="Add an empty file to mark the directory as done")
 
 group = parser.add_argument_group('Bamparser')
 group.add_argument('--coverage', \
@@ -136,9 +137,9 @@ barcode = parser.add_argument_group('BarcodeSearch')
 barcode.add_argument("--barcode", \
 			action="store_true", \
 			help="Search the input (sorted) BAM files for suitable barcode regions")
-barcode.add_argument("-B", "--BAMs", \
-			nargs="+", \
-			help="BAM files of samples")
+#barcode.add_argument("-B", "--BAMs", \
+#			nargs="+", \
+#			help="BAM files of samples")
 barcode.add_argument("--window_size", \
 			type=int, \
 			default="5000", \
@@ -178,6 +179,19 @@ for item1 in BamparseList:
 	for item2 in sys.argv:
 		if item1 == item2:
 			bamparse = True
+
+#######################################################################
+
+# Ensure that if multiple sorted BAM inputs are specified, BarcodeSearch is the function being run
+# Else warn the user and exit
+
+if args.sortbam:
+	if len(args.sortbam) == 1:
+		args.sortbam = args.sortbam[0]
+
+	elif len(args.sortbam) > 1 and not args.barcode:
+		print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
+		exit()
 
 #######################################################################
 

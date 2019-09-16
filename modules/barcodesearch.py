@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 
-#	Look for ~5,000 bp regions with conserved ends and a variable centre versus the reference
-#	Then check whether this region is also variable in subsequent samples
-#	This will allow identification of barcodes flanked by conserved primer sites
+#	Look for genomic regions with conserved ends and a variable centre versus the reference,
+#	then check whether these regions are also variable in subsequent samples.
+#	This will allow identification of barcode regions flanked by conserved primer sites
 #
 #	Copyright (C) 2019 Matthew Pinder. matt_pinder13@hotmail.com
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
 #
 #	This program is distributed in the hope that it will be useful,
 #	but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -40,7 +45,7 @@ def barcode(args):
 
 	contig_lengths = {}
 
-	cmd2 = ["samtools idxstats %s" % (args.BAMs[0])]
+	cmd2 = ["samtools idxstats %s" % (args.sortbam[0])]
 	process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 
 	with process2.stdout as result2:
@@ -90,11 +95,11 @@ def barcode(args):
 # MAIN CODE
 #######################################################################
 
-	print("Searching for potential barcodes in",len(args.BAMs),"file(s).")
+	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
 	file_number = 0
 
-	for bam in args.BAMs:
+	for bam in args.sortbam:
 
 		print("\n" + FileName(bam))
 
@@ -168,7 +173,7 @@ def barcode(args):
 				primer2_start = int(window_stop - args.primer_size)
 				window_coords = [window_start,primer1_stop,primer2_start,window_stop,1]
 
-				if bam == args.BAMs[0]:
+				if bam == args.sortbam[0]:
 				# If any variants fall within primer sites, skip the window
 					for variant in variant_loci[contig]:
 						validity = "true"
@@ -210,7 +215,7 @@ def barcode(args):
 
 			print(contig)
 			for window_start in master_dict[contig]:
-				if master_dict[contig][window_start][4] == len(args.BAMs):
+				if master_dict[contig][window_start][4] == len(args.sortbam):
 					if not saved_window:
 						saved_window = master_dict[contig][window_start]
 

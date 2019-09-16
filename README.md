@@ -18,7 +18,7 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 |----------------------------------------------|-----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
 | FASTQ input                                  | `bamboozle.py -f <REFERENCE> -F <FORWARD READS> -R <REVERSE READS>`                           | Run pipeline from beginning and align reads using Bowtie2
 | (Unsorted) BAM input                         | `bamboozle.py -f <REFERENCE> -b <BAMFILE>`                                                    | Skips aligning step and starts from the SAMtools step
-| (Sorted) BAM input                           | `bamboozle.py -f <REFERENCE> --sortedbam <SORTED BAMFILE>`                                    | Skips Bowtie2 and SAMtools, starts at BCFtools for SNP calling
+| (Sorted) BAM input                           | `bamboozle.py -f <REFERENCE> --sortbam <SORTED BAMFILE>`                                      | Skips Bowtie2 and SAMtools, starts at BCFtools for SNP calling
 | Coverage statistics                          | `bamboozle.py --coverage --sortbam <BAMFILE> [-c <CONTIG>] [-d <THRESHOLD>]`                  | Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage          |
 | Consensus sequence                           | `bamboozle.py --consensus -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG> -a <RANGE>`          | Extracting consensus sequence of aligned reads from a specific region of the reference sequence |
 | Zero coverage                                | `bamboozle.py --zero -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG>`                          | Finding areas of zero coverage and printing the reference sequence, along with a GC percentage  |
@@ -30,6 +30,7 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 | Identify deviation from median (complex)     | `bamboozle.py --median --complex [-c <CONTIG>] --sortbam <BAMFILE> > <output.bed>`            | Find regions which differ from the contig median by +/- 50%, and output them in .bed format     |
 | Identify deviation from median (simple)      | `bamboozle.py --median --simple [-c <CONTIG>] --sortbam <BAMFILE> > <output.txt>`             | Output the median for one or all contigs in .txt format                                         |
 | Identify longest stretch of a given coverage | `bamboozle.py --long_coverage --sortbam <BAMFILE> -c <CONTIG> -l <LOWER LIMIT> <UPPER LIMIT>` | Identify the longest stretch in a given contig which has coverage between two specified limits |
+| Identify potential barcode regions           | `bamboozle.py --barcode -f <REFERENCE> --sortbam <BAMFILE1> <BAMFILE2> <...> -o <OUTFILE> [--window_size <X>] [--primer_size <Y>]` | Output a BED file of coordinates for potential barcoding regions in the specified BAM files     |
 
 ***  
 | Utility script | Description |  
@@ -106,6 +107,11 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 * `--homohetero` function bugs out if there is only one event in a given contig (`next` never assigned)
 
 * Play with groupings in help file
+
+* Additional features must be added to BarcodeSearch
+  * Filtering of identified SNPs
+  * Determination of how samples differ from each other, as well as differing from the reference
+  * Allow the use of unsorted BAM input
 
 ## Known bugs
 * In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
