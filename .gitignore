@@ -14,4 +14,4 @@ time.log
 runTestMain.sge*
 OldVersions/
 Bowtie2/
-BarcodeSearch/
+THINGS_TO_TEST.md

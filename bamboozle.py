@@ -22,6 +22,9 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#######################################################################
+# IMPORTS
+#######################################################################
 
 import sys
 import os
@@ -34,6 +37,8 @@ from functools import wraps
 from time import time
 import datetime
 
+#######################################################################
+# ARGUMENTS
 #######################################################################
 
 parser = argparse.ArgumentParser(prog="Bamboozle")
@@ -162,15 +167,16 @@ if args.forward and args.reverse and args.ref is None:
 	parser.error("--ref [Reference is required]")
 
 #######################################################################
+# TESTING RUNTIME (--dev)
+#######################################################################
 
-# For determining how long functions take to run
 if args.dev == True:
 	start_time = time()
 
 #######################################################################
+# DEFINE FUNCTIONS USING BAMPARSER MODULE
+#######################################################################
 
-# Determine whether the function derives from `bamparser.py`
-# Avoids the need for a `--bamparse` flag
 BamparseList = ["--coverage","--consensus","--zero","--deletion1","--deletion2","--deletion3",\
 		"--deletionx","--homohetero","--median","--long_coverage"]
 
@@ -181,9 +187,11 @@ for item1 in BamparseList:
 			bamparse = True
 
 #######################################################################
-
-# Ensure that if multiple sorted BAM inputs are specified, BarcodeSearch is the function being run
-# Else warn the user and exit
+# HANDLING OF MULTIPLE SORTED BAM INPUTS
+#	Ensure that if multiple sorted BAM inputs are specified,
+#	BarcodeSearch is the function being run
+#	Else warn the user and exit
+#######################################################################
 
 if args.sortbam:
 	if len(args.sortbam) == 1:
@@ -194,21 +202,10 @@ if args.sortbam:
 		exit()
 
 #######################################################################
-
-# Ensure no bam files are present in the Bowtie2 directory before beginning,
-# as this will confuse the glob steps downstream
-
-# The gff parser sometimes only go through the last annotation (if the analysis was done
-# and then you want to add exons and introns you don't have to run it all over).
-# In that case there will be bam files present but they will not be over run.  
-
-#if glob.glob("Bowtie2/*.bam"):
-#	print("Please remove bam files from the Bowtie2 directory before retrying.")
-#	exit()
-
+# CHECK DEPENDENCIES
 #######################################################################
 
-# Ensure that dependencies are loaded
+# DevNote - add checks for snpEff/Java?
 
 def check_samtools():
 	try:
@@ -255,7 +252,10 @@ else:
 
 sorted_bam_bai = name + '_sorted.bam.bai'
 
-# Time decorator.
+#######################################################################
+# TIME DECORATOR
+#######################################################################
+
 def timing(function):
 	@wraps(function)
 	def wrapper(*args, **kwargs):
@@ -274,7 +274,11 @@ def timing(function):
 		return result
 	return wrapper
 
-# Running bowtie2-build to index reference genome and bowtie2 to align.
+#######################################################################
+# BOWTIE2
+#	Running bowtie2-build to index reference genome and bowtie2 to align.
+#######################################################################
+
 @timing
 def bowtie2():
 	try:
@@ -336,7 +340,12 @@ def bowtie2():
 				pass
 			process2.stdout.close()
 	log_file.close()
-# Converting SAM to BAM using samtools view.
+
+#######################################################################
+# SAMTOOLS VIEW
+#	Converting SAM to BAM using samtools view.
+#######################################################################
+
 @timing
 def samtools_view():
 	check_samtools()
@@ -358,7 +367,11 @@ def samtools_view():
 			process3.stdout.close()
 	log_file.close()
 
-# Sort BAM files.
+#######################################################################
+# SAMTOOLS SORT - FROM BOWTIE PIPELINE
+#	Sort BAM files.
+#######################################################################
+
 @timing
 def samtools_sort():
 	check_samtools()
@@ -381,7 +394,11 @@ def samtools_sort():
 			process4.stdout.close()
 	log_file.close()
 
-# BAM input file by using the '-b' flag.
+#######################################################################
+# SAMTOOLS SORT - FROM BAM INPUT
+#	BAM input file by using the '-b' flag.
+#######################################################################
+
 @timing
 def bam_input():
 	check_samtools()
@@ -402,7 +419,11 @@ def bam_input():
 	process5.stdout.close()
 	log_file.close()
 
-# Index sorted BAM files.
+#######################################################################
+# SAMTOOLS INDEX
+#	Index sorted BAM files.
+#######################################################################
+
 @timing
 def samtools_index():
 	check_samtools()
@@ -422,7 +443,11 @@ def samtools_index():
 			process6.stdout.close()
 	log_file.close()
 
-# Remove SAM and BAM files.
+#######################################################################
+# CLEANUP STEP
+#	Remove SAM and BAM files.
+#######################################################################
+
 def clean():
 	if args.clean:
 		for samfile in os.listdir('Bowtie2'):
@@ -433,13 +458,27 @@ def clean():
 			if fnmatch.fnmatch(bamfile, name + '.bam'):
 				os.remove('Bowtie2/' + bamfile)
 
-# Add empty file when the pipeline is done.
+#######################################################################
+# DONE
+#	Add empty file when the pipeline is done.
+#######################################################################
+
 def done():
 	open("pipeline.done", 'a').close()
 
-# Exit program.
+#######################################################################
+# EXIT
+#	Exit program.
+#######################################################################
+
 def exit():
 	sys.exit()
+
+#######################################################################
+# INPUT FILES
+#	Define pipeline based on the type of input file
+#	Mainly calls the Pipeline module
+#######################################################################
 
 def input_files():
 	import modules.pipeline as pl
@@ -476,13 +515,8 @@ def input_files():
 # DevNote - ensure that there is also a .bai file present
 
 ######################################################################
-
-# If args.sortbam hasn't been specified (i.e. if the input was fastq or unsorted bam),
-# set args.sortbam to the newly created sorted bam in the Bowtie2 directory
-
-#if not args.sortbam:
-#	args.sortbam = glob.glob("Bowtie2/*.bam")[0]
-
+# BAMPARSER
+#	Define pipeline based on which Bamparser function is called
 ######################################################################
 
 def bamparse_func():
