@@ -159,16 +159,42 @@ def coverage_stats_2():
 				position = int(row[1])
 				coverage = int(row[2])
 
-				if coverage >= args.threshold:
-					cov_stats[contig] += 1
-					if not recording:
-						start_coord = position
-						recording = True
-				elif coverage < args.threshold and recording == True:
-					stop_coord = position - 1
-					output_line = contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\n"
-					output_file.write(output_line)
-					recording = False
+				if not current_contig:
+					current_contig = contig
+
+		# This block can definitely be simplified; maybe define some functions?
+
+				if contig == current_contig:
+					if coverage >= args.threshold:
+						cov_stats[contig] += 1
+						if not recording:
+							start_coord = position
+							recording = True
+
+					elif coverage < args.threshold:
+						if recording:
+							stop_coord = position - 1
+							output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\n"
+							output_file.write(output_line)
+						recording = False
+
+					if position == contig_lengths[current_contig]:
+						if recording:
+							stop_coord = position
+							output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\n"
+							output_file.write(output_line)
+							recording = False
+
+
+				elif contig != current_contig:
+					current_contig = contig
+
+					if coverage >= args.threshold:
+						cov_stats[contig] += 1
+						if not recording:
+							start_coord = position
+							recording = True
+
 
 # Start saving start_coord and stop_coord, cross-referencing with gff file if given, and writing to output_file
 
