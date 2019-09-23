@@ -165,27 +165,50 @@ def coverage_stats_2():
 		# This block can definitely be simplified; maybe define some functions?
 
 				if contig == current_contig:
+					# Start recording
 					if coverage >= args.threshold:
 						cov_stats[contig] += 1
 						if not recording:
 							start_coord = position
 							recording = True
 
+					# Print window and stop recording
 					elif coverage < args.threshold:
 						if recording:
+							print_genes = []
 							stop_coord = position - 1
-							output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\n"
+
+							if contig in in_gff_loci.keys():
+								for gene in in_gff_loci[contig]:
+									if start_coord <= int(in_gff_loci[contig][gene][0]) <= stop_coord \
+									or start_coord <= int(in_gff_loci[contig][gene][1]) <= stop_coord \
+									or int(in_gff_loci[contig][gene][0]) <= start_coord <= int(in_gff_loci[contig][gene][1]) \
+									or int(in_gff_loci[contig][gene][0]) <= stop_coord <= int(in_gff_loci[contig][gene][1]):
+										print_genes.append(gene)
+
+							output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\t" + ','.join(print_genes) + "\n"
 							output_file.write(output_line)
 						recording = False
 
+					# For cases where recorded window continues to end of contig
 					if position == contig_lengths[current_contig]:
 						if recording:
+							print_genes = []
 							stop_coord = position
-							output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\n"
+
+							if contig in in_gff_loci.keys():
+								for gene in in_gff_loci[contig]:
+									if start_coord <= int(in_gff_loci[contig][gene][0]) <= stop_coord \
+									or start_coord <= int(in_gff_loci[contig][gene][1]) <= stop_coord \
+									or int(in_gff_loci[contig][gene][0]) <= start_coord <= int(in_gff_loci[contig][gene][1]) \
+									or int(in_gff_loci[contig][gene][0]) <= stop_coord <= int(in_gff_loci[contig][gene][1]):
+										print_genes.append(gene)
+
+							output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\t" + ','.join(print_genes) + "\n"
 							output_file.write(output_line)
 							recording = False
 
-
+				# New contig
 				elif contig != current_contig:
 					current_contig = contig
 
@@ -195,31 +218,19 @@ def coverage_stats_2():
 							start_coord = position
 							recording = True
 
-
-# Start saving start_coord and stop_coord, cross-referencing with gff file if given, and writing to output_file
-
-				# ...
-
-				# if args.gff:
-					# output_file.write(contig + "\t" + (start_coord - 1) + stop_coord + ...)
-				# else:
-					# output_file.write(contig + "\t" + (start_coord - 1) + stop_coord)
-
-			if args.contig:
-				print("Length of " + args.contig + ":",contig_lengths[args.contig])
-				value = 100.0 / contig_lengths[args.contig] * cov_stats[args.contig]
-				print(round(value, 3),"% of contig ", args.contig, " with >=",args.threshold,"x coverage.",sep="")
-			else:
-				print("Length of assembly:",str(assembly_length))
-				value = 100.0 / assembly_length * sum(cov_stats.values())
-				print(round(value, 3),"% of assembly with >=",args.threshold,"x coverage.",sep="")
-
 		output_file.close()
 
+	# Print percentage stats to standard out
+	if args.contig:
+		print("Length of " + args.contig + ":",contig_lengths[args.contig])
+		value = 100.0 / contig_lengths[args.contig] * cov_stats[args.contig]
+		print(round(value, 3),"% of contig ", args.contig, " with >=",args.threshold,"x coverage.",sep="")
+	else:
+		print("Length of assembly:",str(assembly_length))
+		value = 100.0 / assembly_length * sum(cov_stats.values())
+		print(round(value, 3),"% of assembly with >=",args.threshold,"x coverage.",sep="")
+
 coverage_stats_2()
-
-
-# CONTIG	START	STOP	LABEL
 
 #######################################################################
 # CAN BE REMOVED WHEN INTEGRATED INTO BAMBOOZLE
