@@ -53,7 +53,7 @@ def barcode(args):
 		rows2 = (line2.decode() for line2 in result2)
 		for row2 in rows2:
 			if row2.split("\t")[0] != "*":
-				contig_lengths[row2.split("\t")[0]] = row2.split("\t")[1]
+				contig_lengths[row2.split("\t")[0]] = int(row2.split("\t")[1])
 
 #######################################################################
 
@@ -167,7 +167,7 @@ def barcode(args):
 		for contig in contig_lengths:
 
 			print(contig)
-			for window in range(0,(int(contig_lengths[contig]) - args.window_size)):
+			for window in range(0,(contig_lengths[contig] - args.window_size)):
 				window_start = int(window + 1)
 				window_stop = int(window_start + args.window_size)
 				primer1_stop = int(window_start + args.primer_size)
