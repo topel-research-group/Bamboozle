@@ -101,6 +101,26 @@ def coverage_stats_2():
 
 #######################################################################
 
+	def print_to_bed(start_coord, stop_coord, output_file):
+		print_genes = []
+
+		if args.gff:
+			if contig in in_gff_loci.keys():
+				for gene in in_gff_loci[contig]:
+					if start_coord <= int(in_gff_loci[contig][gene][0]) <= stop_coord \
+					or start_coord <= int(in_gff_loci[contig][gene][1]) <= stop_coord \
+					or int(in_gff_loci[contig][gene][0]) <= start_coord <= int(in_gff_loci[contig][gene][1]) \
+					or int(in_gff_loci[contig][gene][0]) <= stop_coord <= int(in_gff_loci[contig][gene][1]):
+						print_genes.append(gene)
+		if print_genes:
+			output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\t" + ','.join(print_genes) + "\n"
+		else:
+			output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\n"
+
+		output_file.write(output_line)
+
+#######################################################################
+
 # Record all contig lengths (may be overkill for single-contig analyses)
 # Taken from `barcodesearch.py`
 
@@ -150,8 +170,6 @@ def coverage_stats_2():
 		for contig in contig_lengths.keys():
 			cov_stats[contig] = 0
 
-# USE CODE FROM BAMPARSER'S COVERAGE_LIMITS AS GUIDELINE FOR SAVING LOCI
-
 		with process.stdout as result:
 			rows = (line.decode().split('\t') for line in result)
 			for row in rows:
@@ -161,8 +179,6 @@ def coverage_stats_2():
 
 				if not current_contig:
 					current_contig = contig
-
-		# This block can definitely be simplified; maybe define some functions?
 
 				if contig == current_contig:
 					# Start recording
@@ -175,38 +191,16 @@ def coverage_stats_2():
 					# Print window and stop recording
 					elif coverage < args.threshold:
 						if recording:
-							print_genes = []
-							stop_coord = position - 1
+							print_to_bed(start_coord, (position - 1), output_file)
 
-							if contig in in_gff_loci.keys():
-								for gene in in_gff_loci[contig]:
-									if start_coord <= int(in_gff_loci[contig][gene][0]) <= stop_coord \
-									or start_coord <= int(in_gff_loci[contig][gene][1]) <= stop_coord \
-									or int(in_gff_loci[contig][gene][0]) <= start_coord <= int(in_gff_loci[contig][gene][1]) \
-									or int(in_gff_loci[contig][gene][0]) <= stop_coord <= int(in_gff_loci[contig][gene][1]):
-										print_genes.append(gene)
-
-							output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\t" + ','.join(print_genes) + "\n"
-							output_file.write(output_line)
 						recording = False
 
 					# For cases where recorded window continues to end of contig
 					if position == contig_lengths[current_contig]:
 						if recording:
-							print_genes = []
-							stop_coord = position
+							print_to_bed(start_coord, position, output_file)
 
-							if contig in in_gff_loci.keys():
-								for gene in in_gff_loci[contig]:
-									if start_coord <= int(in_gff_loci[contig][gene][0]) <= stop_coord \
-									or start_coord <= int(in_gff_loci[contig][gene][1]) <= stop_coord \
-									or int(in_gff_loci[contig][gene][0]) <= start_coord <= int(in_gff_loci[contig][gene][1]) \
-									or int(in_gff_loci[contig][gene][0]) <= stop_coord <= int(in_gff_loci[contig][gene][1]):
-										print_genes.append(gene)
-
-							output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\t" + ','.join(print_genes) + "\n"
-							output_file.write(output_line)
-							recording = False
+						recording = False
 
 				# New contig
 				elif contig != current_contig:
