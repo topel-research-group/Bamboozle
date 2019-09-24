@@ -158,10 +158,11 @@ barcode.add_argument("-o", "--outfile", \
 
 args = parser.parse_args()
 
-if args.feature and args.gff is None:
-        parser.error("--feature requires --gff")
-elif args.gff and args.feature is None:
-        parser.error("--feature requires --gff")
+if not args.coverage:
+	if args.feature and args.gff is None:
+	        parser.error("--feature requires --gff")
+	elif args.gff and args.feature is None:
+	        parser.error("--feature requires --gff")
 
 if args.forward and args.reverse and args.ref is None:
 	parser.error("--ref [Reference is required]")
@@ -529,6 +530,9 @@ def bamparse_func():
 
 	if args.coverage:
 		check_samtools()
+		if args.gff and not args.outfile:
+			print("If --gff is specified, please ensure that -o is also specified.")
+			exit()
 		bp.coverage_stats(args)
 	elif args.consensus:
 		if args.ref and args.contig and args.range:

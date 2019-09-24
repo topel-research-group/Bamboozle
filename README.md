@@ -19,7 +19,7 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 | FASTQ input                                  | `bamboozle.py -f <REFERENCE> -F <FORWARD READS> -R <REVERSE READS>`                           | Run pipeline from beginning and align reads using Bowtie2
 | (Unsorted) BAM input                         | `bamboozle.py -f <REFERENCE> -b <BAMFILE>`                                                    | Skips aligning step and starts from the SAMtools step
 | (Sorted) BAM input                           | `bamboozle.py -f <REFERENCE> --sortbam <SORTED BAMFILE>`                                      | Skips Bowtie2 and SAMtools, starts at BCFtools for SNP calling
-| Coverage statistics                          | `bamboozle.py --coverage --sortbam <BAMFILE> [-c <CONTIG>] [-d <THRESHOLD>]`                  | Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage          |
+| Coverage statistics                          | `bamboozle.py --coverage --sortbam <BAMFILE> [-c <CONTIG>] [-d <THRESHOLD>] [-o <OUTFILE>] [--gff <GFF>]` | Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage; can also output this information (and overlapping genes) in a BED file |
 | Consensus sequence                           | `bamboozle.py --consensus -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG> -a <RANGE>`          | Extracting consensus sequence of aligned reads from a specific region of the reference sequence |
 | Zero coverage                                | `bamboozle.py --zero -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG>`                          | Finding areas of zero coverage and printing the reference sequence, along with a GC percentage  |
 | Identify deletions 1                         | `bamboozle.py --deletion1 --sortbam <BAMFILE> [-c <CONTIG>]`                                  | Identify deletions and print every deletion position                                            |
@@ -43,7 +43,7 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 
 |     Program      |                                                                  Versions used                                                                   |
 |------------------|--------------------------------------------------------------------------------------------------------------------------------------------------| 
-|`Bamboozle` | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 <br/> Bedtools2/v2.27.1 <br/> Java (for snpEff) |
+|`Bamboozle`       | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 <br/> Bedtools2/v2.27.1 <br/> Java (for snpEff) |
 |`angsd_fst`       | angsd/v0.918                                                                                                                                     |
 |`vcftools_fst`    | VCFtools/v0.1.13                                                                                                                                 |  
 |`make_plot`       | Highcharts/v6.2.0                                                                                                                                |  
@@ -56,6 +56,8 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 * `--coverage`
   * `-c` flag is optional; if not specified, analysis will be run on the whole assembly
   * `-d` flag is optional; if not specified, coverage of >= 20x will be reported
+  * If the `-o` flag is specified, a BED file of regions with coverage above the threshold will be generated
+    * The `--gff` flag can also be specified, which labels the above BED file with any gene models overlapping the high-coverage windows
   * Requires a version of samtools which allows the `depth -aa` option
   * Percentage values are rounded to 3 decimal places
 
