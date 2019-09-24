@@ -76,6 +76,7 @@ def coverage_stats_2():
 # Generate a dictionary of dictionaries of lists; contig -> gene name -> coordinates
 
 	if args.gff:
+		print("Parsing GFF file...")
 		in_gff_loci = {}
 
 		with open(args.gff, 'r') as input:
@@ -104,6 +105,8 @@ def coverage_stats_2():
 	def print_to_bed(start_coord, stop_coord, output_file):
 		print_genes = []
 
+		# Determine whether the window overlaps with a feature in the gff file
+		# DevNote - Any way to make this less wordy?
 		if args.gff:
 			if contig in in_gff_loci.keys():
 				for gene in in_gff_loci[contig]:
@@ -112,12 +115,17 @@ def coverage_stats_2():
 					or int(in_gff_loci[contig][gene][0]) <= start_coord <= int(in_gff_loci[contig][gene][1]) \
 					or int(in_gff_loci[contig][gene][0]) <= stop_coord <= int(in_gff_loci[contig][gene][1]):
 						print_genes.append(gene)
+
+		# Define BED file entry depending on whether any genes were found
 		if print_genes:
 			output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\t" + ','.join(print_genes) + "\n"
 		else:
 			output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\n"
 
-		output_file.write(output_line)
+		# Print to output file
+		with open(args.outfile, "a") as output_file:
+			output_file.write(output_line)
+		output_file.close()
 
 #######################################################################
 
@@ -154,65 +162,65 @@ def coverage_stats_2():
 		else:
 			print("Obtaining whole-genome stats for ",os.path.basename(args.sortbam),"; coverage >=",args.threshold,"x.",sep="")
 
-	with open(args.outfile, "a") as output_file:
-		output_file.write("track name=Coverage description=\"Coverage above " + str(args.threshold) + "x\"\n")
+	if args.outfile:
+		with open(args.outfile, "a") as output_file:
+			output_file.write("track name=Coverage description=\"Coverage above " + str(args.threshold) + "x\"\n")
+		output_file.close()
 
 	# Define starting variables
 
-		# Start and stop of region of interest
-		start_coord = 0
-		stop_coord = 0
-		current_contig = ""
-		recording = False
+	# Start and stop of region of interest
+	start_coord = 0
+	stop_coord = 0
+	current_contig = ""
+	recording = False
 
-		# For calculating percentages (can be refined)
-		cov_stats = {}
-		for contig in contig_lengths.keys():
-			cov_stats[contig] = 0
+	# For calculating percentages (can be refined)
+	cov_stats = {}
+	for contig in contig_lengths.keys():
+		cov_stats[contig] = 0
 
-		with process.stdout as result:
-			rows = (line.decode().split('\t') for line in result)
-			for row in rows:
-				contig = row[0]
-				position = int(row[1])
-				coverage = int(row[2])
+	with process.stdout as result:
+		rows = (line.decode().split('\t') for line in result)
+		for row in rows:
+			contig = row[0]
+			position = int(row[1])
+			coverage = int(row[2])
 
-				if not current_contig:
-					current_contig = contig
+			if not current_contig:
+				current_contig = contig
 
-				if contig == current_contig:
-					# Start recording
-					if coverage >= args.threshold:
-						cov_stats[contig] += 1
-						if not recording:
-							start_coord = position
-							recording = True
+			if contig == current_contig:
+				# Start recording
+				if coverage >= args.threshold:
+					cov_stats[contig] += 1
+					if args.outfile and not recording:
+						start_coord = position
+						recording = True
 
-					# Print window and stop recording
-					elif coverage < args.threshold:
-						if recording:
-							print_to_bed(start_coord, (position - 1), output_file)
+				# Print window and stop recording
+				elif args.outfile and (coverage < args.threshold):
+					if recording:
+						print_to_bed(start_coord, (position - 1), output_file)
 
-						recording = False
+					recording = False
 
-					# For cases where recorded window continues to end of contig
-					if position == contig_lengths[current_contig]:
-						if recording:
-							print_to_bed(start_coord, position, output_file)
+				# For cases where recorded window continues to end of contig
+				if args.outfile and (position == contig_lengths[current_contig]):
+					if recording:
+						print_to_bed(start_coord, position, output_file)
 
-						recording = False
+					recording = False
 
-				# New contig
-				elif contig != current_contig:
-					current_contig = contig
+			# New contig
+			elif contig != current_contig:
+				current_contig = contig
 
-					if coverage >= args.threshold:
-						cov_stats[contig] += 1
-						if not recording:
-							start_coord = position
-							recording = True
-
-		output_file.close()
+				if coverage >= args.threshold:
+					cov_stats[contig] += 1
+					if args.outfile and not recording:
+						start_coord = position
+						recording = True
 
 	# Print percentage stats to standard out
 	if args.contig:
