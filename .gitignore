@@ -16,3 +16,4 @@ OldVersions/
 Bowtie2/
 THINGS_TO_TEST.md
 Coverage_Stats_Extension/*.gff
+testbed/

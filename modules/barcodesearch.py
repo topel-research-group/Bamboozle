@@ -112,8 +112,11 @@ def barcode(args):
 		sample_SNPs = {}
 		sample_indels = {}
 
-		cmd = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv" % \
-			(args.threads, args.ref, bam, args.threads)]
+		filter_qual = "%QUAL>" + str(args.quality)
+
+		cmd = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv | \
+			bcftools filter --threads %s -i '%s'" % \
+			(args.threads, args.ref, bam, args.threads, args.threads, filter_qual)]
 
 		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 

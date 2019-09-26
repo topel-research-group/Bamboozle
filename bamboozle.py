@@ -142,9 +142,10 @@ barcode = parser.add_argument_group('BarcodeSearch')
 barcode.add_argument("--barcode", \
 			action="store_true", \
 			help="Search the input (sorted) BAM files for suitable barcode regions")
-#barcode.add_argument("-B", "--BAMs", \
-#			nargs="+", \
-#			help="BAM files of samples")
+barcode.add_argument("-q", "--quality", \
+			type=int, \
+			default="20",
+			help="Quality threshold for filtering variants")
 barcode.add_argument("--window_size", \
 			type=int, \
 			default="5000", \
