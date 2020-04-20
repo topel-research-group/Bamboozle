@@ -157,6 +157,11 @@ barcode.add_argument("--primer_size", \
 barcode.add_argument("-o", "--outfile", \
 			help="Output filename")
 
+sv = parser.add_argument_group('SVCaller')
+sv.add_argument("--lof", \
+		action="store_true", \
+		help="Run loss-of-function pipeline")
+
 args = parser.parse_args()
 
 if not args.coverage:
@@ -574,6 +579,11 @@ def bamparse_func():
 		exit()
 
 def main():
+#	if args.lof:
+#		import modules.sv_caller as sv
+#		check_samtools()
+#		sv.FunctionName(args)
+
 	if bamparse:
 		bamparse_func()
 
