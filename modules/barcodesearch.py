@@ -34,10 +34,16 @@ import io
 
 def barcode(args):
 
-# Ensure the output BED file doesn't already exist
+# Ensure the output files doesn't already exist
 
-	if os.path.isfile(args.outfile) == True:
-		print("Warning: Output file",args.outfile,"already exists. Please choose another output prefix.")
+	out_bed = args.outprefix + ".bed"
+	out_txt = args.outprefix + ".txt"
+
+	if os.path.isfile(out_bed) == True:
+		print("Warning: Output file",out_bed,"already exists. Please choose another output prefix.")
+		sys.exit(0)
+	if os.path.isfile(out_txt) == True:
+		print("Warning: Output file",out_txt,"already exists. Please choose another output prefix.")
 		sys.exit(0)
 
 #######################################################################
@@ -88,6 +94,10 @@ def barcode(args):
 	for contig in contig_lengths:
 		master_dict[contig] = {}
 
+	pre_final_dict = {}
+	for contig in contig_lengths:
+		pre_final_dict[contig] = {}
+
 	final_dict = {}
 	for contig in contig_lengths:
 		final_dict[contig] = {}
@@ -121,15 +131,19 @@ def barcode(args):
 		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
 # Generate a list of loci where variants occur
+# Also generate (and compress and index) the resultant VCF file, for consensus generation later
 
 		print("\nFinding variants...")
 
-		with process.stdout as result:
+		vcf_file = FileName(bam) + ".vcf"
+#		with process.stdout as result:
+		with process.stdout as result, open(vcf_file, "a") as output_file:
 			rows = (line.decode() for line in result)
 
 			current_contig = ""
 
 			for row in rows:
+				output_file.write(row)
 				if not row.startswith("#"):
 					contig_name = row.split("\t")[0]
 					variant_position = row.split("\t")[1]
@@ -149,6 +163,10 @@ def barcode(args):
 						if not contig_name in sample_SNPs.keys():
 							sample_SNPs[contig_name] = []
 						sample_SNPs[contig_name].append(variant_position)
+
+			output_file.close()
+			os.system("bgzip -@ " + str(args.threads) + " " + vcf_file)
+			os.system("bcftools index --threads " + str(args.threads) + " " + vcf_file + ".gz")
 
 		print("\nAdding variants to list...")
 		for contig in sample_SNPs:
@@ -178,7 +196,7 @@ def barcode(args):
 				window_coords = [window_start,primer1_stop,primer2_start,window_stop,1]
 
 				if bam == args.sortbam[0]:
-				# If any variants fall within primer sites, skip the window
+			# If any variants fall within primer sites, skip the window
 					for variant in variant_loci[contig]:
 						validity = "true"
 						if int(variant) > window_stop:
@@ -186,12 +204,12 @@ def barcode(args):
 						elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
 							validity = "false"
 							break
-				# If no variants in primer sites, save the coordinates
+			# If no variants in primer sites, save the coordinates
 					if validity == "true":
 						master_dict[contig][window_start] = window_coords
 
 				elif window_start in master_dict[contig].keys() and master_dict[contig][window_start][4] == file_number:
-				# If any variants fall within primer sites, skip the window
+			# If any variants fall within primer sites, skip the window
 					for variant in variant_loci[contig]:
 						validity = "true"
 						if int(variant) > window_stop:
@@ -199,7 +217,7 @@ def barcode(args):
 						elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
 							validity = "false"
 							break
-				# If no variants in primer sites, increase instances by 1
+			# If no variants in primer sites, increase instances by 1
 					if validity == "true":
 						master_dict[contig][window_start] = \
 						[window_start,primer1_stop,primer2_start,window_stop,(master_dict[contig][window_start][4] + 1)]
@@ -228,46 +246,80 @@ def barcode(args):
 							saved_window[2],master_dict[contig][window_start][3]]
 
 					else:
-						final_dict[contig][saved_window[0]] = \
+						pre_final_dict[contig][saved_window[0]] = \
 						[saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
 
 						saved_window = master_dict[contig][window_start]
 
-			final_dict[contig][saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
+			pre_final_dict[contig][saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
 
 #######################################################################
 
-# Report results in BED format
+# Find a way to skip loci where the following type of error occurs:
+# `Warning: ignoring overlapping variant starting at 000215F:2953`
 
-	print("\nGenerating BED file...")
+#######################################################################
 
-	with open(args.outfile, "a") as output_file:
-		output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
+# Compare consensus sequences for all BAMs, to ensure they are truly unique,
+# not merely differing from the reference in all the same positions
 
+	print("\nChecking consensuses...")
+
+	for contig in pre_final_dict:
+		for window in pre_final_dict[contig]:
+			compare_seqs = {}
+			for bam in args.sortbam:
+				compare_seqs[FileName(bam)] = ""
+				vcf_zipped = FileName(bam) + ".vcf.gz"
+				cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus %s" % \
+					("../SMar_v1.1.1_First10Contigs.fst", contig, \
+					pre_final_dict[contig][window][0], pre_final_dict[contig][window][3], vcf_zipped)]
+				process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+				with process3.stdout as result:
+					rows = (line.decode() for line in result)
+					for row in rows:
+						compare_seqs[FileName(bam)] += (row.upper().strip("\n"))
+
+			if not (len(compare_seqs) != len(set(compare_seqs.values()))):	# All values unique
+				final_dict[contig][window] = pre_final_dict[contig][window]
+
+
+# Report results in TXT and BED format
+
+	print("\nGenerating output files...")
+#
+	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
+		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
+#
 		for contig in final_dict:
-
+#
 			window_number = 0
-
+#
 			for window in final_dict[contig]:
-
+#
 				window_number += 1
 				window_SNPs = 0
 				window_indels = 0
-
+#
 				for SNP in all_SNPs[contig]:
 					if final_dict[contig][window][1] < int(SNP) < final_dict[contig][window][2]:
 						window_SNPs += 1
-
+#
 				for indel in all_indels[contig]:
 					if final_dict[contig][window][1] < int(indel) < final_dict[contig][window][2]:
 						window_indels += 1
-
-			# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-
+#
+		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
+#
 				window_out = str(contig) + "\t" + str(final_dict[contig][window][0] - 1) + "\t" + str(final_dict[contig][window][3]) + "\t" + \
 						"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
 						"\t0\t.\t" + str(final_dict[contig][window][1]) + "\t" + str(final_dict[contig][window][2] - 1) + "\n"
-
-				output_file.write(window_out)
-
-		output_file.close()
+#
+				line_out = str(contig) + ":" + str(final_dict[contig][window][0]) + "-" + str(final_dict[contig][window][3]) + \
+						" (variable region: " + str(final_dict[contig][window][1]) + "-" + str(final_dict[contig][window][2]) + ")\n"
+#
+				output_bed.write(window_out)
+				output_txt.write(line_out)
+#
+		output_bed.close()
+		output_txt.close()

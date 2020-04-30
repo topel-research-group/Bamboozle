@@ -30,7 +30,7 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 | Identify deviation from median (complex)     | `bamboozle.py --median --complex [-c <CONTIG>] --sortbam <BAMFILE> > <output.bed>`            | Find regions which differ from the contig median by +/- 50%, and output them in .bed format     |
 | Identify deviation from median (simple)      | `bamboozle.py --median --simple [-c <CONTIG>] --sortbam <BAMFILE> > <output.txt>`             | Output the median for one or all contigs in .txt format                                         |
 | Identify longest stretch of a given coverage | `bamboozle.py --long_coverage --sortbam <BAMFILE> -c <CONTIG> -l <LOWER LIMIT> <UPPER LIMIT>` | Identify the longest stretch in a given contig which has coverage between two specified limits |
-| Identify potential barcode regions           | `bamboozle.py --barcode -f <REFERENCE> --sortbam <BAMFILE1> <BAMFILE2> <...> -o <OUTFILE> [-q <QUALITY>] [--window_size <X>] [--primer_size <Y>]` | Output a BED file of coordinates for potential barcoding regions in the specified BAM files     |
+| Identify potential barcode regions           | `bamboozle.py --barcode -f <REFERENCE> --sortbam <BAMFILE1> <BAMFILE2> <...> -o <OUTFILE> [-q <QUALITY>] [--window_size <X>] [--primer_size <Y>]` | Output BED and TXT files of coordinates for potential barcoding regions in the specified BAM files     |
 
 ***  
 | Utility script | Description |  
