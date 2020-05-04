@@ -52,20 +52,20 @@ def barcode(args):
 
 	contig_lengths = {}
 
-	cmd2 = ["samtools idxstats %s" % (args.sortbam[0])]
-	process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+	cmd = ["samtools idxstats %s" % (args.sortbam[0])]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
-	with process2.stdout as result2:
-		rows2 = (line2.decode() for line2 in result2)
-		for row2 in rows2:
-			if row2.split("\t")[0] != "*":
-				contig_lengths[row2.split("\t")[0]] = int(row2.split("\t")[1])
+	with process.stdout as result:
+		rows = (line.decode() for line in result)
+		for row in rows:
+			if row.split("\t")[0] != "*":
+				contig_lengths[row.split("\t")[0]] = int(row.split("\t")[1])
 
 #######################################################################
 
 # This ensures that window starts and stops align as intended
 
-	primer_size = args.primer_size - 1
+#	primer_size = args.primer_size - 1
 
 #######################################################################
 
@@ -124,11 +124,11 @@ def barcode(args):
 
 		filter_qual = "%QUAL>" + str(args.quality)
 
-		cmd = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv | \
+		cmd2 = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv | \
 			bcftools filter --threads %s -i '%s'" % \
 			(args.threads, args.ref, bam, args.threads, args.threads, filter_qual)]
 
-		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+		process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 
 # Generate a list of loci where variants occur
 # Also generate (and compress and index) the resultant VCF file, for consensus generation later
@@ -136,17 +136,16 @@ def barcode(args):
 		print("\nFinding variants...")
 
 		vcf_file = FileName(bam) + ".vcf"
-#		with process.stdout as result:
-		with process.stdout as result, open(vcf_file, "a") as output_file:
-			rows = (line.decode() for line in result)
+		with process2.stdout as result2, open(vcf_file, "a") as output_file:
+			rows2 = (line.decode() for line in result2)
 
 			current_contig = ""
 
-			for row in rows:
-				output_file.write(row)
-				if not row.startswith("#"):
-					contig_name = row.split("\t")[0]
-					variant_position = row.split("\t")[1]
+			for row2 in rows2:
+				output_file.write(row2)
+				if not row2.startswith("#"):
+					contig_name = row2.split("\t")[0]
+					variant_position = row2.split("\t")[1]
 
 					if not current_contig == contig_name:
 						current_contig = contig_name
@@ -154,7 +153,7 @@ def barcode(args):
 
 					variant_loci[contig_name].append(variant_position)
 
-					if "INDEL" in row.split("\t")[7]:
+					if "INDEL" in row2.split("\t")[7]:
 						if not contig_name in sample_indels.keys():
 							sample_indels[contig_name] = []
 						sample_indels[contig_name].append(variant_position)
@@ -193,6 +192,8 @@ def barcode(args):
 				window_stop = int(window_start + args.window_size)
 				primer1_stop = int(window_start + args.primer_size)
 				primer2_start = int(window_stop - args.primer_size)
+#				primer1_stop = int(window_start + primer_size)
+#				primer2_start = int(window_stop - primer_size)
 				window_coords = [window_start,primer1_stop,primer2_start,window_stop,1]
 
 				if bam == args.sortbam[0]:
@@ -272,54 +273,80 @@ def barcode(args):
 				compare_seqs[FileName(bam)] = ""
 				vcf_zipped = FileName(bam) + ".vcf.gz"
 				cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus %s" % \
-					("../SMar_v1.1.1_First10Contigs.fst", contig, \
-					pre_final_dict[contig][window][0], pre_final_dict[contig][window][3], vcf_zipped)]
+					(args.ref, contig, pre_final_dict[contig][window][0], pre_final_dict[contig][window][3], vcf_zipped)]
 				process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
-				with process3.stdout as result:
-					rows = (line.decode() for line in result)
-					for row in rows:
-						compare_seqs[FileName(bam)] += (row.upper().strip("\n"))
+				with process3.stdout as result3:
+					rows3 = (line.decode() for line in result3)
+					for row3 in rows3:
+						compare_seqs[FileName(bam)] += (row3.upper().strip("\n"))
 
 			if not (len(compare_seqs) != len(set(compare_seqs.values()))):	# All values unique
 				final_dict[contig][window] = pre_final_dict[contig][window]
 
 
+# Define a function to generate the required sequence for conserved and variable regions
+
+	def return_region(start, stop):
+		cmd4 = ["samtools faidx %s %s:%s-%s" % (args.ref, contig, start, stop]
+		process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+
+		return_me = ""
+
+		with process4.stdout as result4:
+			rows4 = (line.decode() for line in result4)
+			for row4 in rows4:
+				if not row4.startswith(">"):
+					return_me += row4.strip("\n")
+
+		return(return_me)
+
+
 # Report results in TXT and BED format
 
 	print("\nGenerating output files...")
-#
+
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
-#
+		output_txt.write("contig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\n")
+
 		for contig in final_dict:
-#
+
 			window_number = 0
-#
+
 			for window in final_dict[contig]:
-#
+
 				window_number += 1
 				window_SNPs = 0
 				window_indels = 0
-#
+
+				conserved_1_start = final_dict[contig][window][0]
+				conserved_1_stop = final_dict[contig][window][1] - 1
+				variable_start = final_dict[contig][window][1]
+				variable_stop = final_dict[contig][window][2]
+				conserved_2_start = final_dict[contig][window][2] + 1
+				conserved_2_stop = final_dict[contig][window][3]
+
+
 				for SNP in all_SNPs[contig]:
-					if final_dict[contig][window][1] < int(SNP) < final_dict[contig][window][2]:
+					if variable_start < int(SNP) < variable_stop:
 						window_SNPs += 1
-#
+
 				for indel in all_indels[contig]:
-					if final_dict[contig][window][1] < int(indel) < final_dict[contig][window][2]:
+					if variable_start < int(indel) < variable_stop:
 						window_indels += 1
-#
+
 		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-#
-				window_out = str(contig) + "\t" + str(final_dict[contig][window][0] - 1) + "\t" + str(final_dict[contig][window][3]) + "\t" + \
+
+				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
 						"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
-						"\t0\t.\t" + str(final_dict[contig][window][1]) + "\t" + str(final_dict[contig][window][2] - 1) + "\n"
-#
-				line_out = str(contig) + ":" + str(final_dict[contig][window][0]) + "-" + str(final_dict[contig][window][3]) + \
-						" (variable region: " + str(final_dict[contig][window][1]) + "-" + str(final_dict[contig][window][2]) + ")\n"
-#
+						"\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
+
+				line_out = str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + return_region(conserved_1_start, conserved_1_stop) + "\t" + \
+						str(variable_start) + "\t" + str(variable_stop) + "\t" + return_region(variable_start, variable_stop) + "\t" + \
+						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + return_region(conserved_2_start, conserved_2_stop) + "\n"
+
 				output_bed.write(window_out)
 				output_txt.write(line_out)
-#
+
 		output_bed.close()
 		output_txt.close()
