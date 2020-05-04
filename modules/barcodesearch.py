@@ -287,7 +287,7 @@ def barcode(args):
 # Define a function to generate the required sequence for conserved and variable regions
 
 	def return_region(start, stop):
-		cmd4 = ["samtools faidx %s %s:%s-%s" % (args.ref, contig, start, stop]
+		cmd4 = ["samtools faidx %s %s:%s-%s" % (args.ref, contig, start, stop)]
 		process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
 
 		return_me = ""
