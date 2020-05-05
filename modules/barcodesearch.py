@@ -28,6 +28,9 @@ import os
 import sys
 import io
 
+import numpy as np
+from Levenshtein import distance
+
 #######################################################################
 # HOUSEKEEPING
 #######################################################################
@@ -255,10 +258,10 @@ def barcode(args):
 			pre_final_dict[contig][saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
 
 #######################################################################
-
+#
 # Find a way to skip loci where the following type of error occurs:
 # `Warning: ignoring overlapping variant starting at 000215F:2953`
-
+#
 #######################################################################
 
 # Compare consensus sequences for all BAMs, to ensure they are truly unique,
@@ -283,6 +286,20 @@ def barcode(args):
 			if not (len(compare_seqs) != len(set(compare_seqs.values()))):	# All values unique
 				final_dict[contig][window] = pre_final_dict[contig][window]
 
+# TO DO: calculate the maximum and minimum difference between two sequences
+
+				list1 = list(compare_seqs.values())
+				list2 = list(compare_seqs.values())
+				matrix = np.zeros((len(list1), len(list2)), dtype=np.int)
+
+				for i in range(0,len(list1)):
+					for j in range(0,len(list2)):
+						matrix[i,j] = distance(list1[i],list2[j])
+
+# Add minimum and maximum differences to each window
+				final_dict[contig][window].append(np.min(matrix[np.nonzero(matrix)]))
+				final_dict[contig][window].append(np.max(matrix[np.nonzero(matrix)]))
+			
 
 # Define a function to generate the required sequence for conserved and variable regions
 
@@ -307,7 +324,9 @@ def barcode(args):
 
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
-		output_txt.write("contig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\n")
+		output_txt.write("contig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tminimum_diffs\tmaximum_diffs\n")
+
+# TO DO: print length of variable region
 
 		for contig in final_dict:
 
@@ -325,7 +344,9 @@ def barcode(args):
 				variable_stop = final_dict[contig][window][2]
 				conserved_2_start = final_dict[contig][window][2] + 1
 				conserved_2_stop = final_dict[contig][window][3]
-
+				variable_len = conserved_2_start - variable_start
+				min_diffs = final_dict[contig][window][4] 
+				max_diffs = final_dict[contig][window][5]
 
 				for SNP in all_SNPs[contig]:
 					if variable_start < int(SNP) < variable_stop:
@@ -343,7 +364,8 @@ def barcode(args):
 
 				line_out = str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + return_region(conserved_1_start, conserved_1_stop) + "\t" + \
 						str(variable_start) + "\t" + str(variable_stop) + "\t" + return_region(variable_start, variable_stop) + "\t" + \
-						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + return_region(conserved_2_start, conserved_2_stop) + "\n"
+						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + return_region(conserved_2_start, conserved_2_stop) + "\t" + \
+						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
 
 				output_bed.write(window_out)
 				output_txt.write(line_out)

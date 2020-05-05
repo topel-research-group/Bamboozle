@@ -80,6 +80,10 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
   * Currently generates an (automatically-deleted) intermediate file
 
 
+* `--barcode`
+  * Note that the bed file output uses 0-based coordinates, so the start positions are one lower
+    than the actual start positions; the coordinates in the txt file output are correct
+
 ## Features to add/things to address
 
 * Allow -c flag to accept multiple contigs (one dictionary per contig?)
