@@ -578,7 +578,7 @@ def main():
 		bamparse_func()
 
 	if args.barcode:
-		import modules.barcodesearch_test as bcs
+		import modules.barcodesearch as bcs
 		check_samtools()
 		check_bcftools()
 		if args.dev:

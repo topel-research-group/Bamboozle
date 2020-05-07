@@ -40,14 +40,12 @@ from time import time
 def FileName(long_name):
 	return os.path.splitext(os.path.basename(long_name))[0]
 
-<<<<<<< HEAD
 #######################################################################
 # RECORD ALL CONTIG LENGTHS
 #######################################################################
 
 def get_contig_lengths(firstbam):
 
-	global contig_lengths
 	contig_lengths = {}
 
 	cmd = ["samtools idxstats %s" % (firstbam)]
@@ -58,13 +56,6 @@ def get_contig_lengths(firstbam):
 		for row in rows:
 			if row.split("\t")[0] != "*":
 				contig_lengths[row.split("\t")[0]] = int(row.split("\t")[1])
-=======
-# Ensure the output BED file doesn't already exist
-
-	if os.path.isfile(args.outfile) == True:
-		print("Warning: Output file",args.outfile,"already exists. Please choose another output prefix.")
-		sys.exit(0)
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
 
 	return(contig_lengths)
 
@@ -76,11 +67,10 @@ def bcf(infile, contig_list, quality, threads, reference):
 
 	print("\n" + FileName(infile))
 
-	global process2
-
-	if os.path.isfile(infile + ".vcf.gz") == True:
-		print("VCF file already exists for",infile,"; reading file...")
-		process2 = gzip.open(infile + ".vcf.gz", 'rt')
+	if os.path.isfile(FileName(infile) + ".vcf.gz") == True:
+		import gzip
+		print("VCF file already exists for",FileName(infile),"- reading file...")
+		process2 = gzip.open(FileName(infile) + ".vcf.gz", 'rt')
 
 	else:
 		cmd2 = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv | \
@@ -95,22 +85,88 @@ def bcf(infile, contig_list, quality, threads, reference):
 # GENERATE A LIST OF LOCI WHERE VARIANTS OCCUR
 #######################################################################
 
-def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict):
-	if not vcf_row.startswith("#"):
-		contig_name = vcf_row.split("\t")[0]
-		variant_position = vcf_row.split("\t")[1]
+def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
+	contig_name = vcf_row.split("\t")[0]
+	variant_position = vcf_row.split("\t")[1]
 
-		if not current_contig == contig_name:
-			current_contig = contig_name
-			print(current_contig)
+	if not contig == contig_name:
+		contig = contig_name
+		print(contig)
 
-		variant_dict[contig_name].append(variant_position)
+	variant_dict[contig_name].append(variant_position)
 
-		if "INDEL" in vcf_row.split("\t")[7]:
-			indel_dict[contig_name].append(variant_position)
+	if "INDEL" in vcf_row.split("\t")[7]:
+		indel_dict[contig_name].append(variant_position)
+	else:
+		SNP_dict[contig_name].append(variant_position)
+	return(contig)
+
+#######################################################################
+# MERGE OVERLAPPING WINDOWS
+# THIS TAKES A LONG TIME AND SHOULD BE MULTITHREADED
+#######################################################################
+
+def merge_windows(contig, window_dict):
+
+	merged = {}	
+	saved_window = []
+
+	for window_start in window_dict[contig]:
+		if not saved_window:
+			saved_window = window_dict[contig][window_start]
+
+		elif saved_window[0] <= window_dict[contig][window_start][0] <= saved_window[1]:
+			saved_window = [saved_window[0],window_dict[contig][window_start][1],\
+				saved_window[2],window_dict[contig][window_start][3]]
 
 		else:
-			SNP_dict[contig_name].append(variant_position)
+			merged[saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
+			saved_window = window_dict[contig][window_start]
+
+		merged[saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
+
+	return(merged)
+
+#######################################################################
+# ENSURE UNIQUENESS OF VARIABLE REGIONS BETWEEN STRAINS
+# THIS TAKES A VERY LONG TIME AND SHOULD BE MULTITHREADED
+#######################################################################
+
+def check_unique_windows(windows, contig):
+	for window in windows[contig]:
+		compare_seqs = {}
+		for bam in args.sortbam:
+			compare_seqs[FileName(bam)] = ""
+			vcf_zipped = FileName(bam) + ".vcf.gz"
+			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus %s" % \
+				(args.ref, contig, windows[contig][window][0], windows[contig][window][3], vcf_zipped)]
+			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+			with process3.stdout as result3:
+				rows3 = (line.decode() for line in result3)
+				for row3 in rows3:
+					compare_seqs[FileName(bam)] += (row3.upper().strip("\n"))
+
+# Ensure all variable regions are unique between samples
+
+		if not (len(compare_seqs) != len(set(compare_seqs.values()))):
+			final[window] = windows[contig][window]
+
+# Calculate the number of differences between each pair of sequences
+
+			list1 = list(compare_seqs.values())
+			list2 = list(compare_seqs.values())
+			matrix = np.zeros((len(list1), len(list2)), dtype=np.int)
+
+			for i in range(0,len(list1)):
+				for j in range(0,len(list2)):
+					matrix[i,j] = distance(list1[i],list2[j])
+
+# Add minimum and maximum differences to each window
+			final[window].append(np.min(matrix[np.nonzero(matrix)]))
+			final[window].append(np.max(matrix[np.nonzero(matrix)]))
+
+	return(final)
+
 
 #######################################################################
 # GENERATE THE REQUIRED SEQUENCE FOR CONSERVED AND VARIABLE REGIONS
@@ -118,7 +174,6 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict):
 
 def return_region(start, stop, reference, contig):
 
-	global return_me
 	return_me = ""
 
 	cmd4 = ["samtools faidx %s %s:%s-%s" % (reference, contig, start, stop)]
@@ -155,7 +210,7 @@ def barcode(args):
 
 # Record all contig lengths
 
-	get_contig_lengths(args.sortbam[0])
+	contig_lengths = get_contig_lengths(args.sortbam[0])
 
 # Set initial global lists/dictionaries
 
@@ -179,6 +234,10 @@ def barcode(args):
 	for contig in contig_lengths:
 		master_dict[contig] = {}
 
+	merged_dict = {}
+	for contig in contig_lengths:
+		merged_dict[contig] = {}
+
 	final_dict = {}
 	for contig in contig_lengths:
 		final_dict[contig] = {}
@@ -199,38 +258,25 @@ def barcode(args):
 
 	for bam in args.sortbam:
 
-		bcf(bam, contig_lengths, filter_qual, args.threads, args.ref)
+# Generate or read in a VCF file for the current BAM
+
+		process2 = bcf(bam, contig_lengths, filter_qual, args.threads, args.ref)
 		if args.dev == True:
 			print("Parsing",bam,"=",(time() - start_time),"seconds.")
 			start_time = time()
 
-# bcf() returns process2
-
-
-# Generate a list of loci where variants occur
+# Generate a list of loci where variants occur for
 
 		print("\nFinding variants...")
 
-<<<<<<< HEAD
-		global current_contig
 		current_contig = ""
-=======
-		with process.stdout as result:
-			rows = (line.decode() for line in result)
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
 
-		if os.path.isfile(infile + ".vcf.gz") == True:
+		if os.path.isfile(FileName(bam) + ".vcf.gz") == True:
 			for row2 in process2:
-				get_variants(row2, all_variants, all_indels, all_SNPs)
+				if not row2.startswith("#"):
+					current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 
-<<<<<<< HEAD
 		else:
-=======
-			for row in rows:
-				if not row.startswith("#"):
-					contig_name = row.split("\t")[0]
-					variant_position = row.split("\t")[1]
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
 
 			vcf_file = FileName(bam) + ".vcf"
 			with process2.stdout as result2, open(vcf_file, "a") as output_file:
@@ -238,45 +284,38 @@ def barcode(args):
 
 				for row2 in rows2:
 					output_file.write(row2)
-					get_variants(row2, all_variants, all_indels, all_SNPs)
+					if not row2.startswith("#"):
+						current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 
-<<<<<<< HEAD
 			output_file.close()
+
+# If the VCF file didn't exist previously, then bgzip the newly-written one, and index it
+
 			os.system("bgzip -@ " + str(args.threads) + " " + vcf_file)
+		if os.path.isfile(FileName(bam) + ".vcf.gz.csi") == False:
 			os.system("bcftools index --threads " + str(args.threads) + " " + vcf_file + ".gz")
 
 		if args.dev == True:
 			print("Finding variants in",bam,"=",(time() - start_time),"seconds.")
 			start_time = time()
 
+# Get sorted lists of variant/SNP/indel positions, with duplicates removed
+
 	for contig in all_variants:
-		all_variants[contig].sort()
-		all_variants[contig] = list(set(all_variants[contig]))
-=======
-		print("\nAdding variants to list...")
-		for contig in sample_SNPs:
-			for SNP in sample_SNPs[contig]:
-				if not SNP in all_SNPs[contig]:
-					all_SNPs[contig].append(SNP)
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
+		all_variants[contig] = sorted(list(set(all_variants[contig])), key=int)
 
 	for contig in all_SNPs:
-		all_SNPs[contig].sort()
-		all_SNPs[contig] = list(set(all_SNPs[contig]))
+		all_SNPs[contig] = sorted(list(set(all_SNPs[contig])), key=int)
 
 	for contig in all_indels:
-		all_indels[contig].sort()
-		all_indels[contig] = list(set(all_indels[contig]))
+		all_indels[contig] = sorted(list(set(all_indels[contig])), key=int)
 
-# Start stepping through the file
-
-# Assign start and stop locations for window and primers
+# Step through each contig, assigning start and stop locations for window and primers
 
 	print("\nChecking windows...")
 
 	for contig in contig_lengths:
 
-<<<<<<< HEAD
 		print(contig)
 		for window in range(0,(contig_lengths[contig] - args.window_size)):
 			window_start = int(window + 1)
@@ -287,92 +326,31 @@ def barcode(args):
 
 		# If any variants fall within primer sites, skip the window
 			for variant in all_variants[contig]:
-				validity = "true"
+				validity = "True"
 				if int(variant) > window_stop:
 					break
 				elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
-					validity = "false"
+					validity = "False"
 					break
 		# If no variants in primer sites, save the coordinates
-			if validity == "true":
+			if validity == "True":
 				master_dict[contig][window_start] = window_coords
 
 	if args.dev == True:
 		print("Finding windows =",(time() - start_time),"seconds.")
 		start_time = time()
-=======
-			print(contig)
-			for window in range(0,(contig_lengths[contig] - args.window_size)):
-				window_start = int(window + 1)
-				window_stop = int(window_start + args.window_size)
-				primer1_stop = int(window_start + args.primer_size)
-				primer2_start = int(window_stop - args.primer_size)
-				window_coords = [window_start,primer1_stop,primer2_start,window_stop,1]
-
-				if bam == args.sortbam[0]:
-				# If any variants fall within primer sites, skip the window
-					for variant in variant_loci[contig]:
-						validity = "true"
-						if int(variant) > window_stop:
-							break
-						elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
-							validity = "false"
-							break
-				# If no variants in primer sites, save the coordinates
-					if validity == "true":
-						master_dict[contig][window_start] = window_coords
-
-				elif window_start in master_dict[contig].keys() and master_dict[contig][window_start][4] == file_number:
-				# If any variants fall within primer sites, skip the window
-					for variant in variant_loci[contig]:
-						validity = "true"
-						if int(variant) > window_stop:
-							break
-						elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
-							validity = "false"
-							break
-				# If no variants in primer sites, increase instances by 1
-					if validity == "true":
-						master_dict[contig][window_start] = \
-						[window_start,primer1_stop,primer2_start,window_stop,(master_dict[contig][window_start][4] + 1)]
-
-		file_number += 1
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
 
 #######################################################################
 
 # Merge overlapping windows
+# THIS TAKES A LONG TIME AND SHOULD BE MULTITHREADED
 
 	print("\nMerging overlapping windows...")
 
 	for contig in master_dict:
 		if master_dict[contig]:
-
-			saved_window = []
-
 			print(contig)
-			for window_start in master_dict[contig]:
-				if not saved_window:
-					saved_window = master_dict[contig][window_start]
-
-				elif saved_window[0] <= master_dict[contig][window_start][0] <= saved_window[1]:
-					saved_window = [saved_window[0],master_dict[contig][window_start][1],\
-						saved_window[2],master_dict[contig][window_start][3]]
-
-<<<<<<< HEAD
-				else:
-					pre_final_dict[contig][saved_window[0]] = \
-					[saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
-=======
-					else:
-						final_dict[contig][saved_window[0]] = \
-						[saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
-
-					saved_window = master_dict[contig][window_start]
-
-<<<<<<< HEAD
-			pre_final_dict[contig][saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]	# list index out of range
+			merged_dict[contig] = merge_windows(contig, master_dict)
 
 	if args.dev == True:
 		print("Merging windows =",(time() - start_time),"seconds.")
@@ -383,47 +361,17 @@ def barcode(args):
 # Find a way to skip loci where the following type of error occurs:
 # `Warning: ignoring overlapping variant starting at 000215F:2953`
 #
-=======
-			final_dict[contig][saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
-
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
 #######################################################################
 
-# Report results in BED format
+# Compare consensus sequences for all BAMs, to ensure they are truly unique,
+# not merely differing from the reference in all the same positions
 
-	print("\nGenerating BED file...")
+# THIS TAKES A VERY LONG TIME AND SHOULD BE MULTITHREADED
 
-<<<<<<< HEAD
-	for contig in pre_final_dict:
-		for window in pre_final_dict[contig]:
-			compare_seqs = {}
-			for bam in args.sortbam:
-				compare_seqs[FileName(bam)] = ""
-				vcf_zipped = FileName(bam) + ".vcf.gz"
-				cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus %s" % \
-					(args.ref, contig, pre_final_dict[contig][window][0], pre_final_dict[contig][window][3], vcf_zipped)]
-				process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
-				with process3.stdout as result3:
-					rows3 = (line.decode() for line in result3)
-					for row3 in rows3:
-						compare_seqs[FileName(bam)] += (row3.upper().strip("\n"))
+	print("\nChecking consensuses...")
 
-			if not (len(compare_seqs) != len(set(compare_seqs.values()))):	# All values unique
-				final_dict[contig][window] = pre_final_dict[contig][window]
-
-# TO DO: calculate the maximum and minimum difference between two sequences
-
-				list1 = list(compare_seqs.values())
-				list2 = list(compare_seqs.values())
-				matrix = np.zeros((len(list1), len(list2)), dtype=np.int)
-
-				for i in range(0,len(list1)):
-					for j in range(0,len(list2)):
-						matrix[i,j] = distance(list1[i],list2[j])
-
-# Add minimum and maximum differences to each window
-				final_dict[contig][window].append(np.min(matrix[np.nonzero(matrix)]))
-				final_dict[contig][window].append(np.max(matrix[np.nonzero(matrix)]))
+	for contig in merged_dict:
+		final_dict[contig] = check_unique_windows(merged_dict, contig)
 
 	if args.dev == True:
 		print("Comparing consensus sequences =",(time() - start_time),"seconds.")
@@ -437,13 +385,6 @@ def barcode(args):
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
 		output_txt.write("contig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tminimum_diffs\tmaximum_diffs\n")
 
-# TO DO: print length of variable region
-
-=======
-	with open(args.outfile, "a") as output_file:
-		output_file.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
-
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
 		for contig in final_dict:
 
 			window_number = 0
@@ -454,7 +395,6 @@ def barcode(args):
 				window_SNPs = 0
 				window_indels = 0
 
-<<<<<<< HEAD
 				conserved_1_start = final_dict[contig][window][0]
 				conserved_1_stop = final_dict[contig][window][1] - 1
 				variable_start = final_dict[contig][window][1]
@@ -465,8 +405,6 @@ def barcode(args):
 				min_diffs = final_dict[contig][window][4] 
 				max_diffs = final_dict[contig][window][5]
 
-=======
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
 				for SNP in all_SNPs[contig]:
 					if variable_start < int(SNP) < variable_stop:
 						window_SNPs += 1
@@ -475,7 +413,6 @@ def barcode(args):
 					if variable_start < int(indel) < variable_stop:
 						window_indels += 1
 
-<<<<<<< HEAD
 		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
 
 				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
@@ -496,14 +433,3 @@ def barcode(args):
 		if args.dev == True:
 			print("Writing output =",(time() - start_time),"seconds.")
 			start_time = time()
-=======
-			# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-
-				window_out = str(contig) + "\t" + str(final_dict[contig][window][0] - 1) + "\t" + str(final_dict[contig][window][3]) + "\t" + \
-						"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
-						"\t0\t.\t" + str(final_dict[contig][window][1]) + "\t" + str(final_dict[contig][window][2] - 1) + "\n"
-
-				output_file.write(window_out)
-
-		output_file.close()
->>>>>>> parent of f5a9766... Improve barcodesearch.py to ensure all loci differ from one another before reporting
