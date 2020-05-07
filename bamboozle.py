@@ -144,7 +144,7 @@ barcode.add_argument("--barcode", \
 			help="Search the input (sorted) BAM files for suitable barcode regions")
 barcode.add_argument("-q", "--quality", \
 			type=int, \
-			default="20", \
+			default="20",
 			help="Quality threshold for filtering variants")
 barcode.add_argument("--window_size", \
 			type=int, \
@@ -154,8 +154,8 @@ barcode.add_argument("--primer_size", \
 			type=int, \
 			default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode")
-barcode.add_argument("-o", "--outprefix", \
-			help="Output file prefix")
+barcode.add_argument("-o", "--outfile", \
+			help="Output filename")
 
 args = parser.parse_args()
 
@@ -177,15 +177,12 @@ if args.forward and args.reverse and args.ref is None:
 
 #######################################################################
 # DEFINE FUNCTIONS USING BAMPARSER MODULE
-# 	As the 'bamparse' flags are not tied to a position, must cycle
-# 	through all flags
 #######################################################################
 
 BamparseList = ["--coverage","--consensus","--zero","--deletion1","--deletion2","--deletion3",\
 		"--deletionx","--homohetero","--median","--long_coverage"]
 
-bamparse = False
-
+bamparse = None
 for item1 in BamparseList:
 	for item2 in sys.argv:
 		if item1 == item2:
