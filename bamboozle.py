@@ -172,8 +172,8 @@ if args.forward and args.reverse and args.ref is None:
 # TESTING RUNTIME (--dev)
 #######################################################################
 
-if args.dev == True:
-	start_time = time()
+#if args.dev == True:
+#	start_time = time()
 
 #######################################################################
 # DEFINE FUNCTIONS USING BAMPARSER MODULE
@@ -581,10 +581,14 @@ def main():
 		bamparse_func()
 
 	if args.barcode:
-		import modules.barcodesearch as bcs
+		import modules.barcodesearch_test as bcs
 		check_samtools()
 		check_bcftools()
-		bcs.barcode(args)
+		if args.dev:
+			import cProfile
+			cProfile.run(bcs.barcode(args))
+		else:
+			bcs.barcode(args)
 		
 	if args.gff and args.feature:
 		import modules.pipeline as pl
@@ -601,5 +605,5 @@ def main():
 if __name__ == "__main__":
 	main()
 
-if args.dev == True:
-	print("Time taken =",(time() - start_time),"seconds.")
+#if args.dev == True:
+#	print("Time taken =",(time() - start_time),"seconds.")
