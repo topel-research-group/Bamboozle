@@ -79,7 +79,6 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 * `--homohetero`
   * Currently generates an (automatically-deleted) intermediate file
 
-
 * `--barcode`
   * Note that the bed file output uses 0-based coordinates, so the start positions are one lower
     than the actual start positions; the coordinates in the txt file output are correct
