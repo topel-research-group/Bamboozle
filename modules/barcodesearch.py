@@ -32,6 +32,7 @@ import numpy as np
 from Levenshtein import distance
 
 from time import time
+from multiprocessing import Pool
 
 #######################################################################
 # GET REASONABLE SAMPLE NAMES
@@ -100,6 +101,34 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 	else:
 		SNP_dict[contig_name].append(variant_position)
 	return(contig)
+
+#######################################################################
+# IDENTIFY VARIABLE WINDOWS AND CONSERVED PRIMER SITES
+#######################################################################
+
+def find_windows(contig, contig_list, window_len, primer_len, variant_list):
+	print(contig)
+	windows = {}
+
+	for window in range(0,(contig_list[contig] - window_len)):
+		window_start = int(window + 1)
+		window_stop = int(window_start + window_len)
+		primer1_stop = int(window_start + primer_len)
+		primer2_start = int(window_stop - primer_len)
+		window_coords = [window_start,primer1_stop,primer2_start,window_stop]
+	# If any variants fall within primer sites, skip the window
+		for variant in variant_list[contig]:
+			validity = "True"
+			if int(variant) > window_stop:
+				break
+			elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
+				validity = "False"
+				break
+	# If no variants in primer sites, save the coordinates
+		if validity == "True":
+			windows[window_start] = window_coords
+
+	return(windows)
 
 #######################################################################
 # MERGE OVERLAPPING WINDOWS
@@ -198,6 +227,10 @@ def barcode(args):
 	if args.dev == True:
 		start_time = time()
 
+# Set number of threads
+
+	pool = Pool(processes = int(args.threads))
+
 # Ensure the output files doesn't already exist
 
 	out_bed = args.outprefix + ".bed"
@@ -268,6 +301,7 @@ def barcode(args):
 			start_time = time()
 
 # Generate a list of loci where variants occur for
+# ADJUST TO MAKE THIS PARALLELISABLE!
 
 		print("\nFinding variants...")
 
@@ -317,33 +351,7 @@ def barcode(args):
 	print("\nChecking windows...")
 
 	for contig in contig_lengths:
-#		master_dict[contig] = find_windows(contig_lengths, contig, args.window_size, args.primer_size
-
-
-#def find_windows(contig_list, contig, window_len, primer_len):
-#	print(contig)
-#	for window in range(0,(contig_list[contig] - window_len)):
-
-
-		print(contig)
-		for window in range(0,(contig_lengths[contig] - args.window_size)):
-			window_start = int(window + 1)
-			window_stop = int(window_start + args.window_size)
-			primer1_stop = int(window_start + args.primer_size)
-			primer2_start = int(window_stop - args.primer_size)
-			window_coords = [window_start,primer1_stop,primer2_start,window_stop]
-
-		# If any variants fall within primer sites, skip the window
-			for variant in all_variants[contig]:
-				validity = "True"
-				if int(variant) > window_stop:
-					break
-				elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
-					validity = "False"
-					break
-		# If no variants in primer sites, save the coordinates
-			if validity == "True":
-				master_dict[contig][window_start] = window_coords
+		master_dict[contig] = find_windows(contig, contig_lengths, args.window_size, args.primer_size, all_variants)
 
 	if args.dev == True:
 		print("Finding windows =",(time() - start_time),"seconds.")
@@ -356,10 +364,15 @@ def barcode(args):
 
 	print("\nMerging overlapping windows...")
 
-	for contig in master_dict:
-		if master_dict[contig]:
+#	for contig in master_dict:
+#		if master_dict[contig]:
+#			print(contig)
+#			merged_dict[contig] = merge_windows(contig, master_dict)
+
+	for contig in unmerged_dict['master_dict']:
+		if unmerged_dict['master_dict'][contig]:
 			print(contig)
-			merged_dict[contig] = merge_windows(contig, master_dict)
+			merged_dict[contig] = merge_windows(contig, unmerged_dict['master_dict'])
 
 	if args.dev == True:
 		print("Merging windows =",(time() - start_time),"seconds.")
