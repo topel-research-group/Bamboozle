@@ -299,7 +299,7 @@ def barcode(args):
 			print("Parsing",bam,"=",(time() - start_time),"seconds.")
 			start_time = time()
 
-# Generate a list of loci where variants occur for
+# Generate a list of loci where variants occur
 # ADJUST TO MAKE THIS PARALLELISABLE!
 
 		print("\nFinding variants...")
@@ -345,13 +345,15 @@ def barcode(args):
 	for contig in all_indels:
 		all_indels[contig] = sorted(list(set(all_indels[contig])), key=int)
 
-# Step through each contig, assigning start and stop locations for window and primers
+# PARALLELISE THIS STEP! Step through each contig, assigning start and stop locations for window and primers
 
 	print("\nChecking windows...")
 
-	for contig in contig_lengths:
-		print(contig)
-		master_dict[contig] = find_windows(contig, contig_lengths, args.window_size, args.primer_size, all_variants)
+	to_master = pool.starmap(find_windows, \
+	[(contig, contig_lengths, args.window_size, args.primer_size, all_variants) for contig in contig_lengths])
+
+	for entry in range(0,len(contig_lengths)):
+		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
 	if args.dev == True:
 		print("Finding windows =",(time() - start_time),"seconds.")
