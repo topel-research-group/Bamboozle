@@ -132,14 +132,16 @@ def merge_windows(contig, window_dict):
 # THIS TAKES A VERY LONG TIME AND SHOULD BE MULTITHREADED
 #######################################################################
 
-def check_unique_windows(windows, contig):
+def check_unique_windows(windows, contig, reference, infiles):
+	final = {}
 	for window in windows[contig]:
 		compare_seqs = {}
-		for bam in args.sortbam:
+
+		for bam in infiles:
 			compare_seqs[FileName(bam)] = ""
 			vcf_zipped = FileName(bam) + ".vcf.gz"
 			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus %s" % \
-				(args.ref, contig, windows[contig][window][0], windows[contig][window][3], vcf_zipped)]
+				(reference, contig, windows[contig][window][0], windows[contig][window][3], vcf_zipped)]
 			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 			with process3.stdout as result3:
 				rows3 = (line.decode() for line in result3)
@@ -315,6 +317,13 @@ def barcode(args):
 	print("\nChecking windows...")
 
 	for contig in contig_lengths:
+#		master_dict[contig] = find_windows(contig_lengths, contig, args.window_size, args.primer_size
+
+
+#def find_windows(contig_list, contig, window_len, primer_len):
+#	print(contig)
+#	for window in range(0,(contig_list[contig] - window_len)):
+
 
 		print(contig)
 		for window in range(0,(contig_lengths[contig] - args.window_size)):
@@ -371,7 +380,7 @@ def barcode(args):
 	print("\nChecking consensuses...")
 
 	for contig in merged_dict:
-		final_dict[contig] = check_unique_windows(merged_dict, contig)
+		final_dict[contig] = check_unique_windows(merged_dict, contig, args.ref, args.sortbam)
 
 	if args.dev == True:
 		print("Comparing consensus sequences =",(time() - start_time),"seconds.")
