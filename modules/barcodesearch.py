@@ -362,7 +362,6 @@ def barcode(args):
 #######################################################################
 
 # Merge overlapping windows
-# THIS TAKES A LONG TIME AND SHOULD BE MULTITHREADED
 
 	print("\nMerging overlapping windows...")
 
@@ -389,8 +388,14 @@ def barcode(args):
 
 	print("\nChecking consensuses...")
 
-	for contig in merged_dict:
-		final_dict[contig] = check_unique_windows(merged_dict, contig, args.ref, args.sortbam)
+	to_final = pool.starmap(check_unique_windows, \
+		[(merged_dict, contig, args.ref, args.sortbam) for contig in contig_lengths])
+
+	for entry in range(0,len(contig_lengths)):
+		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
+
+#	for contig in merged_dict:
+#		final_dict[contig] = check_unique_windows(merged_dict, contig, args.ref, args.sortbam)
 
 	if args.dev == True:
 		print("Comparing consensus sequences =",(time() - start_time),"seconds.")
