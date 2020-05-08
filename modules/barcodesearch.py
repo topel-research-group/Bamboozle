@@ -107,7 +107,6 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 #######################################################################
 
 def find_windows(contig, contig_list, window_len, primer_len, variant_list):
-	print(contig)
 	windows = {}
 
 	for window in range(0,(contig_list[contig] - window_len)):
@@ -351,6 +350,7 @@ def barcode(args):
 	print("\nChecking windows...")
 
 	for contig in contig_lengths:
+		print(contig)
 		master_dict[contig] = find_windows(contig, contig_lengths, args.window_size, args.primer_size, all_variants)
 
 	if args.dev == True:
@@ -364,15 +364,10 @@ def barcode(args):
 
 	print("\nMerging overlapping windows...")
 
-#	for contig in master_dict:
-#		if master_dict[contig]:
-#			print(contig)
-#			merged_dict[contig] = merge_windows(contig, master_dict)
-
-	for contig in unmerged_dict['master_dict']:
-		if unmerged_dict['master_dict'][contig]:
+	for contig in master_dict:
+		if master_dict[contig]:
 			print(contig)
-			merged_dict[contig] = merge_windows(contig, unmerged_dict['master_dict'])
+			merged_dict[contig] = merge_windows(contig, master_dict)
 
 	if args.dev == True:
 		print("Merging windows =",(time() - start_time),"seconds.")
