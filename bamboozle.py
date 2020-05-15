@@ -34,7 +34,6 @@ import fnmatch
 import glob
 from functools import reduce
 from functools import wraps
-from time import time
 import datetime
 
 #######################################################################
@@ -167,13 +166,6 @@ if not args.coverage:
 
 if args.forward and args.reverse and args.ref is None:
 	parser.error("--ref [Reference is required]")
-
-#######################################################################
-# TESTING RUNTIME (--dev)
-#######################################################################
-
-#if args.dev == True:
-#	start_time = time()
 
 #######################################################################
 # DEFINE FUNCTIONS USING BAMPARSER MODULE
@@ -583,7 +575,7 @@ def main():
 		check_bcftools()
 		if args.dev:
 			import cProfile
-			cProfile.run(bcs.barcode(args))
+			cProfile.runctx('bcs.barcode(args)', globals(), locals())
 		else:
 			bcs.barcode(args)
 		
@@ -601,6 +593,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
-#if args.dev == True:
-#	print("Time taken =",(time() - start_time),"seconds.")

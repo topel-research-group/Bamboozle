@@ -41,12 +41,13 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 
 ## Dependencies
 
-|     Program      |                                                                  Versions used                                                                   |
-|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------| 
-|`Bamboozle`       | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 <br/> Bedtools2/v2.27.1 <br/> Java (for snpEff) |
-|`angsd_fst`       | angsd/v0.918                                                                                                                                     |
-|`vcftools_fst`    | VCFtools/v0.1.13                                                                                                                                 |  
-|`make_plot`       | Highcharts/v6.2.0                                                                                                                                |  
+|      Program       |                                                                  Versions used                                                                   |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------| 
+|`Bamboozle`         | Bowtie2/v2.3.3.1 <br/> samtools/v1.9 <br/> bcftools/v1.9 <br/> snpEff/v.4.3t <br/> gffutils/v0.9 <br/> Bedtools2/v2.27.1 <br/> Java (for snpEff) |
+|(`barcodesearch.py`)| NumPy and Levenshtein Python libraries                                                                                                           |
+|`angsd_fst`         | angsd/v0.918                                                                                                                                     |
+|`vcftools_fst`      | VCFtools/v0.1.13                                                                                                                                 |  
+|`make_plot`         | Highcharts/v6.2.0                                                                                                                                |  
 
 ## More information  
 * [Wiki](https://github.com/topel-research-group/Bamboozle/wiki)  
@@ -82,6 +83,8 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 * `--barcode`
   * Note that the bed file output uses 0-based coordinates, so the start positions are one lower
     than the actual start positions; the coordinates in the txt file output are correct
+  * In addition to the bed and txt file output, this function also generates bgzipped vcf files
+    and their respective index files
 
 ## Features to add/things to address
 
