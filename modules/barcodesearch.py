@@ -169,22 +169,41 @@ def check_unique_windows(windows, contig, reference, infiles):
 			# Add minimum and maximum differences to each window
 			final[window].append(np.min(matrix[np.nonzero(matrix)]))
 			final[window].append(np.max(matrix[np.nonzero(matrix)]))
+
+			# Get the required sequences for conserved and variable regions
+			# Dev Note: tidy this up so we're not running essentially the same thing three times!
+
+			conserved_1 = ""
+			cmd4 = ["samtools faidx %s %s:%s-%s" % (reference, contig, windows[contig][window][0], (windows[contig][window][1] - 1))]
+			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
+			with process4.stdout as result4:
+				rows4 = (line.decode() for line in result4)
+				for row4 in rows4:
+					if not row4.startswith(">"):
+						conserved_1 += row4.strip("\n")
+			final[window].append(conserved_1)
+
+			variable = ""
+			cmd5 = ["samtools faidx %s %s:%s-%s" % (reference, contig, windows[contig][window][1], windows[contig][window][2])]
+			process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
+			with process5.stdout as result5:
+				rows5 = (line.decode() for line in result5)
+				for row5 in rows5:
+					if not row5.startswith(">"):
+						variable += row5.strip("\n")
+			final[window].append(variable)
+
+			conserved_2 = ""
+			cmd6= ["samtools faidx %s %s:%s-%s" % (reference, contig, (windows[contig][window][2] + 1), windows[contig][window][3])]
+			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True)
+			with process6.stdout as result6:
+				rows6 = (line.decode() for line in result6)
+				for row6 in rows6:
+					if not row6.startswith(">"):
+						conserved_2 += row6.strip("\n")
+			final[window].append(conserved_2)
+
 	return(final)
-
-
-# Generate the required sequence for conserved and variable regions
-
-def return_region(start, stop, reference, contig):
-	return_me = ""
-
-	cmd4 = ["samtools faidx %s %s:%s-%s" % (reference, contig, start, stop)]
-	process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
-	with process4.stdout as result4:
-		rows4 = (line.decode() for line in result4)
-		for row4 in rows4:
-			if not row4.startswith(">"):
-				return_me += row4.strip("\n")
-	return(return_me)
 
 #######################################################################
 
@@ -326,6 +345,10 @@ def barcode(args):
 				min_diffs = final_dict[contig][window][4] 
 				max_diffs = final_dict[contig][window][5]
 
+				conserved_1_seq = final_dict[contig][window][6]
+				variable_seq = final_dict[contig][window][7]
+				conserved_2_seq = final_dict[contig][window][8]
+
 				for SNP in all_SNPs[contig]:
 					if variable_start < int(SNP) < variable_stop:
 						window_SNPs += 1
@@ -337,10 +360,11 @@ def barcode(args):
 				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
 						"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
 						"\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
-				line_out = str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + return_region(conserved_1_start, conserved_1_stop, args.ref, contig) + "\t" + \
-						str(variable_start) + "\t" + str(variable_stop) + "\t" + return_region(variable_start, variable_stop, args.ref, contig) + "\t" + \
-						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + return_region(conserved_2_start, conserved_2_stop, args.ref, contig) + "\t" + \
+				line_out = str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
+						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
+						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
 						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
+
 				output_bed.write(window_out)
 				output_txt.write(line_out)
 		output_bed.close()
