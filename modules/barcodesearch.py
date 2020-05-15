@@ -19,6 +19,7 @@
 #	You should have received a copy of the GNU General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 # Imports
 
 import subprocess
@@ -145,8 +146,8 @@ def check_unique_windows(windows, contig, reference, infiles):
 		for bam in infiles:
 			compare_seqs[FileName(bam)] = ""
 			vcf_zipped = FileName(bam) + ".vcf.gz"
-			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus %s" % \
-				(reference, contig, windows[contig][window][0], windows[contig][window][3], vcf_zipped)]
+			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus --sample %s %s" % \
+				(reference, contig, windows[contig][window][0], windows[contig][window][3], bam, vcf_zipped)]
 			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 			with process3.stdout as result3:
 				rows3 = (line.decode() for line in result3)
