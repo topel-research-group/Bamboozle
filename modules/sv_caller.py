@@ -89,11 +89,18 @@ def timing(function):
 
 #First things first - taking in all arguments needed
 parser = argparse.ArgumentParser(description='SV caller - title says it all dunnit')
-parser.add_argument('sortedBAM', metavar='sBAM',
-                   help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned)')
-parser.add_argument('refGenome', metavar='ref',
-		   help='Reference genome in FASTA format (
-
+parser.add_argument('-B', '--sorted_BAM', required=True,
+                   help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned). Assuming sample name from first two '_' delimited fields of input name')
+parser.add_argument('-n', '--sample_name',
+		   help='Sample name')
+parser.add_argument('-F', '--reference_FASTA', required=True,
+		   help='Reference genome in FASTA format (needs to be bwa-mem-indexed, this will checked automatically though)')
+parser.add_argument('-G', '--reference_GFF', required=True,
+		   help='Reference GFF with gene models for the reference genome')
+parser.add_argument('-P', '--ref_Pilon',
+		   help='Reference Pilon-corrected assembly in FASTA format (doesn't need indexing)')
+parser.add_argument('-t', '--threads', default='8', type=int,
+		   help='Number of threads to run sv_caller.py with')
 
 # SV calling using GRIDSS, input is sorted BAM file,
 # - function to make sure input is as needed!
