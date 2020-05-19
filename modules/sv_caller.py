@@ -31,7 +31,7 @@
 #Help messages:
 #1. Use a bwa-mem-indexed reference genome
 #2. Even though ref has been indexed with bwa-mem it is ok to have bowtie2-aligned reads since from the same genome
-#3. Reads have to be sorted BAM
+#3. Input alignments have to be sorted BAM
 #4. 
 
 #  NOT SURE about this license? Secondary though
@@ -89,6 +89,13 @@ def timing(function):
 
 # SV calling using GRIDSS, input is sorted BAM file,
 # - function to make sure input is as needed!
+#       1 - input alignment is sorted BAM
+# samtools view -H my_sorted.bam | head -n1 | cut -f3 | cut -f2 -d$':' --> 'coordinate'
+# if unsorted it will be 'unsorted'
+# 
+#       2 - input reference genome has associated bwa-mem index
+# ls folder with reference fasta to find:
+# ref.fa, ref.fa.fai, ref.fa.amb, ref.fa.ann, ref.fa.bwt, ref.fa.pac, ref.fa.sa
 #
 # output file is a gzipped vcf file,
 # makes new directory 'gridss' if it doesn't exist.
