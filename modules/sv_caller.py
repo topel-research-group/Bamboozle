@@ -101,13 +101,28 @@ parser.add_argument('-P', '--ref_Pilon',
 		   help='Reference Pilon-corrected assembly in FASTA format (doesn't need indexing)')
 parser.add_argument('-t', '--threads', default='8', type=int,
 		   help='Number of threads to run sv_caller.py with')
+#arguments to variables
+args = parser.parse_args()
+bam = args.one
+name = args.two
+reffa = args.three
+refgff = args.four
+refpil = args.five
+threads = args.six
 
 # SV calling using GRIDSS, input is sorted BAM file,
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
 # samtools view -H my_sorted.bam | head -n1 | cut -f3 | cut -f2 -d$':' --> 'coordinate'
 # if unsorted it will be 'unsorted'
-# 
+@timing
+def bam_check(bam):
+	cmd1 = ("samtools view -H %s \
+		| head -n1 \
+		| cut -f3 \
+		| cut -f2 -d$':'")
+	% (bam)
+	process1 = subprocess.Popen(cmd7)
 #       2 - input reference genome has associated bwa-mem index
 # ls folder with reference fasta to find:
 # ref.fa, ref.fa.fai, ref.fa.amb, ref.fa.ann, ref.fa.bwt, ref.fa.pac, ref.fa.sa
