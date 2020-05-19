@@ -113,20 +113,36 @@ threads = args.six
 # SV calling using GRIDSS, input is sorted BAM file,
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
-# samtools view -H my_sorted.bam | head -n1 | cut -f3 | cut -f2 -d$':' --> 'coordinate'
-# if unsorted it will be 'unsorted'
 @timing
 def bam_check(bam):
+	#creating output folder right away
+	if not os.path.exists('sv_caller_output'):
+                os.makedirs('sv_caller_output')
+	#command to check out first line of BAM header and look for "coordinate" (= sorted)
 	cmd1 = ("samtools view -H %s \
 		| head -n1 \
 		| cut -f3 \
 		| cut -f2 -d$':'")
 	% (bam)
-	process1 = subprocess.Popen(cmd7)
+	process1 = subprocess.Popen(cmd1,
+		cwd='sv_caller_output')
+	#is this even the right way to rename output? won't this go like bam_name.bam_sorted.bam? bah
+	cmd2 = ("samtools sort %s \
+		-o %s")
+	% (bam,bam+"_sorted.bam")
+
+	if proc.stdout.read() == "coordinate":
+		print("Input BAM is sorted")
+	else
+		process2 = subprocess.Popen(cmd2,
+			cwd='sv_caller_output')
+		print("Input BAM has been sorted")
 #       2 - input reference genome has associated bwa-mem index
 # ls folder with reference fasta to find:
 # ref.fa, ref.fa.fai, ref.fa.amb, ref.fa.ann, ref.fa.bwt, ref.fa.pac, ref.fa.sa
-#
+	
+	
+
 # output file is a gzipped vcf file,
 # makes new directory 'gridss' if it doesn't exist.
 @timing
