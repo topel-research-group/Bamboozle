@@ -124,25 +124,34 @@ def bam_check(bam):
 		| cut -f3 \
 		| cut -f2 -d$':'")
 	% (bam)
-	process1 = subprocess.Popen(cmd1,
+	proc_1 = subprocess.Popen(cmd1,
 		cwd='sv_caller_output')
 	#is this even the right way to rename output? won't this go like bam_name.bam_sorted.bam? bah
-	cmd2 = ("samtools sort %s \
-		-o %s")
-	% (bam,bam+"_sorted.bam")
-
 	if proc.stdout.read() == "coordinate":
 		print("Input BAM is sorted")
 	else
-		process2 = subprocess.Popen(cmd2,
+	        cmd2 = ("samtools sort %s \
+	                -o %s")
+	        % (bam,bam+"_sorted.bam")
+
+		proc_2 = subprocess.Popen(cmd2,
 			cwd='sv_caller_output')
 		print("Input BAM has been sorted")
 #       2 - input reference genome has associated bwa-mem index
 # ls folder with reference fasta to find:
 # ref.fa, ref.fa.fai, ref.fa.amb, ref.fa.ann, ref.fa.bwt, ref.fa.pac, ref.fa.sa
-	
-	
-
+@timing
+def ref_check(fasta):
+	#assuming a path string was provided, remove file?
+	for file in os.listdir(os.path.dirname(reffa)):
+		if file.endswith(('.fai','.amb','.ann','.bwt','.pac','.sa')):
+			print("bwa-mem indices exist")
+		else
+			cmd3 = ("bwa index %s")
+			% (reffa)
+			proc_3 = subprocess.Popen(cmd3,
+				cwd='sv_caller_output')
+			print("bwa-mem indices didn't exist but they sure do now")
 # output file is a gzipped vcf file,
 # makes new directory 'gridss' if it doesn't exist.
 @timing
