@@ -87,6 +87,14 @@ def timing(function):
                 return result
         return wrapper
 
+#First things first - taking in all arguments needed
+parser = argparse.ArgumentParser(description='SV caller - title says it all dunnit')
+parser.add_argument('sortedBAM', metavar='sBAM',
+                   help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned)')
+parser.add_argument('refGenome', metavar='ref',
+		   help='Reference genome in FASTA format (
+
+
 # SV calling using GRIDSS, input is sorted BAM file,
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
