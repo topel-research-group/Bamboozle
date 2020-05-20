@@ -90,7 +90,7 @@ def timing(function):
 #First things first - taking in all arguments needed
 parser = argparse.ArgumentParser(description='SV caller - title says it all dunnit')
 parser.add_argument('-B', '--sorted_BAM', required=True,
-                   help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned). Assuming sample name from first two '_' delimited fields of input name')
+                   help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned). Assuming sample name from first two "_" delimited fields of input name')
 parser.add_argument('-n', '--sample_name',
 		   help='Sample name')
 parser.add_argument('-F', '--reference_FASTA', required=True,
@@ -98,7 +98,7 @@ parser.add_argument('-F', '--reference_FASTA', required=True,
 parser.add_argument('-G', '--reference_GFF', required=True,
 		   help='Reference GFF with gene models for the reference genome')
 parser.add_argument('-P', '--ref_Pilon',
-		   help='Reference Pilon-corrected assembly in FASTA format (doesn't need indexing)')
+		   help="Reference Pilon-corrected assembly in FASTA format (doesn't need indexing)")
 parser.add_argument('-t', '--threads', default='8', type=int,
 		   help='Number of threads to run sv_caller.py with')
 #arguments to variables
@@ -109,7 +109,6 @@ reffa = args.three
 refgff = args.four
 refpil = args.five
 threads = args.six
-
 # SV calling using GRIDSS, input is sorted BAM file,
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
@@ -123,7 +122,7 @@ def bam_check(bam):
 		| head -n1 \
 		| cut -f3 \
 		| cut -f2 -d$':'")
-	% (bam)
+		% (bam)
 	proc_1 = subprocess.Popen(cmd1,
 		cwd='sv_caller_output')
 	#is this even the right way to rename output? won't this go like bam_name.bam_sorted.bam? bah
@@ -132,16 +131,14 @@ def bam_check(bam):
 	else
 	        cmd2 = ("samtools sort %s \
 	                -o %s")
-	        % (bam,bam+"_sorted.bam")
+		        % (bam,bam+"_sorted.bam")
 
 		proc_2 = subprocess.Popen(cmd2,
 			cwd='sv_caller_output')
 		print("Input BAM has been sorted")
 #       2 - input reference genome has associated bwa-mem index
-# ls folder with reference fasta to find:
-# ref.fa, ref.fa.fai, ref.fa.amb, ref.fa.ann, ref.fa.bwt, ref.fa.pac, ref.fa.sa
 @timing
-def ref_check(fasta):
+def ref_check(reffa):
 	#assuming a path string was provided, remove file?
 	for file in os.listdir(os.path.dirname(reffa)):
 		if file.endswith(('.fai','.amb','.ann','.bwt','.pac','.sa')):
@@ -152,10 +149,11 @@ def ref_check(fasta):
 			proc_3 = subprocess.Popen(cmd3,
 				cwd='sv_caller_output')
 			print("bwa-mem indices didn't exist but they sure do now")
+#
 # output file is a gzipped vcf file,
 # makes new directory 'gridss' if it doesn't exist.
 @timing
-def gridss(args,threads,sorted_bam_out):
+def gridss(bam,reffa,threads,sorted_bam_out):
         log_file=open('pipeline.log','a')
         ref_path = add + str(args.ref)
         if not os.path.exists('gridss'):
