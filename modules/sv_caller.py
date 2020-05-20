@@ -210,3 +210,10 @@ def snpEff_test(args):
                                 call(["pip", "install", "gffutils"])
                         else:
                                 sys.exit("[Error] Exiting due to missing dependency \"gffutils\"")
+
+def main():
+	bam_check()
+	ref_check()
+	gridss()
+
+main()
