@@ -150,25 +150,26 @@ def ref_check(reffa):
 				cwd='sv_caller_output')
 			print("bwa-mem indices didn't exist but they sure do now")
 #
-# output file is a gzipped vcf file,
 # makes new directory 'gridss' if it doesn't exist.
 @timing
-def gridss(bam,reffa,threads,sorted_bam_out):
+def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, sorted_bam_out):
         log_file=open('pipeline.log','a')
         ref_path = add + str(args.ref)
-        if not os.path.exists('gridss'):
-                os.makedirs('gridss')
 
-        cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s \
-                | bcftools call --threads %s -Ou -mv \
-                | bcftools filter -s LowQual -e 'QUAL<20' -Oz -o %s") \
-        % (threads, ref_path, sorted_bam_out, threads, bcftools_out)
-#       % (threads, add+args.ref, sorted_bam_out, threads, bcftools_out)
-        process7 = subprocess.Popen(cmd7, \
+        cmd4 = ("gridss.sh \
+		%s,
+		-r %s,
+		-a %s,
+		-o %s,
+		-t %s,
+		-j %s") \
+        % (bam, reffa, assembly_bam_out, sorted_bam_out, threads, java_gridss)
+
+        process4 = subprocess.Popen(cmd4, \
                 stdout=subprocess.PIPE, \
                 stderr = log_file, \
                 shell=True, \
-                cwd='Bcftools')
+                cwd='sv_caller_output')
         while process7.wait() is None:
                 pass
         process7.stdout.close()
