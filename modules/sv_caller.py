@@ -124,7 +124,10 @@ def bam_check(bam):
 		| cut -f2 -d$':'" % (bam)
 	proc_1 = subprocess.Popen(cmd1,
 		cwd='sv_caller_output')
+	#
 	#is this even the right way to rename output? won't this go like bam_name.bam_sorted.bam? bah
+	#come back to this and define basename for sample before this
+	#
 	if proc.stdout.read() == "coordinate":
 		print("Input BAM is sorted")
 	else:
@@ -170,8 +173,6 @@ def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, sorted_bam_out):
                 pass
         process4.stdout.close()
         log_file.close()
-
-###
 
 # BEDTOOLS masking of SV calls goes here
 
