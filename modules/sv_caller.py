@@ -153,10 +153,9 @@ def ref_check(reffa):
 #
 # makes new directory 'gridss' if it doesn't exist.
 @timing
-def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, sorted_bam_out):
+def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out):
         log_file=open('pipeline.log','a')
-        ref_path = add + str(args.ref)
-######	sorted_bam_out = 
+	vcf_out = bam_name+"
 	
         cmd4 = "gridss.sh \
 		%s, \
@@ -164,7 +163,7 @@ def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, sorted_bam_out):
 		-a %s, \
 		-o %s, \
 		-t %s, \
-		-j %s" % (bam, reffa, assembly_bam_out, sorted_bam_out, threads, java_gridss)
+		-j %s" % (bam, reffa, assembly_bam_out, vcf_out, threads, java_gridss)
 
         process4 = subprocess.Popen(cmd4, \
                 stdout=subprocess.PIPE, \
@@ -178,22 +177,23 @@ def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, sorted_bam_out):
 
 # BEDTOOLS masking of SV calls goes here
 @timing
-def masking(sorted_bam_out, refpil, masked_bam_out):
-#####  masked_bam_out = 
+def masking(vcf_out, refpil, masked_vcf_out):
+
+	masked_vcf_out = 
 	cmd5 = "bedtools intersect \
 		-v \
 		-b %s \
 		-a %s \
 		-sorted \
-		> %s" % (refpil, sorted_bam_out, masked_bam_out)
+		> %s" % (refpil, vcf_out, masked_vcf_out)
 	proc_5 = subprocess.Popen(cmd5, \
 		cwd='sv_caller_output')
 ###
 
 # Checks for dependencies required for snpEff.
-def snpeff(masked_bam_out, masked_bam_out_csv, masked_bam_out_ann):
-	#define masked_bam_out_csv masked_bam_out_ann	here
-#
+def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
+	masked_vcf_out_csv = 
+	masked_vcf_out_ann = 
         # Checks if there is a Skeletonema database,
         # if it doesn't exists the program will exit
         # and it has to be created using 'snpEff build'.
@@ -210,7 +210,7 @@ def snpeff(masked_bam_out, masked_bam_out_csv, masked_bam_out_ann):
 		%s \
 		-c /home/andre/snpEff.config \
 		-csvStats %s \
-		> %s" % (masked_bam_out, masked_bam_out_csv, masked_bam_out_ann)
+		> %s" % ((masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
 	proc_7 = subprocess.Popen(cmd7, \
                 cwd='sv_caller_output')
 
