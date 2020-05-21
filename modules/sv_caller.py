@@ -155,7 +155,8 @@ def ref_check(reffa):
 def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, sorted_bam_out):
         log_file=open('pipeline.log','a')
         ref_path = add + str(args.ref)
-
+######	sorted_bam_out = 
+	
         cmd4 = "gridss.sh \
 		%s, \
 		-r %s, \
@@ -175,13 +176,20 @@ def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, sorted_bam_out):
         log_file.close()
 
 # BEDTOOLS masking of SV calls goes here
-
-# input and output are vcf.gz
-
+@timing
+def masking(sorted_bam_out, refpil, masked_bam_out):
+#####  masked_bam_out = 
+	cmd5 = "bedtools intersect \
+		-v \
+		-b %s \
+		-a %s \
+		-sorted \
+		> %s" % (refpil, sorted_bam_out, masked_bam_out)
+	proc_5 = subprocess.Popen(cmd5,
 ###
 
 # Checks for dependencies required for snpEff.
-def snpEff_test(args):
+def snpeff(args):
         # Checks if there is a Skeletonema database,
         # if it doesn't exists the program will exit
         # and it has to be created using 'snpEff build'.
