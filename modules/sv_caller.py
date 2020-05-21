@@ -39,7 +39,7 @@
 #       Pipeline that performs bioinformatic analysis including SNP calling
 #       and effect prediction of fastq files or BAM file.
 #
-#       Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
+#       Copyright (C) 2020 André Soares, andre.soares@bioenv.gu.se
 #
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -109,14 +109,16 @@ reffa = args.three
 refgff = args.four
 refpil = args.five
 threads = args.six
-# SV calling using GRIDSS, input is sorted BAM file,
+
+#create output folder if it doesn't exist
+if not os.path.exists('sv_caller_output'):
+                os.makedirs('sv_caller_output')
+
+
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
 @timing
 def bam_check(bam):
-	#creating output folder right away
-	if not os.path.exists('sv_caller_output'):
-                os.makedirs('sv_caller_output')
 	#command to check out first line of BAM header and look for "coordinate" (= sorted)
 	cmd1 = "samtools view -H %s \
 		| head -n1 \
