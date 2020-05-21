@@ -185,40 +185,33 @@ def masking(sorted_bam_out, refpil, masked_bam_out):
 		-a %s \
 		-sorted \
 		> %s" % (refpil, sorted_bam_out, masked_bam_out)
-	proc_5 = subprocess.Popen(cmd5,
+	proc_5 = subprocess.Popen(cmd5, \
+		cwd='sv_caller_output')
 ###
 
 # Checks for dependencies required for snpEff.
-def snpeff(args):
+def snpeff(masked_bam_out, masked_bam_out_csv, masked_bam_out_ann):
+	#define masked_bam_out_csv masked_bam_out_ann	here
+#
         # Checks if there is a Skeletonema database,
         # if it doesn't exists the program will exit
         # and it has to be created using 'snpEff build'.
         try:
-                cmdx = ('snpEff databases | grep "Skeletonema"')
-                processx = subprocess.check_output(cmdx, shell=True)
+                cmd6 = "snpEff databases | grep Smarinoi.v112"
+		################## this didn't work last I tried, check snpeff database!
+                proc_6 = subprocess.check_output(cmd6, shell=True)
 
         except subprocess.CalledProcessError as e:
                 if e.returncode >= 1:
                         print('snpEff: Skeletonema database not found, exit program...')
                         exit()
-
-        # Try to import gffutils if gff and feature flag is used.
-        if args.gff and args.feature:
-                try:
-                        import gffutils
-
-                except ImportError:
-                        sys.stderr.write("[Error] The python module \"gffutils\" \
-                                        is not installed\n")
-                        sys.stderr.write("[--] Would you like to install it now using \
-                                        'pip install gffutils' [Y/N]?\n")
-                        answer = sys.stdin.readline()
-                        if answer[0].lower() == "y":
-                                sys.stderr.write("[--] Running \"pip install gffutils\"\n")
-                                from subprocess import call
-                                call(["pip", "install", "gffutils"])
-                        else:
-                                sys.exit("[Error] Exiting due to missing dependency \"gffutils\"")
+	cmd7 = "snpEff eff Smarinoi.v112 \
+		%s \
+		-c /home/andre/snpEff.config \
+		-csvStats %s \
+		> %s" % (masked_bam_out, masked_bam_out_csv, masked_bam_out_ann)
+	proc_7 = subprocess.Popen(cmd7, \
+                cwd='sv_caller_output')
 
 def main():
 	bam_check()
