@@ -90,9 +90,9 @@ def timing(function):
 #First things first - taking in all arguments needed
 parser = argparse.ArgumentParser(description='SV caller - title says it all dunnit')
 parser.add_argument('-B', '--sorted_BAM', required=True,
-                   help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned). Assuming sample name from first two "_" delimited fields of input name')
-parser.add_argument('-n', '--sample_name',
-		   help='Sample name')
+                   help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned). Assuming sample name from first two "_" delimited fields of input name!')
+#parser.add_argument('-n', '--sample_name',
+#		   help='Sample name')
 parser.add_argument('-F', '--reference_FASTA', required=True,
 		   help='Reference genome in FASTA format (needs to be bwa-mem-indexed, this will checked automatically though)')
 parser.add_argument('-G', '--reference_GFF', required=True,
@@ -104,7 +104,7 @@ parser.add_argument('-t', '--threads', default='8', type=int,
 #arguments to variables
 args = parser.parse_args()
 bam = args.one
-name = args.two
+bam_name = bam.split('_')[:1]
 reffa = args.three
 refgff = args.four
 refpil = args.five
@@ -113,12 +113,6 @@ threads = args.six
 #create output folder if it doesn't exist
 if not os.path.exists('sv_caller_output'):
                 os.makedirs('sv_caller_output')
-
-#take bam, create a sample name variable but don't do this if --sample_name is invoked
-def split_spl_name(bam_name):
-	if args.two is None:
-        	bam_split = args.myArg.split('_')
-		bam_name = bam_split[:1]
 
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
@@ -135,11 +129,11 @@ def bam_check(bam):
 	#is this even the right way to rename output? won't this go like bam_name.bam_sorted.bam? bah
 	#come back to this and define basename for sample before this
 	#
-	if proc.stdout.read() == "coordinate":
+	if proc1.stdout.read() == "coordinate":
 		print("Input BAM is sorted")
 	else:
 		cmd2 = "samtools sort %s \
-        	        -o %s" % (bam,bam+"_sorted.bam")
+        	        -o %s" % (bam,bam_name+"_sorted.bam")
 
 		proc_2 = subprocess.Popen(cmd2,
 			cwd='sv_caller_output')
