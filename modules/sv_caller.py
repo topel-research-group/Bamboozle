@@ -125,10 +125,7 @@ def bam_check(bam):
 		| cut -f2 -d$':'" % (bam)
 	proc_1 = subprocess.Popen(cmd1,
 		cwd='sv_caller_output')
-	#
-	#is this even the right way to rename output? won't this go like bam_name.bam_sorted.bam? bah
-	#come back to this and define basename for sample before this
-	#
+
 	if proc1.stdout.read() == "coordinate":
 		print("Input BAM is sorted")
 	else:
@@ -138,6 +135,7 @@ def bam_check(bam):
 		proc_2 = subprocess.Popen(cmd2,
 			cwd='sv_caller_output')
 		print("Input BAM has been sorted")
+
 #       2 - input reference genome has associated bwa-mem index
 @timing
 def ref_check(reffa):
@@ -155,7 +153,8 @@ def ref_check(reffa):
 @timing
 def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out):
         log_file=open('pipeline.log','a')
-	vcf_out = bam_name+"
+	vcf_out = bam_name+"_sorted.vcf"
+	assembly_bam_out = bam_name+"_assembly.bam"
 	
         cmd4 = "gridss.sh \
 		%s, \
@@ -175,11 +174,15 @@ def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out):
         process4.stdout.close()
         log_file.close()
 
+#
+# HERE GOES R SCRIPT TO ANNOTATE DEL, INS, ETC
+#
+
 # BEDTOOLS masking of SV calls goes here
 @timing
 def masking(vcf_out, refpil, masked_vcf_out):
+	masked_vcf_out = bam_name+"_sorted_masked.vcf"
 
-	masked_vcf_out = 
 	cmd5 = "bedtools intersect \
 		-v \
 		-b %s \
@@ -188,12 +191,10 @@ def masking(vcf_out, refpil, masked_vcf_out):
 		> %s" % (refpil, vcf_out, masked_vcf_out)
 	proc_5 = subprocess.Popen(cmd5, \
 		cwd='sv_caller_output')
-###
-
 # Checks for dependencies required for snpEff.
 def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
-	masked_vcf_out_csv = 
-	masked_vcf_out_ann = 
+	masked_vcf_out_csv = bam_name+"_sorted_masked.csv"
+	masked_vcf_out_ann = bam_name+"_sorted_masked_ann.vcf"
         # Checks if there is a Skeletonema database,
         # if it doesn't exists the program will exit
         # and it has to be created using 'snpEff build'.
