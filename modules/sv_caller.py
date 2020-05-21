@@ -114,6 +114,11 @@ threads = args.six
 if not os.path.exists('sv_caller_output'):
                 os.makedirs('sv_caller_output')
 
+#take bam, create a sample name variable but don't do this if --sample_name is invoked
+def split_spl_name(bam_name):
+	if args.two is None:
+        	bam_split = args.myArg.split('_')
+		bam_name = bam_split[:1]
 
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
