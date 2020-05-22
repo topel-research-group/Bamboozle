@@ -89,11 +89,17 @@ def timing(function):
         return wrapper
 
 #First things first - taking in all arguments needed
-parser = argparse.ArgumentParser(description='SV caller - title says it all dunnit')
+parser = argparse.ArgumentParser(description="Structural Variant (SV) Caller version 0.1"
+#Any way to list dependencies when -h invoked?
+	#Depends on: \n
+	#\t 1. bwa-mem\n
+	#\t 2. samtools\n
+	#\t 3. GRIDSS\n
+	#\t 4. bedtools\n
+	#\t 5. SnpEff", formatter_class=RawDescriptionHelpFormatter)
+
 parser.add_argument('-B', '--sorted_BAM', required=True,
                    help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned). Assuming sample name from first two "_" delimited fields of input name!')
-#parser.add_argument('-n', '--sample_name',
-#		   help='Sample name')
 parser.add_argument('-F', '--reference_FASTA', required=True,
 		   help='Reference genome in FASTA format (needs to be bwa-mem-indexed, this will checked automatically though)')
 parser.add_argument('-G', '--reference_GFF', required=True,
