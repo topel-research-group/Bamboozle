@@ -89,7 +89,7 @@ def timing(function):
         return wrapper
 
 #First things first - taking in all arguments needed
-parser = argparse.ArgumentParser(description="Structural Variant (SV) Caller version 0.1"
+parser = argparse.ArgumentParser(description="Structural Variant (SV) Caller version 0.1")
 #Any way to list dependencies when -h invoked?
 	#Depends on: \n
 	#\t 1. bwa-mem\n
