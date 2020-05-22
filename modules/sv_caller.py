@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# coding=utf-8
 
 #André Soares - 15/04/2020
 #Pseudocode for a script calling SVs and inferring their LOF potential from BAM/SAM files
@@ -211,7 +212,7 @@ def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
 		%s \
 		-c /home/andre/snpEff.config \
 		-csvStats %s \
-		> %s" % ((masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
+		> %s" % (masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
 	proc_7 = subprocess.Popen(cmd7, \
                 cwd='sv_caller_output')
 
