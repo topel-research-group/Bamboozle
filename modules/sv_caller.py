@@ -104,18 +104,19 @@ parser.add_argument('-F', '--reference_FASTA', required=True,
 		   help='Reference genome in FASTA format (needs to be bwa-mem-indexed, this will checked automatically though)')
 parser.add_argument('-G', '--reference_GFF', required=True,
 		   help='Reference GFF with gene models for the reference genome')
-parser.add_argument('-P', '--ref_Pilon',
+parser.add_argument('-P', '--reference_Pilon',
 		   help="Reference Pilon-corrected assembly in FASTA format (doesn't need indexing)")
 parser.add_argument('-t', '--threads', default='8', type=int,
 		   help='Number of threads to run sv_caller.py with')
 #arguments to variables
 args = parser.parse_args()
-bam = args.one
+#print(args)
+bam = args.sorted_BAM
 bam_name = bam.split('_')[:1]
-reffa = args.three
-refgff = args.four
-refpil = args.five
-threads = args.six
+reffa = args.reference_FASTA
+refgff = args.reference_GFF
+refpil = args.reference_Pilon
+threads = args.threads
 
 #create output folder if it doesn't exist
 if not os.path.exists('sv_caller_output'):
