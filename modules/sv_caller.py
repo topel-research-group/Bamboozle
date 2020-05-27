@@ -77,7 +77,7 @@ def timing(function):
                 start = time()
                 result = function(*args, **kwargs)
                 end = time()
-                fh = open("time.log", "a")
+                fh = open("sv_caller_run.log", "a")
                 lines_of_text = now.strftime("%Y-%m-%d %H:%M") \
                                 + ' Function: ' \
                                 + function.__name__ \
@@ -110,13 +110,14 @@ parser.add_argument('-t', '--threads', default='8', type=int,
 		   help='Number of threads to run sv_caller.py with')
 #arguments to variables
 args = parser.parse_args()
-#print(args)
 bam = args.sorted_BAM
-bam_name = bam.split('_')[:1]
 reffa = args.reference_FASTA
 refgff = args.reference_GFF
 refpil = args.reference_Pilon
 threads = args.threads
+
+#extracting sample name from input BAM
+bam_name = bam[:-4]
 
 #create output folder if it doesn't exist
 if not os.path.exists('sv_caller_output'):
@@ -124,25 +125,27 @@ if not os.path.exists('sv_caller_output'):
 
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
+bam_out = "sv_caller_output/%s_sorted.bam" % (bam_name)
+
 @timing
-def bam_check(bam):
+def bam_check(bam,bam_out):
 	#command to check out first line of BAM header and look for "coordinate" (= sorted)
-	cmd1 = "samtools view -H %s \
-		| head -n1 \
-		| cut -f3 \
-		| cut -f2 -d$':'" % (bam)
-	proc_1 = subprocess.Popen(cmd1,
-		cwd='sv_caller_output')
+	cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bam)
+	proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
+	#, cwd='sv_caller_output')
 
-	if proc1.stdout.read() == "coordinate":
-		print("Input BAM is sorted")
+	#if coordinate is present in bam header, bam is sorted
+	std_out, std_error = proc_1.communicate()
+	if std_out.rstrip('\n') == "coordinate":
+		print("Input BAM was already sorted")
 	else:
-		cmd2 = "samtools sort %s \
-        	        -o %s" % (bam,bam_name+"_sorted.bam")
-
-		proc_2 = subprocess.Popen(cmd2,
-			cwd='sv_caller_output')
+		cmd2 = "samtools sort %s -o %s" % (bam,bam_out)
+		proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+		std_out, std_error = proc_2.communicate()
 		print("Input BAM has been sorted")
+
+#get this in the bottom of the script in the future, comment if not needed while testing
+bam_check(bam,bam_out)
 
 #       2 - input reference genome has associated bwa-mem index
 @timing
@@ -156,6 +159,7 @@ def ref_check(reffa):
 			proc_3 = subprocess.Popen(cmd3,
 				cwd='sv_caller_output')
 			print("bwa-mem indices didn't exist but they sure do now")
+exit()
 #
 # makes new directory 'gridss' if it doesn't exist.
 @timing
