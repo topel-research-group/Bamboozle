@@ -165,7 +165,6 @@ def ref_check(reffa):
 		cmd3 = "bwa index %s" % (reffa)
 		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
 		std_out, std_error = proc_3.communicate()
-		print(std_out)
 		print("bwa-mem indices didn't exist but they sure do now")
 ref_check(reffa)
 exit()
