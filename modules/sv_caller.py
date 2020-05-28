@@ -143,22 +143,31 @@ def bam_check(bam,bam_out):
 		proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 		std_out, std_error = proc_2.communicate()
 		print("Input BAM has been sorted")
-
 #get this in the bottom of the script in the future, comment if not needed while testing
 bam_check(bam,bam_out)
 
 #       2 - input reference genome has associated bwa-mem index
+
+#list of bwa index files
+bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
+
 @timing
 def ref_check(reffa):
-	#assuming a path string was provided, remove file?
+	#creating a list of bwa indices if they exist
+	suf_list = []
 	for file in os.listdir(os.path.dirname(reffa)):
-		if file.endswith(('.fai','.amb','.ann','.bwt','.pac','.sa')):
-			print("bwa-mem indices exist")
-		else:
-			cmd3 = "bwa index %s" % (reffa)
-			proc_3 = subprocess.Popen(cmd3,
-				cwd='sv_caller_output')
-			print("bwa-mem indices didn't exist but they sure do now")
+		if file.endswith(bwa_suf):
+			print(file + " is already in the directory")
+			suf_list.append(file)
+	#if list of bwa indices in folder is <1, create indices
+	if len(suf_list) < 1:
+		#this doesn't overwrite the reference if called
+		cmd3 = "bwa index %s" % (reffa)
+		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
+		std_out, std_error = proc_3.communicate()
+		print(std_out)
+		print("bwa-mem indices didn't exist but they sure do now")
+ref_check(reffa)
 exit()
 #
 # makes new directory 'gridss' if it doesn't exist.
