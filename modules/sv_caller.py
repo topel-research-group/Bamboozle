@@ -167,33 +167,30 @@ def ref_check(reffa):
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
 ref_check(reffa)
-exit()
-#
+
+#	3 - Run GRIDSS to call SVs
 # makes new directory 'gridss' if it doesn't exist.
+vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
+assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
+
 @timing
 def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out):
-	log_file=open('pipeline.log','a')
-	vcf_out = bam_name+"_sorted.vcf"
-	assembly_bam_out = bam_name+"_assembly.bam"
-	
-	cmd4 = "gridss.sh \
-		%s, \
-		-r %s, \
-		-a %s, \
-		-o %s, \
-		-t %s, \
-		-j %s" % (bam, reffa, assembly_bam_out, vcf_out, threads, java_gridss)
+	log_file=open('sv_caller_run.log','a')
 
-	process4 = subprocess.Popen(cmd4, \
-        	stdout=subprocess.PIPE, \
-        	stderr = log_file, \
-        	shell=True, \
-        	cwd='sv_caller_output')
-	while process4.wait() is None:
+	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bam, reffa, assembly_bam_out, vcf_out, threads, java_gridss)
+	proc_4 = subprocess.Popen(cmd4, shell=True)
+
+	while proc_4.wait() is None:
         	pass
-	process4.stdout.close()
+	proc_4.stdout.close()
+
+	std_out, std_error = proc_3.communicate()
 	log_file.close()
 
+	print("GRIDSS finished calling SVs")
+
+gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out)
+exit()
 #
 # HERE GOES R SCRIPT TO ANNOTATE DEL, INS, ETC
 #
