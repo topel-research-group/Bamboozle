@@ -281,6 +281,25 @@ def timing(function):
 		return result
 	return wrapper
 
+#extracting sample name from input BAM, checking if sorted or not
+bam_name = bamfile[:-4]
+bam_sorted = "%s_sorted.bam" % (bam_name)
+
+def bam_check(bamfile,bam_sorted):
+        #command to check out first line of BAM header and look for "coordinate" (= sorted)
+        cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
+        proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
+
+        #if coordinate is present in bam header, bam is sorted
+        std_out, std_error = proc_1.communicate()
+        if std_out.rstrip('\n') == "coordinate":
+                print("Input BAM was already sorted")
+        else:
+                cmd2 = "samtools sort %s -o %s" % (bamfile,bam_sorted)
+                proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                std_out, std_error = proc_2.communicate()
+                print("Input BAM has been sorted")
+
 #######################################################################
 # BOWTIE2
 #	Running bowtie2-build to index reference genome and bowtie2 to align.
@@ -602,7 +621,8 @@ def main():
 
 	if not bamparse and not args.barcode:
 		input_files()
-
+		#not sure if this is where it should go?
+		bam_check(bamfile,bam_sorted)
 #######################################################################
 
 if __name__ == "__main__":
