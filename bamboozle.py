@@ -52,9 +52,9 @@ parser.add_argument("-R", "--reverse", \
 			help="Reverse reads")
 parser.add_argument("-b", "--bamfile", \
 			help="BAM infile")
-parser.add_argument("--sortbam", \
-			nargs='*', \
-			help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
+#parser.add_argument("--sortbam", \
+#			nargs='*', \
+#			help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
 parser.add_argument("--gff", \
 			help="gff infile")
 parser.add_argument("--contigsizes", \
@@ -257,13 +257,13 @@ base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam'
 
-sorted_bam_out = ""
-if args.sortbam:
-	sorted_bam_out = add + str(args.sortbam)
-else:
-	sorted_bam_out = add2 + name + '_sorted.bam'
-
-sorted_bam_bai = name + '_sorted.bam.bai'
+#sorted_bam_out = ""
+#if args.sortbam:
+#	sorted_bam_out = add + str(args.sortbam)
+#else:
+#	sorted_bam_out = add2 + name + '_sorted.bam'
+#
+#sorted_bam_bai = name + '_sorted.bam.bai'
 
 #######################################################################
 # TIME DECORATOR
@@ -607,6 +607,7 @@ def main():
 	if args.lof:
 		import modules.sv_caller as sv
 		check_samtools()
+		bam_check(args)
 		sv.ref_check(args)
 
 	if bamparse:
