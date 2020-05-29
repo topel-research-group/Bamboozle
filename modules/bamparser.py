@@ -41,9 +41,10 @@ from statistics import median
 
 def coverage_stats(args):
 
-	outfile = args.outprefix + ".bed"
-
 	# If an output file of the desired name already exists, print warning and quit
+	if args.outprefix:
+		outfile = args.outprefix + ".bed"
+
 	if args.outprefix and os.path.isfile(outfile) == True:
 		print("The specified output file already exists; please adjust output prefix name [-o] or delete existing file.")
 		sys.exit()

@@ -75,12 +75,14 @@ parser.add_argument("-r", "--clean", \
 parser.add_argument("-p", "--done", \
 			action="store_true", \
 			help="Add an empty file to mark the directory as done")
-parser.add_argument("-o, "--outprefix", \
+parser.add_argument("-o", "--outprefix", \
 			help="Output file prefix")
 
-subparsers = parser.add_subparsers(help="sub-command help")
+#subparsers = parser.add_subparsers(help="sub-command help")
 
-group = subparsers.add_parser("Bamparser", parents=[parser], add_help=False, help='Bamparser')
+#group = subparsers.add_parser("Bamparser", parents=[parser], add_help=False, help='Bamparser')
+group = parser.add_argument_group('Bamparser')
+
 group.add_argument('--coverage', \
 			action="store_true", \
 			help='Print a statistic for what percentage of bases in an assembly have >=Nx coverage')
@@ -141,7 +143,9 @@ group.add_argument("-v", "--verbose", \
 group.add_argument('--dev', \
 			help=argparse.SUPPRESS, action="store_true")
 
-barcode = subparsers.add_parser("barcodesearch", parents=[parser], add_help=False, help='BarcodeSearch')
+#barcode = subparsers.add_parser("barcodesearch", parents=[parser], add_help=False, help='BarcodeSearch')
+barcode = parser.add_argument_group('BarcodeSearch')
+
 barcode.add_argument("--barcode", \
 			action="store_true", \
 			help="Search the input (sorted) BAM files for suitable barcode regions")
