@@ -89,35 +89,14 @@ def timing(function):
         return wrapper
 
 #First things first - taking in all arguments needed
-parser = argparse.ArgumentParser(description="Structural Variant (SV) Caller version 0.1")
-#Any way to list dependencies when -h invoked?
-	#Depends on: \n
-	#\t 1. bwa-mem\n
-	#\t 2. samtools\n
-	#\t 3. GRIDSS\n
-	#\t 4. bedtools\n
-	#\t 5. SnpEff", formatter_class=RawDescriptionHelpFormatter)
-
-parser.add_argument('-B', '--sorted_BAM', required=True,
-                   help='Sorted BAM file (can be bowtie2- or bwa-mem-aligned). Assuming sample name from first two "_" delimited fields of input name!')
-parser.add_argument('-F', '--reference_FASTA', required=True,
-		   help='Reference genome in FASTA format (needs to be bwa-mem-indexed, this will checked automatically though)')
-parser.add_argument('-G', '--reference_GFF', required=True,
-		   help='Reference GFF with gene models for the reference genome')
-parser.add_argument('-P', '--reference_Pilon',
-		   help="Reference Pilon-corrected assembly in FASTA format (doesn't need indexing)")
-parser.add_argument('-t', '--threads', default='8', type=int,
-		   help='Number of threads to run sv_caller.py with')
 #arguments to variables
-args = parser.parse_args()
-bam = args.sorted_BAM
-reffa = args.reference_FASTA
-refgff = args.reference_GFF
-refpil = args.reference_Pilon
+bam = args.sort_bam
+reffa = args.ref
+refgff = args.reference_gff
+refpil = args.masking
 threads = args.threads
-
 #extracting sample name from input BAM
-bam_name = bam[:-4]
+bam_name = bamfile[:-4]
 
 #create output folder if it doesn't exist
 if not os.path.exists('sv_caller_output'):
@@ -125,26 +104,26 @@ if not os.path.exists('sv_caller_output'):
 
 # - function to make sure input is as needed!
 #       1 - input alignment is sorted BAM
-bam_out = "sv_caller_output/%s_sorted.bam" % (bam_name)
-
-@timing
-def bam_check(bam,bam_out):
+#bam_out = "sv_caller_output/%s_sorted.bam" % (bam_name)
+#in bamboozle.py now
+#@timing
+#def bam_check(bam,bam_out):
 	#command to check out first line of BAM header and look for "coordinate" (= sorted)
-	cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bam)
-	proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
+#	cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bam)
+#	proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
 	#, cwd='sv_caller_output')
 
 	#if coordinate is present in bam header, bam is sorted
-	std_out, std_error = proc_1.communicate()
-	if std_out.rstrip('\n') == "coordinate":
-		print("Input BAM was already sorted")
-	else:
-		cmd2 = "samtools sort %s -o %s" % (bam,bam_out)
-		proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-		std_out, std_error = proc_2.communicate()
-		print("Input BAM has been sorted")
+#	std_out, std_error = proc_1.communicate()
+#	if std_out.rstrip('\n') == "coordinate":
+#		print("Input BAM was already sorted")
+#	else:
+#		cmd2 = "samtools sort %s -o %s" % (bam,bam_out)
+#		proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+#		std_out, std_error = proc_2.communicate()
+#		print("Input BAM has been sorted")
 #get this in the bottom of the script in the future, comment if not needed while testing
-bam_check(bam,bam_out)
+#bam_check(bam,bam_out)
 
 #       2 - input reference genome has associated bwa-mem index
 
