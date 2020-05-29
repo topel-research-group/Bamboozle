@@ -288,7 +288,7 @@ def timing(function):
 	return wrapper
 
 #extracting sample name from input BAM, checking if sorted or not
-bam_name = bamfile[:-4]
+bam_name = args.bamfile[:-4]
 bam_sorted = "%s_sorted.bam" % (bam_name)
 
 def bam_check(bamfile,bam_sorted):
