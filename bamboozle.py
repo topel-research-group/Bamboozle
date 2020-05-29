@@ -259,7 +259,7 @@ base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam'
 
-#sorted_bam_out = ""
+sorted_bam_out = ""
 #if args.sortbam:
 #	sorted_bam_out = add + str(args.sortbam)
 #else:
@@ -637,7 +637,7 @@ def main():
 		except:
 			input_files()
 
-	if not bamparse and not args.barcode:
+	if not bamparse and not args.barcode and not args.lof:
 		input_files()
 		#not sure if this is where it should go?
 		bam_check(args.bamfile, bam_sorted, bam_index)
