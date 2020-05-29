@@ -42,8 +42,11 @@ from statistics import median
 def coverage_stats(args):
 
 	# If an output file of the desired name already exists, print warning and quit
-	if args.outfile and os.path.isfile(args.outfile) == True:
-		print("The specified outfile already exists; please adjust output file name [-o] or delete existing file.")
+	if args.outprefix:
+		outfile = args.outprefix + ".bed"
+
+	if args.outprefix and os.path.isfile(outfile) == True:
+		print("The specified output file already exists; please adjust output prefix name [-o] or delete existing file.")
 		sys.exit()
 
 	# Generate a dictionary of dictionaries of lists; contig -> gene name -> coordinates
@@ -94,7 +97,7 @@ def coverage_stats(args):
 			output_line = current_contig + "\t" + str(start_coord - 1) + "\t" + str(stop_coord) + "\n"
 
 		# Print to output file
-		with open(args.outfile, "a") as output_file:
+		with open(outfile, "a") as output_file:
 			output_file.write(output_line)
 		output_file.close()
 
@@ -131,8 +134,8 @@ def coverage_stats(args):
 		else:
 			print("Obtaining whole-genome stats for ",os.path.basename(args.sortbam),"; coverage >=",args.threshold,"x.",sep="")
 
-	if args.outfile:
-		with open(args.outfile, "a") as output_file:
+	if args.outprefix:
+		with open(outfile, "a") as output_file:
 			output_file.write("track name=Coverage description=\"Coverage above " + str(args.threshold) + "x\"\n")
 		output_file.close()
 
@@ -163,18 +166,18 @@ def coverage_stats(args):
 				# Start recording
 				if coverage >= args.threshold:
 					cov_stats[contig] += 1
-					if args.outfile and not recording:
+					if args.outprefix and not recording:
 						start_coord = position
 						recording = True
 
 				# Print window and stop recording
-				elif args.outfile and (coverage < args.threshold):
+				elif args.outprefix and (coverage < args.threshold):
 					if recording:
 						print_to_bed(start_coord, (position - 1), output_file)
 					recording = False
 
 				# For cases where recorded window continues to end of contig
-				if args.outfile and (position == contig_lengths[current_contig]):
+				if args.outprefix and (position == contig_lengths[current_contig]):
 					if recording:
 						print_to_bed(start_coord, position, output_file)
 					recording = False
@@ -185,7 +188,7 @@ def coverage_stats(args):
 
 				if coverage >= args.threshold:
 					cov_stats[contig] += 1
-					if args.outfile and not recording:
+					if args.outprefix and not recording:
 						start_coord = position
 						recording = True
 
@@ -199,8 +202,8 @@ def coverage_stats(args):
 		value = 100.0 / assembly_length * sum(cov_stats.values())
 		print(round(value, 3),"% of assembly with >=",args.threshold,"x coverage.",sep="")
 
-	if args.verbose and args.outfile:
-		print("Results printed to",args.outfile + ".\n")
+	if args.verbose and args.outprefix:
+		print("Results printed to",outfile + ".\n")
 
 #######################################################################
 # ZERO REGIONS
