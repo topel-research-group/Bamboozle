@@ -68,26 +68,6 @@ import datetime
 
 #######################################################################
 
-# Time decorator.
-# returns time elapsed during processing of each function
-def timing(function):
-        @wraps(function)
-        def wrapper(*args, **kwargs):
-                now = datetime.datetime.now()
-                start = time()
-                result = function(*args, **kwargs)
-                end = time()
-                fh = open("sv_caller_run.log", "a")
-                lines_of_text = now.strftime("%Y-%m-%d %H:%M") \
-                                + ' Function: ' \
-                                + function.__name__ \
-                                + ' Elapsed time: {}'.format(end-start) \
-                                + ' seconds \n'
-                fh.writelines(lines_of_text)
-                fh.close()
-                return result
-        return wrapper
-
 #First things first - taking in all arguments needed
 #arguments to variables
 bam = args.sort_bam
