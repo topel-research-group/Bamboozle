@@ -541,11 +541,17 @@ def bamparse_func():
 			cs.main(args)
 
 	elif args.consensus:
+		import modules.consensus as con
 		if args.ref and args.contig and args.range:
-			bp.extract_sequence(args)
+			if args.dev:
+				import cProfile
+				cProfile.runctx('con.main(args)', globals(), locals())
+			else:
+				con.main(args)
 		else:
 			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
 			exit()
+
 	elif args.zero:
 		import modules.zero_regions as zr
 		check_bedtools()

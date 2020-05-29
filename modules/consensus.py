@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
 
-#	Pipeline for retrieving coverage-related statistics from BAM files.
+#	Extract the sequence of the mapped reads from a part of the
+#	reference sequence specified by args.range
+#
+#	Part of bamparser.py in earlier versions of Bamboozle
 #
 #	Copyright (C) 2018 Matthew Pinder. matt_pinder13@hotmail.com
 #	Copyright (C) 2018 Mats Topel. mats.topel@marine.gu.se
@@ -26,14 +29,12 @@
 import subprocess
 
 #######################################################################
-# EXTRACT SEQUENCE
-#	This function extracts the sequence of the mapped reads from
-#	a part of the reference sequence specified by args.range
+# MAIN
 #######################################################################
 
 ## DevNote - This function needs fixing
 
-def extract_sequence(args):
+def main(args):
 	command = ("samtools mpileup -uf %s %s -r %s:%s | bcftools view -cg -") \
 	% (args.ref, args.sortbam, args.contig, args.range)
 	bam = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
@@ -51,3 +52,8 @@ def extract_sequence(args):
 				seq += row.split("\t")[4]
 		print(header)
 		print(seq)
+
+#######################################################################
+
+if __name__ == "__main__":
+	main()
