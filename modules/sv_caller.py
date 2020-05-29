@@ -70,7 +70,7 @@ import datetime
 
 #First things first - taking in all arguments needed
 #arguments to variables
-bam = args.sort_bam
+bam = args.bamfile
 reffa = args.ref
 refgff = args.reference_gff
 refpil = args.masking
@@ -102,8 +102,8 @@ ref_check(reffa)
 if not os.path.exists('sv_caller_output'):
                 os.makedirs('sv_caller_output')
 
-#	3 - Run GRIDSS to call SVs
-# makes new directory 'gridss' if it doesn't exist.
+#GRIDSS
+#naming outputs
 vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
 assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
 
@@ -113,12 +113,11 @@ def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out):
 
 	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bam, reffa, assembly_bam_out, vcf_out, threads, java_gridss)
 	proc_4 = subprocess.Popen(cmd4, shell=True)
-
+	std_out, std_error = proc_4.communicate()
+	
 	while proc_4.wait() is None:
-        	pass
+		pass
 	proc_4.stdout.close()
-
-	std_out, std_error = proc_3.communicate()
 	log_file.close()
 
 	print("GRIDSS finished calling SVs")
@@ -167,7 +166,6 @@ def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
 		cwd='sv_caller_output')
 
 def main():
-	bam_check()
 	ref_check()
 	gridss()
 
