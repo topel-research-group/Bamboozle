@@ -75,8 +75,12 @@ parser.add_argument("-r", "--clean", \
 parser.add_argument("-p", "--done", \
 			action="store_true", \
 			help="Add an empty file to mark the directory as done")
+parser.add_argument("-o, "--outprefix", \
+			help="Output file prefix")
 
-group = parser.add_argument_group('Bamparser')
+subparsers = parser.add_subparsers(help="sub-command help")
+
+group = subparsers.add_parser("Bamparser", parents=[parser], add_help=False, help='Bamparser')
 group.add_argument('--coverage', \
 			action="store_true", \
 			help='Print a statistic for what percentage of bases in an assembly have >=Nx coverage')
@@ -137,7 +141,7 @@ group.add_argument("-v", "--verbose", \
 group.add_argument('--dev', \
 			help=argparse.SUPPRESS, action="store_true")
 
-barcode = parser.add_argument_group('BarcodeSearch')
+barcode = subparsers.add_parser("barcodesearch", parents=[parser], add_help=False, help='BarcodeSearch')
 barcode.add_argument("--barcode", \
 			action="store_true", \
 			help="Search the input (sorted) BAM files for suitable barcode regions")
@@ -153,8 +157,6 @@ barcode.add_argument("--primer_size", \
 			type=int, \
 			default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode")
-barcode.add_argument("-o", "--outprefix", \
-			help="Output file prefix")
 
 args = parser.parse_args()
 
@@ -526,7 +528,7 @@ def bamparse_func():
 
 	if args.coverage:
 		check_samtools()
-		if args.gff and not args.outfile:
+		if args.gff and not args.outprefix:
 			print("If --gff is specified, please ensure that -o is also specified.")
 			exit()
 		bp.coverage_stats(args)
