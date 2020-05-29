@@ -159,8 +159,14 @@ barcode.add_argument("-o", "--outfile", \
 
 sv = parser.add_argument_group('SVCaller')
 sv.add_argument("--lof", \
-		action="store_true", \
-		help="Run loss-of-function pipeline")
+			action="store_true", \
+			help="Run loss-of-function pipeline")
+sv.add_argument("-GFF", "--reference_gff", \
+			required = True, \
+			help='Reference GFF with gene models for the reference genome')
+sv.add_argument("-M", "--masking", \
+			required = False, \
+			help="Masks found SVs by subtracting SVs found for e.g. additional reads used to correct an assembly")
 
 args = parser.parse_args()
 
