@@ -82,31 +82,6 @@ bam_name = bamfile[:-4]
 if not os.path.exists('sv_caller_output'):
                 os.makedirs('sv_caller_output')
 
-# - function to make sure input is as needed!
-#       1 - input alignment is sorted BAM
-#bam_out = "sv_caller_output/%s_sorted.bam" % (bam_name)
-#in bamboozle.py now
-#@timing
-#def bam_check(bam,bam_out):
-	#command to check out first line of BAM header and look for "coordinate" (= sorted)
-#	cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bam)
-#	proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
-	#, cwd='sv_caller_output')
-
-	#if coordinate is present in bam header, bam is sorted
-#	std_out, std_error = proc_1.communicate()
-#	if std_out.rstrip('\n') == "coordinate":
-#		print("Input BAM was already sorted")
-#	else:
-#		cmd2 = "samtools sort %s -o %s" % (bam,bam_out)
-#		proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-#		std_out, std_error = proc_2.communicate()
-#		print("Input BAM has been sorted")
-#get this in the bottom of the script in the future, comment if not needed while testing
-#bam_check(bam,bam_out)
-
-#       2 - input reference genome has associated bwa-mem index
-
 #list of bwa index files
 bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
 
