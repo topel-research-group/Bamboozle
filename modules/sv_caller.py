@@ -82,21 +82,21 @@ import datetime
 #list of bwa index files
 bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
 
-def ref_check(reffa):
+def ref_check(ref):
 	#creating a list of bwa indices if they exist
 	suf_list = []
-	for file in os.listdir(os.path.dirname(reffa)):
+	for file in os.listdir(os.path.dirname(ref)):
 		if file.endswith(bwa_suf):
 			print(file + " is already in the directory")
 			suf_list.append(file)
 	#if list of bwa indices in folder is <1, create indices
 	if len(suf_list) < 1:
 		#this doesn't overwrite the reference if called
-		cmd3 = "bwa index %s" % (reffa)
+		cmd3 = "bwa index %s" % (ref)
 		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
-ref_check(reffa)
+ref_check(ref)
 
 #create output folder if it doesn't exist
 if not os.path.exists('sv_caller_output'):
@@ -109,10 +109,10 @@ assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
 
 java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
 
-def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out):
+def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
 	log_file=open('sv_caller_run.log','a')
 
-	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bam, reffa, assembly_bam_out, vcf_out, threads, java_gridss)
+	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bamfile, ref, assembly_bam_out, vcf_out, threads, java_gridss)
 	proc_4 = subprocess.Popen(cmd4, shell=True)
 	std_out, std_error = proc_4.communicate()
 	
@@ -123,7 +123,7 @@ def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out):
 
 	print("GRIDSS finished calling SVs")
 
-gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out)
+gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out)
 exit()
 #
 # HERE GOES R SCRIPT TO ANNOTATE DEL, INS, ETC
