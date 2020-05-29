@@ -543,12 +543,18 @@ def bamparse_func():
 			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
 			exit()
 	elif args.zero:
+		import modules.zero_regions as zr
 		check_bedtools()
 		if args.ref and args.contig:
-			bp.zero_regions(args)
+			if args.dev:
+				import cProfile
+				cProfile.runctx('zr.main(args)', globals(), locals())
+			else:
+				zr.main(args)
 		else:
 			print("Please ensure that a reference [-f] and contig [-c] are given.")
 			exit()
+
 	elif args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
 		check_samtools()
 		bp.deletion(args)
