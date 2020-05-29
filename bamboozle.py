@@ -129,8 +129,6 @@ group.add_argument('-d', '--threshold', \
 			help='Threshold for calculating the coverage percentage; default 20')
 group.add_argument("-a", "--range", \
 			help="somethingsomsing")
-group.add_argument("-m", "--mutations", \
-			help="List of mutation events; currently requires output from bamboozle deletion function")
 group.add_argument("-x", "--exons", \
 			help="Bed file containing exon coordinates (0-based); requires -m")
 group.add_argument("-l", "--limits", \
@@ -561,17 +559,17 @@ def bamparse_func():
 			print("Please ensure that a reference [-f] and contig [-c] are given.")
 			exit()
 
-	elif args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
+	elif args.deletion1 or args.deletion2 or args.deletion3 or args.deletionx or args.homohetero:
+		import modules.deletion as dl
 		check_samtools()
-		bp.deletion(args)
-	elif args.deletionx:
-		check_samtools()
-		if args.exons:
-			check_samtools()
-			bp.deletion(args)
-		else:
+		if args.deletionx and not args.exons:
 			print("Please ensure that a bed file of exons [-x] is given.")
 			exit()
+		elif args.dev:
+			import cProfile
+			cProfile.runctx('dl.main(args)', globals(), locals())
+		else:
+			dl.main(args)
 
 	elif args.median:
 		import modules.median_deviation as md
