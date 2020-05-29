@@ -70,18 +70,18 @@ import datetime
 
 #First things first - taking in all arguments needed
 #arguments to variables
-bam = args.bamfile
-reffa = args.ref
-refgff = args.reference_gff
-refpil = args.masking
-threads = args.threads
+#args = parser.parse_args()
+#bam = args.bamfile
+#reffa = args.ref
+#refgff = args.reference_gff
+#refpil = args.masking
+#threads = args.threads
 #extracting sample name from input BAM
 #bam_name = bamfile[:-4]
 
 #list of bwa index files
 bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
 
-@timing
 def ref_check(reffa):
 	#creating a list of bwa indices if they exist
 	suf_list = []
@@ -107,7 +107,8 @@ if not os.path.exists('sv_caller_output'):
 vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
 assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
 
-@timing
+java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
+
 def gridss(bam, reffa, threads, java_gridss, assembly_bam_out, vcf_out):
 	log_file=open('sv_caller_run.log','a')
 
@@ -129,7 +130,6 @@ exit()
 #
 
 # BEDTOOLS masking of SV calls goes here
-@timing
 def masking(vcf_out, refpil, masked_vcf_out):
 	masked_vcf_out = bam_name+"_sorted_masked.vcf"
 
@@ -141,6 +141,7 @@ def masking(vcf_out, refpil, masked_vcf_out):
 		> %s" % (refpil, vcf_out, masked_vcf_out)
 	proc_5 = subprocess.Popen(cmd5, \
 		cwd='sv_caller_output')
+
 # Checks for dependencies required for snpEff.
 def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
 	masked_vcf_out_csv = bam_name+"_sorted_masked.csv"
@@ -165,8 +166,7 @@ def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
 	proc_7 = subprocess.Popen(cmd7, \
 		cwd='sv_caller_output')
 
-def main():
-	ref_check()
-	gridss()
-
+def main(args, bam_name):
+	ref_check(args.ref)
+	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 main()
