@@ -581,8 +581,14 @@ def bamparse_func():
 			exit()
 
 	elif args.long_coverage:
+		import modules.coverage_limits as cl
 		check_samtools()
-		bp.coverage_limits(args)
+		if args.dev:
+			import cProfile
+			cProfile.runctx('cl.main(args)', globals(), locals())
+		else:
+			cl.main(args)
+
 	else:
 		parser.print_help(sys.stderr)
 		exit()

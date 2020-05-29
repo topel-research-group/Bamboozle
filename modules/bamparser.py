@@ -389,56 +389,6 @@ def HomoDel_or_Hetero(mutation_list):
 	os.remove(temp_bed)	# Delete the temporary file
 
 #######################################################################
-# COVERAGE LIMITS
-#	Identify the longest continuous region of a contig where
-#	all positions fall between defined coverage limits
-#######################################################################
-
-def coverage_limits(args):
-
-	command = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
-	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
-	if args.limits[0] < args.limits[1]:
-		lower = args.limits[0]
-		upper = args.limits[1]
-	else:
-		lower = args.limits[1]
-		upper = args.limits[0]
-
-	longest = 0
-	start = "N/A"
-	stop = "N/A"
-
-	current = 0
-	current_start = "N/A"
-	current_stop = "N/A"
-
-	recording = False
-
-	with process.stdout as result:
-		rows = (line.decode().split('\t') for line in result)
-		for row in rows:
-			position = int(row[1])
-			coverage = int(row[2])
-			if lower <= coverage <= upper:
-				if not recording:
-					current_start = position
-					recording = True
-				current += 1
-			else:
-				current_stop = position - 1
-				if current > longest:
-					longest = current
-					start = current_start
-					stop = current_stop
-				current = 0
-				recording = False
-
-	print("Longest stretch between " + str(lower) + "x and " + str(upper) + \
-	"x coverage on " + args.contig + "\t" + str(longest) + "\t" + str(start) + "-" + str(stop))
-
-#######################################################################
 # EXTRACT SEQUENCE
 #	This function extracts the sequence of the mapped reads from
 #	a part of the reference sequence specified by args.range
