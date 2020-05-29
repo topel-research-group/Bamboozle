@@ -76,11 +76,7 @@ refgff = args.reference_gff
 refpil = args.masking
 threads = args.threads
 #extracting sample name from input BAM
-bam_name = bamfile[:-4]
-
-#create output folder if it doesn't exist
-if not os.path.exists('sv_caller_output'):
-                os.makedirs('sv_caller_output')
+#bam_name = bamfile[:-4]
 
 #list of bwa index files
 bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
@@ -101,6 +97,10 @@ def ref_check(reffa):
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
 ref_check(reffa)
+
+#create output folder if it doesn't exist
+if not os.path.exists('sv_caller_output'):
+                os.makedirs('sv_caller_output')
 
 #	3 - Run GRIDSS to call SVs
 # makes new directory 'gridss' if it doesn't exist.
