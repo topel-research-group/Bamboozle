@@ -598,10 +598,10 @@ def bamparse_func():
 		exit()
 
 def main():
-#	if args.lof:
-#		import modules.sv_caller as sv
-#		check_samtools()
-#		sv.FunctionName(args)
+	if args.lof:
+		import modules.sv_caller as sv
+		check_samtools()
+		sv.ref_check(args)
 
 	if bamparse:
 		bamparse_func()
