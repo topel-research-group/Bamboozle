@@ -566,13 +566,20 @@ def bamparse_func():
 		else:
 			print("Please ensure that a bed file of exons [-x] is given.")
 			exit()
+
 	elif args.median:
+		import modules.median_deviation as md
 		check_samtools()
 		if args.simple or args.complex:
-			bp.median_deviation(args)
+			if args.dev:
+				import cProfile
+				cProfile.runctx('md.main(args)', globals(), locals())
+			else:
+				md.main(args)
 		else:
 			print("Please specify --simple for medians only or --complex for full output")
 			exit()
+
 	elif args.long_coverage:
 		check_samtools()
 		bp.coverage_limits(args)

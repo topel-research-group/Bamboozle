@@ -28,7 +28,6 @@ import sys
 import subprocess
 import argparse
 import os.path
-from statistics import median
 
 #######################################################################
 # COVERAGE STATS
@@ -388,110 +387,6 @@ def HomoDel_or_Hetero(mutation_list):
 			sys.exit()
 
 	os.remove(temp_bed)	# Delete the temporary file
-
-#######################################################################
-# MEDIAN DEVIATION
-#	Complex and contig flags: Calculate median coverage of contig,
-#	and identify regions deviating by +/- 50%; output in bed format
-#
-#	Complex flag only: Calculate median coverage of each contig in assembly,
-#	and identify regions deviating by +/- 50%; output in bed format
-#
-#	Simple and contig flags: Obtain a per-contig median average coverage for the specified contig
-#
-#	Simple flag only: Obtain a per-contig median average coverage
-#######################################################################
-
-## DevNote - Shows funky behaviour at stretches hovering around the threshold...
-
-def median_deviation(args):
-
-	def make_bed(contig_lib,this_contig):	# Generate a bed file of results
-		median_cov = median(contig_lib.values())
-		lower = median_cov * 0.5
-		upper = median_cov * 1.5
-
-		FirstHigh = 0
-		LastHigh = 0
-		FirstLow = 0
-		LastLow = 0
-
-		for key in contig_lib:
-			if contig_lib[key] > upper and FirstHigh == 0:
-				FirstHigh = key
-			if contig_lib[key] > upper and FirstHigh != 0:
-				LastHigh = key
-			if contig_lib[key] < lower and FirstLow == 0:
-				FirstLow = key
-			if contig_lib[key] < lower and FirstLow != 0:
-				LastLow = key
-			if contig_lib[key] < upper and LastHigh != 0:
-				print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
-				FirstHigh = 0
-				LastHigh = 0
-			if contig_lib[key] > lower and LastLow != 0:
-				print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
-				FirstLow=0
-				LastLow=0
-		# Print last high event, if contig ends on a high
-		if LastHigh != 0:
-			print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
-		# Print last low event, if contig ends on a low
-		if LastLow != 0:
-			print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
-
-	if args.contig:
-
-		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
-		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-
-		cov_stats = {}
-		current_contig = args.contig
-		with process.stdout as result:
-			rows = (line.decode().split('\t') for line in result)
-			for row in rows:
-				position = int(row[1])
-				coverage = int(row[2])
-				cov_stats[position] = coverage
-		if args.complex:
-			print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
-			make_bed(cov_stats,current_contig)
-		elif args.simple:
-			print(current_contig,median(cov_stats.values()),sep="\t")
-
-	else:
-
-		cmd = ["samtools depth -aa %s" % args.sortbam]
-		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-
-		cov_stats = {}
-		current_contig = "None"
-		if args.complex:
-			print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
-
-		with process.stdout as result:
-			rows = (line.decode().split('\t') for line in result)
-			for row in rows:
-				ctg = str(row[0])
-				position = int(row[1])
-				coverage = int(row[2])
-				if current_contig == "None":
-					current_contig = ctg
-				if ctg == current_contig:
-					cov_stats[position] = coverage
-				elif ctg != current_contig:
-					if args.complex:
-						make_bed(cov_stats,current_contig)
-					elif args.simple:
-						print(current_contig,median(cov_stats.values()),sep="\t")
-					cov_stats = {}
-					current_contig = ctg
-					cov_stats[position] = coverage
-
-			if args.complex:
-				make_bed(cov_stats,current_contig)	# Print stats for the final contig
-			elif args.simple:
-				print(current_contig,median(cov_stats.values()),sep="\t")
 
 #######################################################################
 # COVERAGE LIMITS
