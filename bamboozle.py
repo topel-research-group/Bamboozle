@@ -531,11 +531,17 @@ def bamparse_func():
 		args.sortbam = "Bowtie2/*sorted.bam" 
 
 	if args.coverage:
+		import modules.coverage_stats as cs
 		check_samtools()
 		if args.gff and not args.outprefix:
 			print("If --gff is specified, please ensure that -o is also specified.")
 			exit()
-		bp.coverage_stats(args)
+		if args.dev:
+			import cProfile
+			cProfile.runctx('cs.main(args)', globals(), locals())
+		else:
+			cs.main(args)
+
 	elif args.consensus:
 		if args.ref and args.contig and args.range:
 			bp.extract_sequence(args)
