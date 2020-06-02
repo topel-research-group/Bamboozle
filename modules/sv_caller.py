@@ -68,19 +68,10 @@ import datetime
 
 #######################################################################
 
-#First things first - taking in all arguments needed
-#arguments to variables
-#args = parser.parse_args()
-#bam = args.bamfile
-#ref = args.ref
-#refgff = args.reference_gff
-#refpil = args.masking
-#threads = args.threads
-#extracting sample name from input BAM
-#bam_name = bamfile[:-4]
+#checks for the presence of indices for the FASTA reference
+#if non existing, uses bwa to create new indices
 
-
-def ref_check(args):
+def ref_check(reference):
 	#list of bwa index files
 	bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
 
@@ -97,8 +88,6 @@ def ref_check(args):
 		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
-#ref_check(args.ref)
-
 
 #GRIDSS
 
@@ -118,10 +107,12 @@ def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
 
 	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bamfile, args.ref, assembly_bam_out, vcf_out, threads, java_gridss)
 	proc_4 = subprocess.Popen(cmd4, shell=True)
+
 	std_out, std_error = proc_4.communicate()
 	
 	while proc_4.wait() is None:
 		pass
+
 	proc_4.stdout.close()
 	log_file.close()
 
@@ -134,41 +125,41 @@ def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
 #
 
 # BEDTOOLS masking of SV calls goes here
-def masking(vcf_out, refpil, masked_vcf_out):
-	masked_vcf_out = bam_name+"_sorted_masked.vcf"
-
-	cmd5 = "bedtools intersect \
-		-v \
-		-b %s \
-		-a %s \
-		-sorted \
-		> %s" % (refpil, vcf_out, masked_vcf_out)
-	proc_5 = subprocess.Popen(cmd5, \
-		cwd='sv_caller_output')
+#def masking(vcf_out, refpil, masked_vcf_out):
+#	masked_vcf_out = bam_name+"_sorted_masked.vcf"
+#
+#	cmd5 = "bedtools intersect \
+#		-v \
+#		-b %s \
+#		-a %s \
+#		-sorted \
+#		> %s" % (refpil, vcf_out, masked_vcf_out)
+#	proc_5 = subprocess.Popen(cmd5, \
+#		cwd='sv_caller_output')
 
 # Checks for dependencies required for snpEff.
-def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
-	masked_vcf_out_csv = bam_name+"_sorted_masked.csv"
-	masked_vcf_out_ann = bam_name+"_sorted_masked_ann.vcf"
+#def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
+#	masked_vcf_out_csv = bam_name+"_sorted_masked.csv"
+#	masked_vcf_out_ann = bam_name+"_sorted_masked_ann.vcf"
         # Checks if there is a Skeletonema database,
         # if it doesn't exists the program will exit
         # and it has to be created using 'snpEff build'.
-	try:
-		cmd6 = "snpEff databases | grep Smarinoi.v112"
+#	try:
+#		cmd6 = "snpEff databases | grep Smarinoi.v112"
 		################## this didn't work last I tried, check snpeff database!
-		proc_6 = subprocess.check_output(cmd6, shell=True)
+#		proc_6 = subprocess.check_output(cmd6, shell=True)
 
-	except subprocess.CalledProcessError as e:
-		if e.returncode >= 1:
-			print('snpEff: Skeletonema database not found, exit program...')
-			exit()
-	cmd7 = "snpEff eff Smarinoi.v112 \
-		%s \
-		-c /home/andre/snpEff.config \
-		-csvStats %s \
-		> %s" % (masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
-	proc_7 = subprocess.Popen(cmd7, \
-		cwd='sv_caller_output')
+#	except subprocess.CalledProcessError as e:
+#		if e.returncode >= 1:
+#			print('snpEff: Skeletonema database not found, exit program...')
+#			exit()
+#	cmd7 = "snpEff eff Smarinoi.v112 \
+#		%s \
+#		-c /home/andre/snpEff.config \
+#		-csvStats %s \
+#		> %s" % (masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
+#	proc_7 = subprocess.Popen(cmd7, \
+#		cwd='sv_caller_output')
 
 def main(args, bam_name):
 	ref_check(args.ref)
