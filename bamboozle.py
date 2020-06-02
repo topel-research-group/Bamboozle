@@ -616,8 +616,7 @@ def main():
 	if args.lof:
 		import modules.sv_caller as sv
 		check_samtools()
-		bam_check(args.bamfile, bam_sorted, bam_index)
-		sv.ref_check(args)
+		sv.main(args, bam_name)
 
 	if bamparse:
 		bam_check(args.bamfile, bam_sorted, bam_index)
