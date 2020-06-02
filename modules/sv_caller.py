@@ -79,10 +79,11 @@ import datetime
 #extracting sample name from input BAM
 #bam_name = bamfile[:-4]
 
-#list of bwa index files
-bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
 
 def ref_check(args):
+	#list of bwa index files
+	bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
+
 	#creating a list of bwa indices if they exist
 	suf_list = []
 	for file in os.listdir(os.path.dirname(args.ref)):
@@ -96,20 +97,23 @@ def ref_check(args):
 		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
-ref_check(args.ref)
+#ref_check(args.ref)
 
-#create output folder if it doesn't exist
-if not os.path.exists('sv_caller_output'):
-                os.makedirs('sv_caller_output')
 
 #GRIDSS
-#naming outputs
-vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
-assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
-
-java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
 
 def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
+
+	#create output folder if it doesn't exist
+	if not os.path.exists('sv_caller_output'):
+		os.makedirs('sv_caller_output')
+
+	#naming outputs
+	vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
+	assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
+
+	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
+
 	log_file=open('sv_caller_run.log','a')
 
 	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bamfile, args.ref, assembly_bam_out, vcf_out, threads, java_gridss)
@@ -123,8 +127,8 @@ def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
 
 	print("GRIDSS finished calling SVs")
 
-gridss(bamfile, args.ref, threads, java_gridss, assembly_bam_out, vcf_out)
-exit()
+#gridss(bamfile, args.ref, threads, java_gridss, assembly_bam_out, vcf_out)
+#exit()
 #
 # HERE GOES R SCRIPT TO ANNOTATE DEL, INS, ETC
 #
@@ -170,4 +174,4 @@ def main(args, bam_name):
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 
-main(args, bam_name)
+#main(args, bam_name)
