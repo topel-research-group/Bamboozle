@@ -72,7 +72,7 @@ import datetime
 #arguments to variables
 #args = parser.parse_args()
 #bam = args.bamfile
-#reffa = args.ref
+#ref = args.ref
 #refgff = args.reference_gff
 #refpil = args.masking
 #threads = args.threads
@@ -82,21 +82,21 @@ import datetime
 #list of bwa index files
 bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
 
-def ref_check(ref):
+def ref_check(args):
 	#creating a list of bwa indices if they exist
 	suf_list = []
-	for file in os.listdir(os.path.dirname(ref)):
+	for file in os.listdir(os.path.dirname(args.ref)):
 		if file.endswith(bwa_suf):
 			print(file + " is already in the directory")
 			suf_list.append(file)
 	#if list of bwa indices in folder is <1, create indices
 	if len(suf_list) < 1:
 		#this doesn't overwrite the reference if called
-		cmd3 = "bwa index %s" % (ref)
+		cmd3 = "bwa index %s" % (args.ref)
 		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
-ref_check(ref)
+ref_check(args.ref)
 
 #create output folder if it doesn't exist
 if not os.path.exists('sv_caller_output'):
@@ -112,7 +112,7 @@ java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-depen
 def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
 	log_file=open('sv_caller_run.log','a')
 
-	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bamfile, ref, assembly_bam_out, vcf_out, threads, java_gridss)
+	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bamfile, args.ref, assembly_bam_out, vcf_out, threads, java_gridss)
 	proc_4 = subprocess.Popen(cmd4, shell=True)
 	std_out, std_error = proc_4.communicate()
 	
@@ -123,7 +123,7 @@ def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
 
 	print("GRIDSS finished calling SVs")
 
-gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out)
+gridss(bamfile, args.ref, threads, java_gridss, assembly_bam_out, vcf_out)
 exit()
 #
 # HERE GOES R SCRIPT TO ANNOTATE DEL, INS, ETC
@@ -169,4 +169,5 @@ def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
 def main(args, bam_name):
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
-main()
+
+main(args, bam_name)
