@@ -70,44 +70,43 @@ import datetime
 
 #checks for the presence of indices for the FASTA reference
 #if non existing, uses bwa to create new indices
-
 def ref_check(reference):
 	#list of bwa index files
 	bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
 
 	#creating a list of bwa indices if they exist
 	suf_list = []
-	for file in os.listdir(os.path.dirname(args.ref)):
+	for file in os.listdir(os.path.dirname(reference)):
 		if file.endswith(bwa_suf):
 			print(file + " is already in the directory")
 			suf_list.append(file)
 	#if list of bwa indices in folder is <1, create indices
 	if len(suf_list) < 1:
 		#this doesn't overwrite the reference if called
-		cmd3 = "bwa index %s" % (args.ref)
+		cmd3 = "bwa index %s" % (reference)
 		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
 
 #GRIDSS
 
-def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
+def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 
 	#create output folder if it doesn't exist
 	if not os.path.exists('sv_caller_output'):
 		os.makedirs('sv_caller_output')
 
 	#naming outputs
-	vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
-	assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
+	#vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
+	#assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
 
-	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
+	#java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
 
 	log_file=open('sv_caller_run.log','a')
 
-	cmd4 = "gridss.sh %s,-r %s, -a %s, -o %s, -t %s, -j %s" % (bamfile, args.ref, assembly_bam_out, vcf_out, threads, java_gridss)
+	cmd4 = "gridss.sh %s -r %s -a %s -o %s -t %s -j %s" % (bamfile, reference, assembly_bam_out, vcf_out, threads, java_gridss)
 	proc_4 = subprocess.Popen(cmd4, shell=True)
-
+	
 	std_out, std_error = proc_4.communicate()
 	
 	while proc_4.wait() is None:
@@ -118,24 +117,18 @@ def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
 
 	print("GRIDSS finished calling SVs")
 
-#gridss(bamfile, args.ref, threads, java_gridss, assembly_bam_out, vcf_out)
-#exit()
 #
 # HERE GOES R SCRIPT TO ANNOTATE DEL, INS, ETC
 #
 
 # BEDTOOLS masking of SV calls goes here
-#def masking(vcf_out, refpil, masked_vcf_out):
-#	masked_vcf_out = bam_name+"_sorted_masked.vcf"
-#
-#	cmd5 = "bedtools intersect \
-#		-v \
-#		-b %s \
-#		-a %s \
-#		-sorted \
-#		> %s" % (refpil, vcf_out, masked_vcf_out)
-#	proc_5 = subprocess.Popen(cmd5, \
-#		cwd='sv_caller_output')
+
+def masking(vcf_out, refpil, masked_vcf_out):
+
+	cmd5 = "bedtools intersect -v -b %s -a %s -sorted > %s" % (refpil, vcf_out, masked_vcf_out)
+	proc_5 = subprocess.Popen(cmd5, , shell=True)
+	print(cmd5)
+	std_out, std_error = proc_5.communicate()
 
 # Checks for dependencies required for snpEff.
 #def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
@@ -162,7 +155,12 @@ def gridss(bamfile, ref, threads, java_gridss, assembly_bam_out, vcf_out):
 #		cwd='sv_caller_output')
 
 def main(args, bam_name):
+	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
+	vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
+	assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
+	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
+
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
-
+	masking(vcf_out, args.masking, masked_vcf_out)
 #main(args, bam_name)
