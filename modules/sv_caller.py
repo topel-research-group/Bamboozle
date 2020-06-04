@@ -91,18 +91,11 @@ def ref_check(reference):
 #GRIDSS
 
 def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
-
 	#create output folder if it doesn't exist
 	if not os.path.exists('sv_caller_output'):
 		os.makedirs('sv_caller_output')
 
-	#naming outputs
-	#vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
-	#assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
-
-	#java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
-
-	log_file=open('sv_caller_run.log','a')
+#	log_file=open('sv_caller_run.log','a')
 
 	cmd4 = "gridss.sh %s -r %s -a %s -o %s -t %s -j %s" % (bamfile, reference, assembly_bam_out, vcf_out, threads, java_gridss)
 	proc_4 = subprocess.Popen(cmd4, shell=True)
@@ -112,23 +105,22 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 	while proc_4.wait() is None:
 		pass
 
-	proc_4.stdout.close()
-	log_file.close()
-
 	print("GRIDSS finished calling SVs")
-
-#
-# HERE GOES R SCRIPT TO ANNOTATE DEL, INS, ETC
-#
 
 # BEDTOOLS masking of SV calls goes here
 
 def masking(vcf_out, refpil, masked_vcf_out):
-
 	cmd5 = "bedtools intersect -v -b %s -a %s -sorted > %s" % (refpil, vcf_out, masked_vcf_out)
-	proc_5 = subprocess.Popen(cmd5, , shell=True)
+	proc_5 = subprocess.Popen(cmd5, shell=True)
 	print(cmd5)
 	std_out, std_error = proc_5.communicate()
+
+# Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
+
+def annotate(masked_vcf_out, ann_masked_vcf_out):
+	cmd6 = "Rscript --vanilla bamboozle_sv_caller_qc_sum.R %s %s" % (masked_vcf_out, bam_name)
+	proc_6 = subprocess.Popen(cmd5, shell=True)
+        std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
 #def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
@@ -163,4 +155,3 @@ def main(args, bam_name):
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	masking(vcf_out, args.masking, masked_vcf_out)
-#main(args, bam_name)
