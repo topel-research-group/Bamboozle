@@ -155,3 +155,4 @@ def main(args, bam_name):
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	masking(vcf_out, args.masking, masked_vcf_out)
+	annotate(masked_vcf_out, bam_name)
