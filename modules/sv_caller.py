@@ -4,41 +4,15 @@
 #André Soares - 15/04/2020
 #Pseudocode for a script calling SVs and inferring their LOF potential from BAM/SAM files
 
-#very much based on Matt's(?) pipeline.py in Bamboozle/modules
-
-#Input and arguments:
-#	1) sorted BAM alignments of diatom (S. marinoi and others in the future?) genomes against a reference
-#	2) genome reference
-#	3) Pilon-corrected genome reference
-#	4) GFF gene model reference
-#	?) option to run submodules individually?
-
 #Outputs: 
 #	1) VCF files of alterations in gene models, with LOF prediction.
 #	2) summary tables of alterations that should include type (deletion, insertion, inversion, duplication, other genomic rearrangmements),
 #size in bp, quality of call, LOF potential, gene product, genomic location, zygosity, ?...
 
-
-#Steps:
-#0. Check if reference has been indexed with bwa, if not, index it
-#1. Take in sorted alignments, verify they exist, are sorted BAM files
-#1a. Take in fasta, GFF, Pilon-corrected assembly references as arguments (check if BAMs were aligned to those refs?)
-#2. Run GRIDSS
-#3. Mask VCF files of SV calls with bedtools using Pilon assembly
-#4. Run snpEff on masked SV calls to obtain predicted alterations in gene models
-#4a. (Modify output headers?)
 #5. Run snpEff snpSift to obtain summary tables
 
-#Help messages:
-#1. Use a bwa-mem-indexed reference genome
-#2. Even though ref has been indexed with bwa-mem it is ok to have bowtie2-aligned reads since from the same genome
-#3. Input alignments have to be sorted BAM
-#4. 
-
-#  NOT SURE about this license? Secondary though
-
-#       Pipeline that performs bioinformatic analysis including SNP calling
-#       and effect prediction of fastq files or BAM file.
+#	SVCaller provides a pipeline to call and annotate structural variants
+#	from reads mapped to a reference genome.
 #
 #       Copyright (C) 2020 André Soares, andre.soares@bioenv.gu.se
 #
