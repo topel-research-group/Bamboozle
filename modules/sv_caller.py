@@ -83,7 +83,6 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 def masking(vcf_out, refpil, masked_vcf_out):
 	cmd5 = "bedtools intersect -v -b %s -a %s -sorted > %s" % (refpil, vcf_out, masked_vcf_out)
 	proc_5 = subprocess.Popen(cmd5, shell=True)
-	print(cmd5)
 	std_out, std_error = proc_5.communicate()
 
 # Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
@@ -94,36 +93,42 @@ def annotate(masked_vcf_out, ann_masked_vcf_out):
         std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
-#def snpeff(masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann):
-#	masked_vcf_out_csv = bam_name+"_sorted_masked.csv"
-#	masked_vcf_out_ann = bam_name+"_sorted_masked_ann.vcf"
-        # Checks if there is a Skeletonema database,
-        # if it doesn't exists the program will exit
-        # and it has to be created using 'snpEff build'.
+def snpeff(masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
+
+	#SnpEff database being pulled locally from /home/andre/snpEff.config
+	#maybe put it elsewhere? create a v112 SnpEff db?
+
+	#REWRITE THIS
 #	try:
 #		cmd6 = "snpEff databases | grep Smarinoi.v112"
-		################## this didn't work last I tried, check snpeff database!
+#		################## this didn't work last I tried, check snpeff database!
 #		proc_6 = subprocess.check_output(cmd6, shell=True)
-
+#
 #	except subprocess.CalledProcessError as e:
 #		if e.returncode >= 1:
 #			print('snpEff: Skeletonema database not found, exit program...')
 #			exit()
-#	cmd7 = "snpEff eff Smarinoi.v112 \
-#		%s \
-#		-c /home/andre/snpEff.config \
-#		-csvStats %s \
-#		> %s" % (masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
-#	proc_7 = subprocess.Popen(cmd7, \
-#		cwd='sv_caller_output')
+	#
+	cmd7 = "snpEff eff Smarinoi.v112 %s -c /home/andre/snpEff.config -csvStats %s > %s" % (masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
+	proc_7 = subprocess.Popen(cmd7, shell=True)
+	std_out, std_error = proc_5.communicate()
 
 def main(args, bam_name):
+	#gridss java
 	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
+	#outputs for gridss
 	vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
 	assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
+	#outputs for bedtools
 	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
+	#output for R script
+	masked_ann_vcf_out =  "sv_caller_output/%s_.sv.annotated.vcf" % (bam_name)
+	#outputs for snpeff
+	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
+	masked_vcf_out_lof_ann "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
 
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	masking(vcf_out, args.masking, masked_vcf_out)
 	annotate(masked_vcf_out, bam_name)
+	snpeff(masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann) 
