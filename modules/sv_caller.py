@@ -76,9 +76,6 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 	
 	std_out, std_error = proc_4.communicate()
 	
-	while proc_4.wait() is None:
-		pass
-
 	print("GRIDSS finished calling SVs")
 
 # BEDTOOLS masking of SV calls goes here
