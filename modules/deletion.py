@@ -141,15 +141,15 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 def main(args):
 
 	# Determine which variant of the deletions script is being run
-	if args.deletion1:
+	if args.command == "deletion1":
 		version = "deletion1"
-	elif args.deletion2:
+	elif args.command == "deletion2":
 		version = "deletion2"
-	elif args.deletion3:
+	elif args.command == "deletion3":
 		version = "deletion3"
-	elif args.deletionx:
+	elif args.command == "deletionx":
 		version = "deletionx"
-	elif args.homohetero:
+	elif args.command == "homohetero":
 		version = "homohetero"
 
 	mutation_list = []
@@ -157,15 +157,15 @@ def main(args):
 	if args.verbose == True:
 		if not args.contig:
 			args.contig = "assembly"
-		if args.deletion1:
+		if args.command == "deletion1":
 			print("Finding individual deletions in",args.contig)
-		elif args.deletion2:
+		elif args.command == "deletion2":
 			print("Finding deletion events in",args.contig)
-		elif args.deletion3:
+		elif args.command == "deletion3":
 			print("Finding frameshift deletion events in",args.contig)
-		elif args.deletionx:
+		elif args.command == "deletionx":
 			print("Finding deletion events within exons in",args.contig)
-		elif args.homohetero:
+		elif args.command == "homohetero":
 			print("Determining potentially homozygous/heterozygous deletions in",args.contig)
 
 	if args.contig and args.contig != "assembly":
@@ -200,7 +200,7 @@ def main(args):
 					for x, y in window.items():
 						if y < (base1*0.6) and x not in reported:
 							reported.append(x)
-							if args.deletion1:
+							if args.command == "deletion1":
 								print(ctg,x,sep="\t")
 							else:
 								if (int(x) - int(old_position)) != 1:
@@ -216,13 +216,13 @@ def main(args):
 				window[position] = coverage
 
 		# Ensure that the final event is reported
-		if not args.deletion1:
+		if args.command != "deletion1":
 			print_deletion(deletion, del_size, version, mutation_list)
 
-	if args.deletionx:
+	if args.command == "deletionx":
 		exon_mutations(args.exons, mutation_list, args.verbose)
 
-	if args.homohetero:
+	if args.command == "homohetero":
 		HomoDel_or_Hetero(args.sortbam, mutation_list, args.contig)
 
 #######################################################################
