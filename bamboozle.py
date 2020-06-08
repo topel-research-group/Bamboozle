@@ -64,6 +64,9 @@ parser.add_argument("-t", "--threads", \
 parser.add_argument("-e", "--snpeff", \
 			nargs='*', \
 			help="Input options for snpeff, without the '-' before")
+parser.add_argument("--snpeffdb", \
+                        nargs=1, \
+                        help="SnpEff database to use")
 parser.add_argument("-s", "--snpsift", \
 			action="store_true", \
 			help="Run snpSift")
