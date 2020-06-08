@@ -616,33 +616,34 @@ def bamparse_func():
 		exit()
 
 def main():
-	if args.lof:
-		import modules.sv_caller as sv
-		check_samtools()
-		sv.main(args, bam_name)
+        if args.lof:
+                import modules.sv_caller as sv
+                check_samtools()
+                bam_check(args.bamfile, bam_sorted, bam_index)
+                sv.main(args, bam_name)
 
-	if bamparse:
-		bam_check(args.bamfile, bam_sorted, bam_index)
-		bamparse_func()
+        if bamparse:
+                bam_check(args.bamfile, bam_sorted, bam_index)
+                bamparse_func()
 
-	if args.barcode:
-		import modules.barcodesearch as bcs
-		check_samtools()
-		check_bcftools()
-		bam_check(args.bamfile, bam_sorted, bam_index)
-		bcs.barcode(args)
-		
-	if args.gff and args.feature:
-		import modules.pipeline as pl
-		try:
-			pl.annotation(args)
-		except:
-			input_files()
+        if args.barcode:
+                import modules.barcodesearch as bcs
+                check_samtools()
+                check_bcftools()
+                bam_check(args.bamfile, bam_sorted, bam_index)
+                bcs.barcode(args)
 
-	if not bamparse and not args.barcode and not args.lof:
-		input_files()
-		#not sure if this is where it should go?
-		bam_check(args.bamfile, bam_sorted, bam_index)
+        if args.gff and args.feature:
+                import modules.pipeline as pl
+                try:
+                        pl.annotation(args)
+                except:
+                        input_files()
+
+        if not bamparse and not args.barcode and not args.lof:
+                input_files()
+                #not sure if this is where it should go?
+                bam_check(args.bamfile, bam_sorted, bam_index)
 
 #######################################################################
 
