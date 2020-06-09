@@ -109,7 +109,7 @@ def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_
 #			print('snpEff: Skeletonema database not found, exit program...')
 #			exit()
 #
-	cmd7 = "snpEff eff %s %s -c data/snpeff/snpEff.config -dataDir data/snpeff/%s -csvStats %s > %s" % (snpeffdb, masked_vcf_out, snpeffdb, masked_vcf_out_csv, masked_vcf_out_ann)
+	cmd7 = "snpEff eff %s %s -c data/snpeff/snpEff.config -dataDir data/snpeff/%s -csvStats %s > %s" % (snpeffdb, masked_ann_vcf_out, snpeffdb, masked_vcf_out_csv, masked_vcf_out_ann)
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_5.communicate()
 
