@@ -20,3 +20,4 @@ testbed/
 data/snpeff/*/*.fa
 data/snpeff/*/*.gff
 data/snpeff/*/*.bin
+data/snpeff/snpEff.config
