@@ -93,7 +93,7 @@ def annotate(masked_vcf_out, ann_masked_vcf_out):
         std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
-def snpeff(masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
+def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
 
 	#SnpEff database being pulled locally from /home/andre/snpEff.config
 	#maybe put it elsewhere? create a v112 SnpEff db?
@@ -109,7 +109,7 @@ def snpeff(masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
 #			print('snpEff: Skeletonema database not found, exit program...')
 #			exit()
 	#
-	cmd7 = "snpEff eff Smarinoi.v112 %s -c /home/andre/snpEff.config -csvStats %s > %s" % (masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
+	cmd7 = "snpEff eff %s %s -c /home/andre/snpEff.config -csvStats %s > %s" % (snpeffdb, masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_5.communicate()
 
@@ -131,4 +131,4 @@ def main(args, bam_name):
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	masking(vcf_out, args.masking, masked_vcf_out)
 	annotate(masked_vcf_out, bam_name)
-	snpeff(masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann) 
+	snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann) 
