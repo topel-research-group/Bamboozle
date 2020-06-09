@@ -109,7 +109,7 @@ def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_
 #			print('snpEff: Skeletonema database not found, exit program...')
 #			exit()
 	#
-	cmd7 = "snpEff eff %s %s -c /home/andre/snpEff.config -csvStats %s > %s" % (snpeffdb, masked_vcf_out, masked_vcf_out_csv, masked_vcf_out_ann)
+	cmd7 = "snpEff eff %s %s -c data/snpeff/snpEff.config -dataDir data/snpeff/%s -csvStats %s > %s" % (snpeffdb, masked_vcf_out, snpeffdb, masked_vcf_out_csv, masked_vcf_out_ann)
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_5.communicate()
 
@@ -131,4 +131,4 @@ def main(args, bam_name):
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	masking(vcf_out, args.masking, masked_vcf_out)
 	annotate(masked_vcf_out, bam_name)
-	snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann) 
+	snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
