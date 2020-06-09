@@ -125,7 +125,7 @@ def main(args, bam_name):
 	masked_ann_vcf_out =  "sv_caller_output/%s_.sv.annotated.vcf" % (bam_name)
 	#outputs for snpeff
 	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
-	masked_vcf_out_lof_ann "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
+	masked_vcf_out_lof_ann = "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
 
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
