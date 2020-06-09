@@ -89,7 +89,7 @@ def masking(vcf_out, refpil, masked_vcf_out):
 
 def annotate(masked_vcf_out, bam_name):
 	cmd6 = "Rscript --vanilla ../scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (masked_vcf_out, bam_name)
-	proc_6 = subprocess.Popen(cmd5, shell=True)
+	proc_6 = subprocess.Popen(cmd6, shell=True)
 	std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
@@ -108,7 +108,7 @@ def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_
 #		if e.returncode >= 1:
 #			print('snpEff: Skeletonema database not found, exit program...')
 #			exit()
-	#
+#
 	cmd7 = "snpEff eff %s %s -c data/snpeff/snpEff.config -dataDir data/snpeff/%s -csvStats %s > %s" % (snpeffdb, masked_vcf_out, snpeffdb, masked_vcf_out_csv, masked_vcf_out_ann)
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_5.communicate()
