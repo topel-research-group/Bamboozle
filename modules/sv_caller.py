@@ -90,7 +90,7 @@ def masking(vcf_out, refpil, masked_vcf_out):
 def annotate(masked_vcf_out, ann_masked_vcf_out):
 	cmd6 = "Rscript --vanilla ../scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (masked_vcf_out, bam_name)
 	proc_6 = subprocess.Popen(cmd5, shell=True)
-        std_out, std_error = proc_6.communicate()
+	std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
 def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
