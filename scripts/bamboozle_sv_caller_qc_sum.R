@@ -27,7 +27,7 @@ if (length(args)==0) {
 }
 
 #part 1: filter, annotate VCF
-vcf <- VariantAnnotation::readVcf(args[1])
+vcf <- VariantAnnotation::readVcf(args[1],"hg19")
 #add column to VCF
 info(header(vcf)) = unique(as(rbind(as.data.frame(info(header(vcf))), data.frame(
   row.names=c("SIMPLE_TYPE"),
