@@ -131,10 +131,8 @@ def main(args, bam_name):
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	#only apply masking() if it's been called
-	if len(args.masking) == 1:
+	if args.masking:
 		masking(vcf_out, args.masking, masked_vcf_out)
-	#if masking() has been called, apply annotate to output, if not apply to gridss output
-	if len(args.masking) == 1:
 		annotate(masked_vcf_out, bam_name)
 	else:
 		annotate(vcf_out, bam_name)
