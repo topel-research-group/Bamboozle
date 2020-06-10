@@ -64,7 +64,7 @@ def bcf(infile, contig_list, quality, threads, reference):
 		process2 = gzip.open(FileName(infile) + ".vcf.gz", 'rt')
 	else:
 		cmd2 = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv | \
-			bcftools filter --threads %s -i '%s'" % \
+			bcftools filter --threads %s -i '%s & GT=\"hom\"'" % \
 			(threads, reference, infile, threads, threads, quality)]
 		process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 	return(process2)
