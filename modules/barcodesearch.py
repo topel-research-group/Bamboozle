@@ -225,7 +225,8 @@ def barcode(args):
 		sys.exit(0)
 
 	# Record all contig lengths
-	contig_lengths = get_contig_lengths(args.sortbam[0])
+#	contig_lengths = get_contig_lengths(args.sortbam[0])
+	contig_lengths = get_contig_lengths(args.bamfile[0])
 
 	# Set initial global lists/dictionaries
 	all_SNPs = {}
@@ -254,9 +255,11 @@ def barcode(args):
 	filter_qual = "%QUAL>" + str(args.quality)
 
 
-	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
+#	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
+	print("Searching for potential barcodes in",len(args.bamfile),"file(s).")
 
-	for bam in args.sortbam:
+#	for bam in args.sortbam:
+	for bam in args.bamfile:
 		# Generate or read in a VCF file for the current BAM
 		process2 = bcf(bam, contig_lengths, filter_qual, args.threads, args.ref)
 
@@ -314,8 +317,11 @@ def barcode(args):
 	# Compare consensus sequences for all BAMs, to ensure they are truly unique, not merely differing from the reference in all the same positions
 	print("\nChecking consensuses...")
 
+#	to_final = pool.starmap(check_unique_windows, \
+#		[(merged_dict, contig, args.ref, args.sortbam) for contig in contig_lengths])
+
 	to_final = pool.starmap(check_unique_windows, \
-		[(merged_dict, contig, args.ref, args.sortbam) for contig in contig_lengths])
+		[(merged_dict, contig, args.ref, args.bamfile) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
@@ -326,7 +332,7 @@ def barcode(args):
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
 
-		output_txt.write("contig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
+		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
 
 		for contig in final_dict:
 			window_number = 0
@@ -334,6 +340,8 @@ def barcode(args):
 				window_number += 1
 				window_SNPs = 0
 				window_indels = 0
+
+				window_name = str(contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
 
 				conserved_1_start = final_dict[contig][window][0]
 				conserved_1_stop = final_dict[contig][window][1] - 1
@@ -358,9 +366,8 @@ def barcode(args):
 
 				# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
 				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
-						"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
-						"\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
-				line_out = str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
+						str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
+				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
 						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
 						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
 						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"

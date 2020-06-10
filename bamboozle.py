@@ -59,18 +59,14 @@ subparsers = parser.add_subparsers(title="Commands", dest="command", metavar="")
 #bam_input = infiles.add_argument_group("BAM file(s)")
 #bam_input.add_argument("-b", "--bamfile", \
 #				help="BAM infile")
-#bam_input.add_argument("--sortbam", nargs='*', \
-#				help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
 
 input_commands = argparse.ArgumentParser(add_help=False)
 input_commands.add_argument("-F", "--forward", nargs='*', \
 				help="Forward reads")
 input_commands.add_argument("-R", "--reverse", nargs='*', \
 				help="Reverse reads")
-input_commands.add_argument("-b", "--bamfile", \
+input_commands.add_argument("-b", "--bamfile", nargs="*", \
 				help="BAM infile")
-input_commands.add_argument("--sortbam", nargs='*', \
-				help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
 
 ## Other
 other_commands = argparse.ArgumentParser(add_help=False)
@@ -227,20 +223,21 @@ for item1 in BamparseList:
 			bamparse = True
 
 #######################################################################
-# HANDLING OF MULTIPLE SORTED BAM INPUTS
-#	Ensure that if multiple sorted BAM inputs are specified,
-#	BarcodeSearch is the function being run
-#	Else warn the user and exit
+# HANDLING BAM FILES
+#	First, ensure that all BAM input files are sorted
+#	Otherwise, sort them
+#	Then, assign all sorted BAMs to args.sortbam
+#	Finally, ensure that if multiple BAMs are specified,
+#		the barcode command is being run
+#		Else warn the user and exit
 #######################################################################
 
-# DevNote - this will need changing after the removal of the sortbam option
-
-#if args.sortbam:
-#	if len(args.sortbam) == 1:
-#		args.sortbam = args.sortbam[0]
-#	elif len(args.sortbam) > 1 and args.command != "barcode":
-#		print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
-#		exit()
+if args.bamfile:
+	if len(args.bamfile) == 1:
+		args.bamfile = args.bamfile[0]
+	elif len(args.bamfile) > 1 and args.command != "barcode":
+		print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
+		exit()
 
 #######################################################################
 # CHECK DEPENDENCIES
@@ -683,7 +680,7 @@ def main():
 		import modules.barcodesearch as bcs
 		check_samtools()
 		check_bcftools()
-		bam_check(args.bamfile, bam_sorted, bam_index)
+#		bam_check(args.bamfile, bam_sorted, bam_index)
 		if args.dev:
 			import cProfile
 			cProfile.runctx('bcs.barcode(args)', globals(), locals())
