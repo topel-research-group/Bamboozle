@@ -695,8 +695,8 @@ def main():
 			cProfile.runctx('bcs.barcode(args)', globals(), locals())
 		else:
 			bcs.barcode(args)
-		
-	if args.command == "pipeline":
+
+	if args.command == "pipeline":		
 		import modules.pipeline as pl
 		try:
 			pl.annotation(args)
