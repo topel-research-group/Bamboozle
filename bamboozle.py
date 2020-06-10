@@ -45,22 +45,42 @@ parser = argparse.ArgumentParser(usage="bamboozle.py <command> <args>")
 subparsers = parser.add_subparsers(title="Commands", dest="command", metavar="")
 
 # Arguments common to all commands
-all_commands = argparse.ArgumentParser(add_help=False)
-all_commands.add_argument("-F", "--forward", nargs='*', \
+## Inputs
+
+## DevNote: The block below causes either a help conflict, or the inability to call help when an input file is required...
+#infiles = parser.add_mutually_exclusive_group()
+#
+#fwd_rev = infiles.add_argument_group("FASTQ files")
+#fwd_rev.add_argument("-F", "--forward", nargs='*', \
+#				help="Forward reads")
+#fwd_rev.add_argument("-R", "--reverse", nargs='*', \
+#				help="Reverse reads")
+#
+#bam_input = infiles.add_argument_group("BAM file(s)")
+#bam_input.add_argument("-b", "--bamfile", \
+#				help="BAM infile")
+#bam_input.add_argument("--sortbam", nargs='*', \
+#				help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
+
+input_commands = argparse.ArgumentParser(add_help=False)
+input_commands.add_argument("-F", "--forward", nargs='*', \
 				help="Forward reads")
-all_commands.add_argument("-R", "--reverse", nargs='*', \
+input_commands.add_argument("-R", "--reverse", nargs='*', \
 				help="Reverse reads")
-all_commands.add_argument("-b", "--bamfile", \
+input_commands.add_argument("-b", "--bamfile", \
 				help="BAM infile")
-all_commands.add_argument("--sortbam", nargs='*', \
+input_commands.add_argument("--sortbam", nargs='*', \
 				help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
-all_commands.add_argument("-t", "--threads", default=1, \
+
+## Other
+other_commands = argparse.ArgumentParser(add_help=False)
+other_commands.add_argument("-t", "--threads", default=1, \
 				help="Number of threads to use (note: not currently implemented for all functions)")
-all_commands.add_argument("-o", "--outprefix", \
+other_commands.add_argument("-o", "--outprefix", \
 				help="Output file prefix")
-all_commands.add_argument("-v", "--verbose", action="store_true", \
+other_commands.add_argument("-v", "--verbose", action="store_true", \
 				help="Be more verbose")
-all_commands.add_argument('--dev', \
+other_commands.add_argument('--dev', \
 				help=argparse.SUPPRESS, action="store_true")
 
 # Argument included only in pipeline, consensus, zero, and barcode
@@ -79,7 +99,7 @@ threshold_command.add_argument('-d', '--threshold', type=int, nargs='?', const='
 				help='Threshold for calculating the coverage percentage; default 20')
 
 # Pipeline command
-pipeline = subparsers.add_parser("pipeline", parents=[all_commands, ref_command], \
+pipeline = subparsers.add_parser("pipeline", parents=[input_commands, other_commands, ref_command], \
 				usage="bamboozle.py pipeline <args>", \
 				help="[Vilma's pipeline]")
 pipeline.add_argument("--gff", \
@@ -98,51 +118,51 @@ pipeline.add_argument("-p", "--done", action="store_true", \
 			help="Add an empty file to mark the directory as done")
 
 # Coverage command
-coverage = subparsers.add_parser("coverage", parents=[all_commands, contig_command], \
+coverage = subparsers.add_parser("coverage", parents=[input_commands, other_commands, contig_command], \
 				usage="bamboozle.py coverage <args>", \
 				help="Print a statistic for what percentage of bases in an assembly have >=Nx coverage")
 
 # Consensus command
-consensus = subparsers.add_parser("consensus", parents=[all_commands, ref_command, contig_command], \
+consensus = subparsers.add_parser("consensus", parents=[input_commands, other_commands, ref_command, contig_command], \
 				usage="bamboozle.py consensus <args>", \
 				help="Extract the consensus sequence of aligned reads from a region of the reference (WIP)")
 consensus.add_argument("-a", "--range", \
 			help="somethingsomsing")
 
 # Zero command
-zero = subparsers.add_parser("zero", parents=[all_commands, ref_command, contig_command], \
+zero = subparsers.add_parser("zero", parents=[input_commands, other_commands, ref_command, contig_command], \
 				usage="bamboozle.py zero <args>", \
 				help="Find areas of zero coverage and print the reference sequence, along with a GC percentage")
 
 # Deletion1 command
-deletion1 = subparsers.add_parser("deletion1", parents=[all_commands, contig_command, threshold_command], \
+deletion1 = subparsers.add_parser("deletion1", parents=[input_commands, other_commands, contig_command, threshold_command], \
 				usage="bamboozle.py deletion1 <args>", \
 				help="Find deletions")
 
 # Deletion2 command
-deletion2 = subparsers.add_parser("deletion2", parents=[all_commands, contig_command, threshold_command], \
+deletion2 = subparsers.add_parser("deletion2", parents=[input_commands, other_commands, contig_command, threshold_command], \
 				usage="bamboozle.py deletion2 <args>", \
 				help="Find deletion events")
 
 # Deletion3 command
-deletion3 = subparsers.add_parser("deletion3", parents=[all_commands, contig_command, threshold_command], \
+deletion3 = subparsers.add_parser("deletion3", parents=[input_commands, other_commands, contig_command, threshold_command], \
 				usage="bamboozle.py deletion3 <args>", \
 				help="Find frameshift deletion events")
 
 # Deletionx command
-deletionx = subparsers.add_parser("deletionx", parents=[all_commands, contig_command, threshold_command], \
+deletionx = subparsers.add_parser("deletionx", parents=[input_commands, other_commands, contig_command, threshold_command], \
 				usage="bamboozle.py deletionx <args>", \
 				help="Find deletions occurring within exons")
 deletionx.add_argument("-x", "--exons", \
 			help="Bed file containing exon coordinates (0-based)")
 
 # Homohetero command
-homohetero = subparsers.add_parser("homohetero", parents=[all_commands, contig_command, threshold_command], \
+homohetero = subparsers.add_parser("homohetero", parents=[input_commands, other_commands, contig_command, threshold_command], \
 				usage="bamboozle.py homohetero <args>", \
 				help="Attempt to determine whether a deletion is homozygous or heterozygous")
 
 # Median command
-median = subparsers.add_parser("median", parents=[all_commands, contig_command], \
+median = subparsers.add_parser("median", parents=[input_commands, other_commands, contig_command], \
 				usage="bamboozle.py median <args>", \
 				help="Find regions differing from contig median by +/- 50%%, or just contig medians")
 median.add_argument("--complex", action="store_true", \
@@ -151,14 +171,14 @@ median.add_argument("--simple", action="store_true", \
 			help="Print median coverage only for median")
 
 # Long_coverage command
-long_coverage = subparsers.add_parser("long_coverage", parents=[all_commands, contig_command], \
+long_coverage = subparsers.add_parser("long_coverage", parents=[input_commands, other_commands, contig_command], \
 				usage="bamboozle.py long_coverage <args>",
 				help="Find the longest region between given coverage limits for a given contig")
 long_coverage.add_argument("-l", "--limits", type=int, nargs=2, \
 			help="Specify lower and upper limits for long_coverage function")
 
 # Barcode command
-barcode = subparsers.add_parser("barcode", parents=[all_commands, ref_command], \
+barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands, ref_command], \
 				usage="bamboozle.py barcode <args>", \
 				help="Search the input (sorted) BAM files for suitable barcode regions")
 barcode.add_argument("-q", "--quality", type=int, default="20", \
