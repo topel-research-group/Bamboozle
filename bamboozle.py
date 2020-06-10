@@ -40,132 +40,161 @@ import datetime
 # ARGUMENTS
 #######################################################################
 
-parser = argparse.ArgumentParser(prog="Bamboozle")
-parser.add_argument("-f", "--ref", \
-			help="Reference")
-parser.add_argument("-F", "--forward", \
-			nargs='*', \
-			help="Forward reads")
-parser.add_argument("-R", "--reverse", \
-			nargs='*', \
-			help="Reverse reads")
-parser.add_argument("-b", "--bamfile", \
-			help="BAM infile")
-parser.add_argument("--gff", \
+parser = argparse.ArgumentParser(usage="bamboozle.py <command> <args>")
+
+subparsers = parser.add_subparsers(title="Commands", dest="command", metavar="")
+
+# Arguments common to all commands
+## Inputs
+
+## DevNote: The block below causes either a help conflict, or the inability to call help when an input file is required...
+#infiles = parser.add_mutually_exclusive_group()
+#
+#fwd_rev = infiles.add_argument_group("FASTQ files")
+#fwd_rev.add_argument("-F", "--forward", nargs='*', \
+#				help="Forward reads")
+#fwd_rev.add_argument("-R", "--reverse", nargs='*', \
+#				help="Reverse reads")
+#
+#bam_input = infiles.add_argument_group("BAM file(s)")
+#bam_input.add_argument("-b", "--bamfile", \
+#				help="BAM infile")
+#bam_input.add_argument("--sortbam", nargs='*', \
+#				help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
+
+input_commands = argparse.ArgumentParser(add_help=False)
+input_commands.add_argument("-F", "--forward", nargs='*', \
+				help="Forward reads")
+input_commands.add_argument("-R", "--reverse", nargs='*', \
+				help="Reverse reads")
+input_commands.add_argument("-b", "--bamfile", \
+				help="BAM infile")
+input_commands.add_argument("--sortbam", nargs='*', \
+				help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
+
+## Other
+other_commands = argparse.ArgumentParser(add_help=False)
+other_commands.add_argument("-t", "--threads", default=1, \
+				help="Number of threads to use (note: not currently implemented for all functions)")
+other_commands.add_argument("-o", "--outprefix", \
+				help="Output file prefix")
+other_commands.add_argument("-v", "--verbose", action="store_true", \
+				help="Be more verbose")
+other_commands.add_argument('--dev', \
+				help=argparse.SUPPRESS, action="store_true")
+
+# Argument included only in pipeline, consensus, zero, barcode, and lof
+ref_command = argparse.ArgumentParser(add_help=False)
+ref_command.add_argument("-f", "--ref", \
+				help="Reference")
+
+# Argument included only in coverage, consensus, zero, deletion1, deletion2, deletion3, deletionx, homohetero, median, and long_coverage
+contig_command = argparse.ArgumentParser(add_help=False)
+contig_command.add_argument("-c", "--contig", \
+				help="Gives per-contig coverage stats")
+
+# Arguments included only in deletion1, deletion2, deletion3, deletionx, and homohetero
+threshold_command = argparse.ArgumentParser(add_help=False)
+threshold_command.add_argument('-d', '--threshold', type=int, nargs='?', const='1', default='20', \
+				help='Threshold for calculating the coverage percentage; default 20')
+
+# Pipeline command
+pipeline = subparsers.add_parser("pipeline", parents=[input_commands, other_commands, ref_command], \
+				usage="bamboozle.py pipeline <args>", \
+				help="[Vilma's pipeline]")
+pipeline.add_argument("--gff", \
 			help="gff infile")
-parser.add_argument("--contigsizes", \
+pipeline.add_argument("--contigsizes", \
 			help="Contig sizes for gff parser")
-parser.add_argument("--feature", \
+pipeline.add_argument("--feature", \
 			help="Feature for gff parser")
-parser.add_argument("-t", "--threads", \
-			default=1, \
-			help="Threads")
-parser.add_argument("-e", "--snpeff", \
-			nargs='*', \
+pipeline.add_argument("-e", "--snpeff", nargs='*', \
 			help="Input options for snpeff, without the '-' before")
-parser.add_argument("-s", "--snpsift", \
-			action="store_true", \
+pipeline.add_argument("-s", "--snpsift", action="store_true", \
 			help="Run snpSift")
-parser.add_argument("-r", "--clean", \
-			action="store_true", \
+pipeline.add_argument("-r", "--clean", action="store_true", \
 			help="Removes the SAM and BAM files")
-parser.add_argument("-p", "--done", \
-			action="store_true", \
+pipeline.add_argument("-p", "--done", action="store_true", \
 			help="Add an empty file to mark the directory as done")
-parser.add_argument("-o", "--outprefix", \
-			help="Output file prefix")
 
-#subparsers = parser.add_subparsers(help="sub-command help")
+# Coverage command
+coverage = subparsers.add_parser("coverage", parents=[input_commands, other_commands, contig_command], \
+				usage="bamboozle.py coverage <args>", \
+				help="Print a statistic for what percentage of bases in an assembly have >=Nx coverage")
 
-#group = subparsers.add_parser("Bamparser", parents=[parser], add_help=False, help='Bamparser')
-group = parser.add_argument_group('Bamparser')
-
-group.add_argument('--coverage', \
-			action="store_true", \
-			help='Print a statistic for what percentage of bases in an assembly have >=Nx coverage')
-group.add_argument('--consensus', \
-			action="store_true", \
-			help='Extract the consensus sequence of aligned reads from a specific region of the reference sequence (WIP)')
-group.add_argument('--zero', \
-			action="store_true", \
-			help='Find areas of zero coverage and print the reference sequence, along with a GC percentage')
-group.add_argument('--deletion1', \
-			action="store_true", \
-			help='Find deletions')
-group.add_argument('--deletion2', \
-			action="store_true", \
-			help='Find deletion events')
-group.add_argument('--deletion3', \
-			action="store_true", \
-			help='Find frameshift deletion events')
-group.add_argument('--deletionx', \
-			action="store_true", \
-			help='Find deletions occurring within exons')
-group.add_argument('--homohetero', \
-			action="store_true", \
-			help='Attempt to determine whether a deletion is homozygous or heterozygous')
-group.add_argument('--median', \
-			action="store_true", \
-			help='Find regions differing from contig median by +/- 50%%, or just contig medians')
-group.add_argument('--long_coverage', \
-			action="store_true", \
-			help='Find the longest region between given coverage limits for a given contig')
-group.add_argument('--complex', \
-			action="store_true", \
-			help='Print full bed output for median')
-group.add_argument('--simple', \
-			action="store_true", \
-			help='Print median coverage only for median')
-group.add_argument('-c', '--contig', \
-			help='Gives per-contig coverage stats')
-group.add_argument('-d', '--threshold', \
-			type=int, \
-			nargs='?', \
-			const='1', \
-			default='20', \
-			help='Threshold for calculating the coverage percentage; default 20')
-group.add_argument("-a", "--range", \
+# Consensus command
+consensus = subparsers.add_parser("consensus", parents=[input_commands, other_commands, ref_command, contig_command], \
+				usage="bamboozle.py consensus <args>", \
+				help="Extract the consensus sequence of aligned reads from a region of the reference (WIP)")
+consensus.add_argument("-a", "--range", \
 			help="somethingsomsing")
-group.add_argument("-m", "--mutations", \
-			help="List of mutation events; currently requires output from bamboozle deletion function")
-group.add_argument("-x", "--exons", \
-			help="Bed file containing exon coordinates (0-based); requires -m")
-group.add_argument("-l", "--limits", \
-			type=int, \
-			nargs=2, \
-			help="Specify lower and upper limits for long_coverage function; two arguments required")
-group.add_argument("-v", "--verbose", \
-			action="store_true", \
-			help="Be more verbose")
-parser.add_argument("--sortbam", \
-			nargs='*', \
-			help=argparse.SUPPRESS)
-group.add_argument('--dev', \
-			help=argparse.SUPPRESS, action="store_true")
 
-#barcode = subparsers.add_parser("barcodesearch", parents=[parser], add_help=False, help='BarcodeSearch')
-barcode = parser.add_argument_group('BarcodeSearch')
+# Zero command
+zero = subparsers.add_parser("zero", parents=[input_commands, other_commands, ref_command, contig_command], \
+				usage="bamboozle.py zero <args>", \
+				help="Find areas of zero coverage and print the reference sequence, along with a GC percentage")
 
-barcode.add_argument("--barcode", \
-			action="store_true", \
-			help="Search the input (sorted) BAM files for suitable barcode regions")
-barcode.add_argument("-q", "--quality", \
-			type=int, \
-			default="20",
+# Deletion1 command
+deletion1 = subparsers.add_parser("deletion1", parents=[input_commands, other_commands, contig_command, threshold_command], \
+				usage="bamboozle.py deletion1 <args>", \
+				help="Find deletions")
+
+# Deletion2 command
+deletion2 = subparsers.add_parser("deletion2", parents=[input_commands, other_commands, contig_command, threshold_command], \
+				usage="bamboozle.py deletion2 <args>", \
+				help="Find deletion events")
+
+# Deletion3 command
+deletion3 = subparsers.add_parser("deletion3", parents=[input_commands, other_commands, contig_command, threshold_command], \
+				usage="bamboozle.py deletion3 <args>", \
+				help="Find frameshift deletion events")
+
+# Deletionx command
+deletionx = subparsers.add_parser("deletionx", parents=[input_commands, other_commands, contig_command, threshold_command], \
+				usage="bamboozle.py deletionx <args>", \
+				help="Find deletions occurring within exons")
+deletionx.add_argument("-x", "--exons", \
+			help="Bed file containing exon coordinates (0-based)")
+
+# Homohetero command
+homohetero = subparsers.add_parser("homohetero", parents=[input_commands, other_commands, contig_command, threshold_command], \
+				usage="bamboozle.py homohetero <args>", \
+				help="Attempt to determine whether a deletion is homozygous or heterozygous")
+
+# Median command
+median = subparsers.add_parser("median", parents=[input_commands, other_commands, contig_command], \
+				usage="bamboozle.py median <args>", \
+				help="Find regions differing from contig median by +/- 50%%, or just contig medians")
+median.add_argument("--complex", action="store_true", \
+			help="Print full bed output for median")
+median.add_argument("--simple", action="store_true", \
+			help="Print median coverage only for median")
+
+# Long_coverage command
+long_coverage = subparsers.add_parser("long_coverage", parents=[input_commands, other_commands, contig_command], \
+				usage="bamboozle.py long_coverage <args>",
+				help="Find the longest region between given coverage limits for a given contig")
+long_coverage.add_argument("-l", "--limits", type=int, nargs=2, \
+			help="Specify lower and upper limits for long_coverage function")
+
+# Barcode command
+barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands, ref_command], \
+				usage="bamboozle.py barcode <args>", \
+				help="Search the input (sorted) BAM files for suitable barcode regions")
+barcode.add_argument("-q", "--quality", type=int, default="20", \
 			help="Quality threshold for filtering variants")
-barcode.add_argument("--window_size", \
-			type=int, \
-			default="5000", \
+barcode.add_argument("--window_size", type=int, default="5000", \
 			help="Window size for barcode search")
-barcode.add_argument("--primer_size", \
-			type=int, \
-			default="21", \
+barcode.add_argument("--primer_size", type=int, default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode")
 
-sv = parser.add_argument_group('SVCaller')
-sv.add_argument("--lof", \
-			action="store_true", \
-			help="Run loss-of-function pipeline")
+# SV caller command
+sv = subparsers.add_parser("lof", parents=[input_commands, other_commands, ref_command], \
+				usage="bamboozle.py lof <args>", \
+				help="Run loss-of-function pipeline")
+sv.add_argument("--snpeffdb", \
+			nargs=1, \
+			help="SnpEff database to use")
 sv.add_argument("-GFF", "--reference_gff", \
 			required = True, \
 			help='Reference GFF with gene models for the reference genome')
@@ -175,7 +204,7 @@ sv.add_argument("-M", "--masking", \
 
 args = parser.parse_args()
 
-if not args.coverage:
+if args.command == "pipeline":
 	if args.feature and args.gff is None:
 	        parser.error("--feature requires --gff")
 	elif args.gff and args.feature is None:
@@ -209,8 +238,7 @@ for item1 in BamparseList:
 #if args.sortbam:
 #	if len(args.sortbam) == 1:
 #		args.sortbam = args.sortbam[0]
-#
-#	elif len(args.sortbam) > 1 and not args.barcode:
+#	elif len(args.sortbam) > 1 and args.command != "barcode":
 #		print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
 #		exit()
 
@@ -566,46 +594,77 @@ def bamparse_func():
 #	if not args.sortbam:
 #		args.sortbam = "Bowtie2/*sorted.bam" 
 
-	if args.coverage:
+	if args.command == "coverage":
+		import modules.coverage_stats as cs
 		check_samtools()
 		if args.gff and not args.outprefix:
 			print("If --gff is specified, please ensure that -o is also specified.")
 			exit()
-		bp.coverage_stats(args)
-	elif args.consensus:
+		if args.dev:
+			import cProfile
+			cProfile.runctx('cs.main(args)', globals(), locals())
+		else:
+			cs.main(args)
+
+	elif args.command == "consensus":
+		import modules.consensus as con
 		if args.ref and args.contig and args.range:
-			bp.extract_sequence(args)
+			if args.dev:
+				import cProfile
+				cProfile.runctx('con.main(args)', globals(), locals())
+			else:
+				con.main(args)
 		else:
 			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
 			exit()
-	elif args.zero:
+
+	elif args.command == "zero":
+		import modules.zero_regions as zr
 		check_bedtools()
 		if args.ref and args.contig:
-			bp.zero_regions(args)
+			if args.dev:
+				import cProfile
+				cProfile.runctx('zr.main(args)', globals(), locals())
+			else:
+				zr.main(args)
 		else:
 			print("Please ensure that a reference [-f] and contig [-c] are given.")
 			exit()
-	elif args.deletion1 or args.deletion2 or args.deletion3 or args.homohetero:
+
+	elif args.command in ["deletion1", "deletion2", "deletion3", "deletionx", "homohetero"]:
+		import modules.deletion as dl
 		check_samtools()
-		bp.deletion(args)
-	elif args.deletionx:
-		check_samtools()
-		if args.exons:
-			check_samtools()
-			bp.deletion(args)
-		else:
+		if args.command == "deletionx" and not args.exons:
 			print("Please ensure that a bed file of exons [-x] is given.")
 			exit()
-	elif args.median:
+		elif args.dev:
+			import cProfile
+			cProfile.runctx('dl.main(args)', globals(), locals())
+		else:
+			dl.main(args)
+
+	elif args.command == "median":
+		import modules.median_deviation as md
 		check_samtools()
 		if args.simple or args.complex:
-			bp.median_deviation(args)
+			if args.dev:
+				import cProfile
+				cProfile.runctx('md.main(args)', globals(), locals())
+			else:
+				md.main(args)
 		else:
 			print("Please specify --simple for medians only or --complex for full output")
 			exit()
-	elif args.long_coverage:
+
+	elif args.command == "long_coverage":
+		import modules.coverage_limits as cl
 		check_samtools()
-		bp.coverage_limits(args)
+		if args.dev:
+			import cProfile
+			cProfile.runctx('cl.main(args)', globals(), locals())
+		else:
+			cl.main(args)
+
 	else:
 		parser.print_help(sys.stderr)
 		exit()
@@ -620,7 +679,7 @@ def main():
 		bam_check(args.bamfile, bam_sorted, bam_index)
 		bamparse_func()
 
-	if args.barcode:
+	if args.command == "barcode":
 		import modules.barcodesearch as bcs
 		check_samtools()
 		check_bcftools()
@@ -638,7 +697,8 @@ def main():
 		except:
 			input_files()
 
-	if not bamparse and not args.barcode and not args.lof:
+	# If the command is not a 'bamparse', barcode or lof command, run [Vilma's pipeline]
+	if not bamparse and args.command not in ["barcode", "lof"]:
 		input_files()
 		#not sure if this is where it should go?
 		bam_check(args.bamfile, bam_sorted, bam_index)
