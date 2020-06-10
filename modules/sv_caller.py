@@ -87,8 +87,8 @@ def masking(vcf_out, refpil, masked_vcf_out):
 
 # Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
 
-def annotate(masked_vcf_out, bam_name):
-	cmd6 = "Rscript --vanilla scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (masked_vcf_out, bam_name)
+def annotate(masked_vcf_out, bam_name, bamboozledir):
+	cmd6 = "Rscript --vanilla %s/scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (bamboozledir, masked_vcf_out, bam_name)
 	proc_6 = subprocess.Popen(cmd6, shell=True)
 	std_out, std_error = proc_6.communicate()
 
@@ -133,8 +133,8 @@ def main(args, bam_name):
 	#only apply masking() if it's been called
 	if args.masking:
 		masking(vcf_out, args.masking, masked_vcf_out)
-		annotate(masked_vcf_out, bam_name)
+		annotate(masked_vcf_out, bam_name, args.bamboozledir)
 		snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
 	else:
-		annotate(vcf_out, bam_name)
+		annotate(vcf_out, bam_name, args.bamboozledir)
 		snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
