@@ -225,8 +225,7 @@ def barcode(args):
 		sys.exit(0)
 
 	# Record all contig lengths
-#	contig_lengths = get_contig_lengths(args.sortbam[0])
-	contig_lengths = get_contig_lengths(args.bamfile[0])
+	contig_lengths = get_contig_lengths(args.sortbam[0])
 
 	# Set initial global lists/dictionaries
 	all_SNPs = {}
@@ -255,11 +254,9 @@ def barcode(args):
 	filter_qual = "%QUAL>" + str(args.quality)
 
 
-#	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
-	print("Searching for potential barcodes in",len(args.bamfile),"file(s).")
+	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
-#	for bam in args.sortbam:
-	for bam in args.bamfile:
+	for bam in args.sortbam:
 		# Generate or read in a VCF file for the current BAM
 		process2 = bcf(bam, contig_lengths, filter_qual, args.threads, args.ref)
 
@@ -317,11 +314,8 @@ def barcode(args):
 	# Compare consensus sequences for all BAMs, to ensure they are truly unique, not merely differing from the reference in all the same positions
 	print("\nChecking consensuses...")
 
-#	to_final = pool.starmap(check_unique_windows, \
-#		[(merged_dict, contig, args.ref, args.sortbam) for contig in contig_lengths])
-
 	to_final = pool.starmap(check_unique_windows, \
-		[(merged_dict, contig, args.ref, args.bamfile) for contig in contig_lengths])
+		[(merged_dict, contig, args.ref, args.sortbam) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]

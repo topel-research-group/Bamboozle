@@ -213,14 +213,12 @@ if args.forward and args.reverse and args.ref is None:
 # DEFINE FUNCTIONS USING BAMPARSER MODULE
 #######################################################################
 
-BamparseList = ["--coverage","--consensus","--zero","--deletion1","--deletion2","--deletion3",\
-		"--deletionx","--homohetero","--median","--long_coverage"]
+BamparseList = ["coverage","consensus","zero","deletion1","deletion2","deletion3",\
+		"deletionx","homohetero","median","long_coverage"]
 
 bamparse = None
-for item1 in BamparseList:
-	for item2 in sys.argv:
-		if item1 == item2:
-			bamparse = True
+if args.command in BamparseList:
+	bamparse = True
 
 #######################################################################
 # HANDLING BAM FILES
@@ -232,12 +230,42 @@ for item1 in BamparseList:
 #		Else warn the user and exit
 #######################################################################
 
-if args.bamfile:
-	if len(args.bamfile) == 1:
-		args.bamfile = args.bamfile[0]
-	elif len(args.bamfile) > 1 and args.command != "barcode":
-		print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
-		exit()
+#extracting sample name from input BAM, checking if sorted or not
+
+# DevNote - the check below can be removed once all functions are capable of accepting multiple inputs
+if len(args.bamfile) > 1 and args.command != "barcode":
+	print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
+	exit()
+
+def bam_check(threads, bam_list):
+	args.sortbam = []
+	for bamfile in bam_list:
+		bam_name = bamfile[:-4]
+		bam_sorted = "%s_sorted.bam" % (bam_name)
+		bam_index = "%s_sorted.bai" % (bam_name)
+
+		#command to check out first line of BAM header and look for "coordinate" (= sorted)
+		cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
+		proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
+
+		#if coordinate is present in bam header, bam is sorted
+		std_out, std_error = proc_1.communicate()
+		if std_out.rstrip('\n') == "coordinate":
+			print("Input BAM " + bamfile + " is already sorted")
+			args.sortbam.append(bamfile)
+		else:
+			print("Input BAM " + bamfile + " is unsorted. Sorting...")
+			cmd2 = "samtools sort -@ %s %s -o %s" % (threads, bamfile,bam_sorted)
+			proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+			std_out, std_error = proc_2.communicate()
+			cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
+			proc_3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+			std_out, std_error = proc_3.communicate()
+			print("Input BAM " + bamfile + " has been sorted")
+			args.sortbam.append(bam_sorted)
+
+	if len(args.sortbam) == 1:
+		args.sortbam = args.sortbam[0]
 
 #######################################################################
 # CHECK DEPENDENCIES
@@ -312,30 +340,6 @@ def timing(function):
 		return result
 	return wrapper
 
-#extracting sample name from input BAM, checking if sorted or not
-bam_name = args.bamfile[:-4]
-bam_sorted = "%s_sorted.bam" % (bam_name)
-bam_index = "%s_sorted.bai" % (bam_name)
-
-def bam_check(bamfile,bam_sorted,bam_index):
-        #command to check out first line of BAM header and look for "coordinate" (= sorted)
-        cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
-        proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
-
-        #if coordinate is present in bam header, bam is sorted
-        std_out, std_error = proc_1.communicate()
-        if std_out.rstrip('\n') == "coordinate":
-                print("Input BAM was already sorted")
-                args.sortbam = args.bamfile
-        else:
-                cmd2 = "samtools sort %s -o %s" % (bamfile,bam_sorted)
-                proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-                std_out, std_error = proc_2.communicate()
-                cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
-                proc_3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-                std_out, std_error = proc_3.communicate()
-                print("Input BAM has been sorted")
-                args.sortbam = bam_sorted
 
 #######################################################################
 # BOWTIE2
@@ -543,12 +547,15 @@ def exit():
 #	Mainly calls the Pipeline module
 #######################################################################
 
+# DevNote - This section will need revising, as it hasn't been addressed
+#		since the early days of the program
+
 def input_files():
 	import modules.pipeline as pl
 	pl.snpEff_test(args)
 
 	if args.sortbam:
-		bam_check(args.bamfile, bam_sorted, bam_index)
+		bam_check(args.threads, args.bamfile)
 		pl.bcftools(args,threads,sorted_bam_out)
 		pl.annotation(args)
 
@@ -584,8 +591,6 @@ def input_files():
 ######################################################################
 
 def bamparse_func():
-	import modules.bamparser as bp
-
 #	input_files()
 
 #	if not args.sortbam:
@@ -670,24 +675,25 @@ def main():
 	if args.command == "lof":
 		import modules.sv_caller as sv
 		check_samtools()
+		bam_check(args.threads, args.bamfile)
 		sv.main(args, bam_name)
 
 	if bamparse:
-		bam_check(args.bamfile, bam_sorted, bam_index)
+		bam_check(args.threads, args.bamfile)
 		bamparse_func()
 
 	if args.command == "barcode":
 		import modules.barcodesearch as bcs
 		check_samtools()
 		check_bcftools()
-#		bam_check(args.bamfile, bam_sorted, bam_index)
+		bam_check(args.threads, args.bamfile)
 		if args.dev:
 			import cProfile
 			cProfile.runctx('bcs.barcode(args)', globals(), locals())
 		else:
 			bcs.barcode(args)
 		
-	if args.gff and args.feature:
+	if args.command == "pipeline":
 		import modules.pipeline as pl
 		try:
 			pl.annotation(args)
@@ -696,9 +702,8 @@ def main():
 
 	# If the command is not a 'bamparse', barcode or lof command, run [Vilma's pipeline]
 	if not bamparse and args.command not in ["barcode", "lof"]:
+		bam_check(args.threads, args.bamfile)
 		input_files()
-		#not sure if this is where it should go?
-		bam_check(args.bamfile, bam_sorted, bam_index)
 
 #######################################################################
 
