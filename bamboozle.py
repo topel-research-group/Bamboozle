@@ -51,9 +51,6 @@ parser.add_argument("-R", "--reverse", \
 			help="Reverse reads")
 parser.add_argument("-b", "--bamfile", \
 			help="BAM infile")
-parser.add_argument("--sortbam", \
-			nargs='*', \
-			help="Sorted BAM infile (N.B. only the BarcodeSearch function accepts multiple inputs)")
 parser.add_argument("--gff", \
 			help="gff infile")
 parser.add_argument("--contigsizes", \
@@ -140,6 +137,9 @@ group.add_argument("-l", "--limits", \
 group.add_argument("-v", "--verbose", \
 			action="store_true", \
 			help="Be more verbose")
+parser.add_argument("--sortbam", \
+			nargs='*', \
+			help=argparse.SUPPRESS)
 group.add_argument('--dev', \
 			help=argparse.SUPPRESS, action="store_true")
 
@@ -161,6 +161,17 @@ barcode.add_argument("--primer_size", \
 			type=int, \
 			default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode")
+
+sv = parser.add_argument_group('SVCaller')
+sv.add_argument("--lof", \
+			action="store_true", \
+			help="Run loss-of-function pipeline")
+sv.add_argument("-GFF", "--reference_gff", \
+			required = True, \
+			help='Reference GFF with gene models for the reference genome')
+sv.add_argument("-M", "--masking", \
+			required = False, \
+			help="Masks found SVs by subtracting SVs found for e.g. additional reads used to correct an assembly")
 
 args = parser.parse_args()
 
@@ -193,13 +204,15 @@ for item1 in BamparseList:
 #	Else warn the user and exit
 #######################################################################
 
-if args.sortbam:
-	if len(args.sortbam) == 1:
-		args.sortbam = args.sortbam[0]
+# DevNote - this will need changing after the removal of the sortbam option
 
-	elif len(args.sortbam) > 1 and not args.barcode:
-		print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
-		exit()
+#if args.sortbam:
+#	if len(args.sortbam) == 1:
+#		args.sortbam = args.sortbam[0]
+#
+#	elif len(args.sortbam) > 1 and not args.barcode:
+#		print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
+#		exit()
 
 #######################################################################
 # CHECK DEPENDENCIES
@@ -245,12 +258,12 @@ sam = name + '.sam'
 bam = name + '.bam'
 
 sorted_bam_out = ""
-if args.sortbam:
-	sorted_bam_out = add + str(args.sortbam)
-else:
-	sorted_bam_out = add2 + name + '_sorted.bam'
-
-sorted_bam_bai = name + '_sorted.bam.bai'
+#if args.sortbam:
+#	sorted_bam_out = add + str(args.sortbam)
+#else:
+#	sorted_bam_out = add2 + name + '_sorted.bam'
+#
+#sorted_bam_bai = name + '_sorted.bam.bai'
 
 #######################################################################
 # TIME DECORATOR
@@ -273,6 +286,31 @@ def timing(function):
 		fh.close()
 		return result
 	return wrapper
+
+#extracting sample name from input BAM, checking if sorted or not
+bam_name = args.bamfile[:-4]
+bam_sorted = "%s_sorted.bam" % (bam_name)
+bam_index = "%s_sorted.bai" % (bam_name)
+
+def bam_check(bamfile,bam_sorted,bam_index):
+        #command to check out first line of BAM header and look for "coordinate" (= sorted)
+        cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
+        proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
+
+        #if coordinate is present in bam header, bam is sorted
+        std_out, std_error = proc_1.communicate()
+        if std_out.rstrip('\n') == "coordinate":
+                print("Input BAM was already sorted")
+                args.sortbam = args.bamfile
+        else:
+                cmd2 = "samtools sort %s -o %s" % (bamfile,bam_sorted)
+                proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                std_out, std_error = proc_2.communicate()
+                cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
+                proc_3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                std_out, std_error = proc_3.communicate()
+                print("Input BAM has been sorted")
+                args.sortbam = bam_sorted
 
 #######################################################################
 # BOWTIE2
@@ -485,14 +523,15 @@ def input_files():
 	pl.snpEff_test(args)
 
 	if args.sortbam:
+		bam_check(args.bamfile, bam_sorted, bam_index)
 		pl.bcftools(args,threads,sorted_bam_out)
 		pl.annotation(args)
 
-	elif args.bamfile:
-		bam_input()
-		samtools_index()
-		pl.bcftools(args,threads,sorted_bam_out)
-		pl.annotation(args)
+#	elif args.bamfile:
+#		bam_input()
+#		samtools_index()
+#		pl.bcftools(args,threads,sorted_bam_out)
+#		pl.annotation(args)
 	else:
 		bowtie2()
 		samtools_view()
@@ -524,8 +563,8 @@ def bamparse_func():
 
 #	input_files()
 
-	if not args.sortbam:
-		args.sortbam = "Bowtie2/*sorted.bam" 
+#	if not args.sortbam:
+#		args.sortbam = "Bowtie2/*sorted.bam" 
 
 	if args.coverage:
 		check_samtools()
@@ -572,13 +611,20 @@ def bamparse_func():
 		exit()
 
 def main():
+	if args.lof:
+		import modules.sv_caller as sv
+		check_samtools()
+		sv.main(args, bam_name)
+
 	if bamparse:
+		bam_check(args.bamfile, bam_sorted, bam_index)
 		bamparse_func()
 
 	if args.barcode:
 		import modules.barcodesearch as bcs
 		check_samtools()
 		check_bcftools()
+		bam_check(args.bamfile, bam_sorted, bam_index)
 		if args.dev:
 			import cProfile
 			cProfile.runctx('bcs.barcode(args)', globals(), locals())
@@ -592,8 +638,10 @@ def main():
 		except:
 			input_files()
 
-	if not bamparse and not args.barcode:
+	if not bamparse and not args.barcode and not args.lof:
 		input_files()
+		#not sure if this is where it should go?
+		bam_check(args.bamfile, bam_sorted, bam_index)
 
 #######################################################################
 
