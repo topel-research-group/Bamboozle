@@ -204,6 +204,12 @@ sv.add_argument("-M", "--masking", \
 
 args = parser.parse_args()
 
+# Get absolute path to Bamboozle directory and assign to args.bamboozledir,
+# so that R scripts can be called relative to Bamboozle regardless of cwd
+
+args.bamboozledir = os.path.dirname(os.path.realpath(__file__))
+
+
 if args.command == "pipeline":
 	if args.feature and args.gff is None:
 	        parser.error("--feature requires --gff")
@@ -690,7 +696,7 @@ def main():
 		else:
 			bcs.barcode(args)
 		
-	if args.gff and args.feature:
+	if args.command == "pipeline":
 		import modules.pipeline as pl
 		try:
 			pl.annotation(args)
