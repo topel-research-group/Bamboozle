@@ -88,7 +88,7 @@ def masking(vcf_out, refpil, masked_vcf_out):
 # Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
 
 def annotate(masked_vcf_out, bam_name):
-	cmd6 = "Rscript --vanilla ../scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (masked_vcf_out, bam_name)
+	cmd6 = "Rscript --vanilla scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (masked_vcf_out, bam_name)
 	proc_6 = subprocess.Popen(cmd6, shell=True)
 	std_out, std_error = proc_6.communicate()
 
@@ -109,11 +109,12 @@ def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_
 #			print('snpEff: Skeletonema database not found, exit program...')
 #			exit()
 #
-	cmd7 = "snpEff eff %s %s -c data/snpeff/snpEff.config -dataDir data/snpeff/%s -csvStats %s > %s" % (snpeffdb, masked_ann_vcf_out, snpeffdb, masked_vcf_out_csv, masked_vcf_out_ann)
+	cmd7 = "snpEff eff %s %s -c data/snpeff/snpEff.config -dataDir data/snpeff/%s -csvStats %s > %s" % (snpeffdb, masked_ann_vcf_out, snpeffdb, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
 	proc_7 = subprocess.Popen(cmd7, shell=True)
-	std_out, std_error = proc_5.communicate()
+	std_out, std_error = proc_7.communicate()
 
 def main(args, bam_name):
+	print(os.getcwd())
 	#gridss java
 	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
 	#outputs for gridss
@@ -122,13 +123,19 @@ def main(args, bam_name):
 	#outputs for bedtools
 	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
 	#output for R script
-	masked_ann_vcf_out =  "sv_caller_output/%s_.sv.annotated.vcf" % (bam_name)
+	masked_ann_vcf_out =  "sv_caller_output/%s.sv.annotated.vcf" % (bam_name)
 	#outputs for snpeff
 	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
 	masked_vcf_out_lof_ann = "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
 
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
-	masking(vcf_out, args.masking, masked_vcf_out)
-	annotate(masked_vcf_out, bam_name)
+	#only apply masking() if it's been called
+	if len(args.masking) == 1:
+		masking(vcf_out, args.masking, masked_vcf_out)
+	#if masking() has been called, apply annotate to output, if not apply to gridss output
+	if len(args.masking) == 1:
+		annotate(masked_vcf_out, bam_name)
+	else:
+		annotate(vcf_out, bam_name)
 	snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
