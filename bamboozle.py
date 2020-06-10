@@ -670,7 +670,7 @@ def bamparse_func():
 		exit()
 
 def main():
-	if args.lof:
+	if args.command == "lof":
 		import modules.sv_caller as sv
 		check_samtools()
 		sv.main(args, bam_name)
