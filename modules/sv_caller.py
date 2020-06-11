@@ -93,7 +93,7 @@ def annotate(masked_vcf_out, bam_name, bamboozledir):
 	std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
-def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
+def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, bamboozledir2, snpeffdb2, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
 
 	#SnpEff database being pulled locally from /home/andre/snpEff.config
 	#maybe put it elsewhere? create a v112 SnpEff db?
@@ -109,12 +109,11 @@ def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_
 #			print('snpEff: Skeletonema database not found, exit program...')
 #			exit()
 #
-	cmd7 = "snpEff eff %s %s -c data/snpeff/snpEff.config -dataDir data/snpeff/%s -csvStats %s > %s" % (snpeffdb, masked_ann_vcf_out, snpeffdb, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+	cmd7 = "snpEff eff %s %s -c %s/data/snpeff/snpEff.config -dataDir %s/data/snpeff/%s -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir1, bamboozledir2, snpeffdb2, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_7.communicate()
 
 def main(args, bam_name):
-	print(os.getcwd())
 	#gridss java
 	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
 	#outputs for gridss
@@ -128,13 +127,16 @@ def main(args, bam_name):
 	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
 	masked_vcf_out_lof_ann = "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
 
+	#clean database variable
+	snpeff_db = str(args.snpeffdb).strip('[]')
+
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	#only apply masking() if it's been called
 	if args.masking:
 		masking(vcf_out, args.masking, masked_vcf_out)
 		annotate(masked_vcf_out, bam_name, args.bamboozledir)
-		snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, args.bamboozledir, snpeff_db, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
 	else:
 		annotate(vcf_out, bam_name, args.bamboozledir)
-		snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, args.bamboozledir, snpeff_db, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
