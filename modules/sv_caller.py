@@ -94,25 +94,8 @@ def annotate(masked_vcf_out, bam_name, bamboozledir):
 
 # Checks for dependencies required for snpEff.
 def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, bamboozledir2, snpeffdb2, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
+	cmd7 = "snpEff eff %s %s -c %s/data/snpeff/snpEff.config -dataDir %s/data/snpeff/%s -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir2, snpeffdb2, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
 
-	#SnpEff database being pulled locally from /home/andre/snpEff.config
-	#maybe put it elsewhere? create a v112 SnpEff db?
-
-	#REWRITE THIS
-#	try:
-#		cmd6 = "snpEff databases | grep Smarinoi.v112"
-#		################## this didn't work last I tried, check snpeff database!
-#		proc_6 = subprocess.check_output(cmd6, shell=True)
-#
-#	except subprocess.CalledProcessError as e:
-#		if e.returncode >= 1:
-#			print('snpEff: Skeletonema database not found, exit program...')
-#			exit()
-#
-	cmd7 = "snpEff eff %s %s -dataDir %s/data/snpeff/%s -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir2, snpeffdb2, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-	
-	#bamboozledir1
-	#-c %s/data/snpeff/snpEff.config
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_7.communicate()
 
@@ -132,6 +115,9 @@ def main(args, bam_name):
 
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
+	
+	#modify snpeff config file
+	
 
 	#calling functions for sv_caller
 	ref_check(args.ref)
@@ -140,9 +126,7 @@ def main(args, bam_name):
 	if args.masking:
 		masking(vcf_out, args.masking, masked_vcf_out)
 		annotate(masked_vcf_out, bam_name, args.bamboozledir)
-		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, snpeff_db, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-	#args.bamboozledir
+		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, args.bamboozledir, snpeff_db, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
 	else:
 		annotate(vcf_out, bam_name, args.bamboozledir)
-		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, snpeff_db, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-	#args.bamboozledir
+		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, args.bamboozledir, snpeff_db, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
