@@ -85,8 +85,7 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 	temp_bed = "temporary_bed_file"
 
 	if os.path.isfile(temp_bed) == True:
-		print("Temporary file can't be written; please ensure",temp_bed,"is not a file.")
-		sys.exit(1)
+		sys.exit("[Error] Temporary file temporary_bed_file already exists.")
 
 	for item in mutation_list:
 		with open(temp_bed, "a") as output_file:
@@ -126,8 +125,7 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 			if int(next[1]) - int(after[1]) != 1:
 				del coverage[0]
 		else:
-			print("Whoops, something went wrong!")
-			sys.exit()
+			sys.exit("[Error] Whoops, something went wrong!")
 
 	# Delete the temporary file
 	os.remove(temp_bed)

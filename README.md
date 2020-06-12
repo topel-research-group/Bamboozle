@@ -51,12 +51,6 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 ## More information  
 * [Wiki](https://github.com/topel-research-group/Bamboozle/wiki)  
 
-## Non-zero exit codes
-
-| Exit code |           Cause            |
-|-----------|----------------------------|
-|     1     | Output file already exists |
-
 
 ## Additional notes
 * `coverage`

@@ -75,8 +75,7 @@ def main(args):
 	if args.outprefix:
 		outfile = args.outprefix + ".bed"
 		if os.path.isfile(outfile) == True:
-			print("Warning: Output file",outfile,"already exists. Please choose another output prefix.")
-			sys.exit(1)
+			sys.exit("[Error] Output file already exists. Please choose another output prefix.")
 
 	# Generate a dictionary of dictionaries of lists; contig -> gene name -> coordinates
 	in_gff_loci = {}
