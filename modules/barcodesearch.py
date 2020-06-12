@@ -81,6 +81,10 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 		print(contig)
 	variant_dict[contig_name].append(variant_position)
 
+	# If the VCF contains heterozygous sites (i.e. was made outside of Bamboozle), give warning
+	if not vcf_row.split("\t")[9].startswith("1/1"):
+		print("Heterozygous site at position " + variant_position + "; proceed with caution.")
+
 	if "INDEL" in vcf_row.split("\t")[7]:
 		indel_dict[contig_name].append(variant_position)
 	else:
@@ -210,6 +214,7 @@ def check_unique_windows(windows, contig, reference, infiles):
 # Main function
 
 def barcode(args):
+
 	# Set number of threads
 	pool = Pool(processes = int(args.threads))
 
@@ -257,6 +262,8 @@ def barcode(args):
 	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
 	for bam in args.sortbam:
+		vcf_file = FileName(bam) + ".vcf"
+
 		# Generate or read in a VCF file for the current BAM
 		process2 = bcf(bam, contig_lengths, filter_qual, args.threads, args.ref)
 
@@ -272,7 +279,6 @@ def barcode(args):
 
 		# If a VCF file doesn't already exist, generate one, generate variant the list, then bgzip and index the new VCF
 		else:
-			vcf_file = FileName(bam) + ".vcf"
 			with process2.stdout as result2, open(vcf_file, "a") as output_file:
 				rows2 = (line.decode() for line in result2)
 				for row2 in rows2:
