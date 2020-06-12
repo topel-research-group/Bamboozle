@@ -71,7 +71,7 @@ input_commands.add_argument("-b", "--bamfile", nargs="*", \
 ## Other
 other_commands = argparse.ArgumentParser(add_help=False)
 other_commands.add_argument("-t", "--threads", default=1, \
-				help="Number of threads to use (note: not currently implemented for all functions)")
+				help="Number of threads to use (note: not currently implemented for all functions) (default: 1)")
 other_commands.add_argument("-o", "--outprefix", \
 				help="Output file prefix")
 other_commands.add_argument("-v", "--verbose", action="store_true", \
@@ -92,7 +92,7 @@ contig_command.add_argument("-c", "--contig", \
 # Arguments included only in deletion1, deletion2, deletion3, deletionx, and homohetero
 threshold_command = argparse.ArgumentParser(add_help=False)
 threshold_command.add_argument('-d', '--threshold', type=int, nargs='?', const='1', default='20', \
-				help='Threshold for calculating the coverage percentage; default 20')
+				help='Threshold for calculating the coverage percentage (default: 20)')
 
 # Pipeline command
 pipeline = subparsers.add_parser("pipeline", parents=[input_commands, other_commands, ref_command], \
@@ -178,11 +178,11 @@ barcode = subparsers.add_parser("barcode", parents=[input_commands, other_comman
 				usage="bamboozle.py barcode <args>", \
 				help="Search the input (sorted) BAM files for suitable barcode regions")
 barcode.add_argument("-q", "--quality", type=int, default="20", \
-			help="Quality threshold for filtering variants")
+			help="Quality threshold for filtering variants (default: 20)")
 barcode.add_argument("--window_size", type=int, default="5000", \
-			help="Window size for barcode search")
+			help="Window size for barcode search (default: 5000)")
 barcode.add_argument("--primer_size", type=int, default="21", \
-			help="Desired size of conserved regions at beginning and end of barcode")
+			help="Desired size of conserved regions at beginning and end of barcode (default: 21)")
 
 # SV caller command
 sv = subparsers.add_parser("lof", parents=[input_commands, other_commands, ref_command], \
