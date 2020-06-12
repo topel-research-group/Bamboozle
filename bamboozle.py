@@ -254,7 +254,8 @@ def bam_check(threads, bam_list):
 		#if coordinate is present in bam header, bam is sorted
 		std_out, std_error = proc_1.communicate()
 		if std_out.rstrip('\n') == "coordinate":
-			print("Input BAM " + bamfile + " is already sorted")
+			if args.verbose:
+				print("Input BAM " + bamfile + " is already sorted")
 			args.sortbam.append(bamfile)
 		else:
 			print("Input BAM " + bamfile + " is unsorted. Sorting...")
