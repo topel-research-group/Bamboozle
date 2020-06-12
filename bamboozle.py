@@ -89,17 +89,20 @@ contig_command = argparse.ArgumentParser(add_help=False)
 contig_command.add_argument("-c", "--contig", \
 				help="Gives per-contig coverage stats")
 
-# Arguments included only in deletion1, deletion2, deletion3, deletionx, and homohetero
+# Arguments included only in coverage, deletion1, deletion2, deletion3, deletionx, and homohetero
 threshold_command = argparse.ArgumentParser(add_help=False)
 threshold_command.add_argument('-d', '--threshold', type=int, nargs='?', const='1', default='20', \
 				help='Threshold for calculating the coverage percentage (default: 20)')
 
+# Arguments included only in pipeline and coverage 
+gff_command = argparse.ArgumentParser(add_help=False)
+gff_command.add_argument("--gff", \
+				help="gff infile")
+
 # Pipeline command
-pipeline = subparsers.add_parser("pipeline", parents=[input_commands, other_commands, ref_command], \
+pipeline = subparsers.add_parser("pipeline", parents=[input_commands, other_commands, ref_command, gff_command], \
 				usage="bamboozle.py pipeline <args>", \
 				help="[Vilma's pipeline]")
-pipeline.add_argument("--gff", \
-			help="gff infile")
 pipeline.add_argument("--contigsizes", \
 			help="Contig sizes for gff parser")
 pipeline.add_argument("--feature", \
@@ -114,7 +117,7 @@ pipeline.add_argument("-p", "--done", action="store_true", \
 			help="Add an empty file to mark the directory as done")
 
 # Coverage command
-coverage = subparsers.add_parser("coverage", parents=[input_commands, other_commands, contig_command], \
+coverage = subparsers.add_parser("coverage", parents=[input_commands, other_commands, contig_command, threshold_command, gff_command], \
 				usage="bamboozle.py coverage <args>", \
 				help="Print a statistic for what percentage of bases in an assembly have >=Nx coverage")
 
