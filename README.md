@@ -17,20 +17,19 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 |                   Function                   |                                        Example syntax                                         |                                              Notes                                              |
 |----------------------------------------------|-----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
 | FASTQ input                                  | `bamboozle.py -f <REFERENCE> -F <FORWARD READS> -R <REVERSE READS>`                           | Run pipeline from beginning and align reads using Bowtie2
-| (Unsorted) BAM input                         | `bamboozle.py -f <REFERENCE> -b <BAMFILE>`                                                    | Skips aligning step and starts from the SAMtools step
-| (Sorted) BAM input                           | `bamboozle.py -f <REFERENCE> --sortbam <SORTED BAMFILE>`                                      | Skips Bowtie2 and SAMtools, starts at BCFtools for SNP calling
-| Coverage statistics                          | `bamboozle.py --coverage --sortbam <BAMFILE> [-c <CONTIG>] [-d <THRESHOLD>] [-o <OUTPREFIX>] [--gff <GFF>]` | Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage; can also output this information (and overlapping genes) in a BED file |
-| Consensus sequence                           | `bamboozle.py --consensus -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG> -a <RANGE>`          | Extracting consensus sequence of aligned reads from a specific region of the reference sequence |
-| Zero coverage                                | `bamboozle.py --zero -f <REFERENCE> --sortbam <BAMFILE> -c <CONTIG>`                          | Finding areas of zero coverage and printing the reference sequence, along with a GC percentage  |
-| Identify deletions 1                         | `bamboozle.py --deletion1 --sortbam <BAMFILE> [-c <CONTIG>]`                                  | Identify deletions and print every deletion position                                            |
-| Identify deletions 2                         | `bamboozle.py --deletion2 --sortbam <BAMFILE> [-c <CONTIG>]`                                  | Identify deletions and combine adjacent positions into discrete events                          |
-| Identify deletions 3                         | `bamboozle.py --deletion3 --sortbam <BAMFILE> [-c <CONTIG>]`                                  | Identify deletions and only report events resulting in a frameshift (i.e. not divisible by 3)   |
-| Idenitfy deletions within exons              | `bamboozle.py --deletionx --sortbam <BAMFILE> -x <EXONS> [-c <CONTIG>]`                       | Identify deletions events occuring within exons                                                 |
-| Identify homozygous/heterozygous deletions   | `bamboozle.py --homohetero --sortbam <BAMFILE> [-c <CONTIG>]`                                 | Compares coverage between a deletion and the previous position to try and determine whether a deletion is homozygous or heterozygous |
-| Identify deviation from median (complex)     | `bamboozle.py --median --complex [-c <CONTIG>] --sortbam <BAMFILE> > <output.bed>`            | Find regions which differ from the contig median by +/- 50%, and output them in .bed format     |
-| Identify deviation from median (simple)      | `bamboozle.py --median --simple [-c <CONTIG>] --sortbam <BAMFILE> > <output.txt>`             | Output the median for one or all contigs in .txt format                                         |
-| Identify longest stretch of a given coverage | `bamboozle.py --long_coverage --sortbam <BAMFILE> -c <CONTIG> -l <LOWER LIMIT> <UPPER LIMIT>` | Identify the longest stretch in a given contig which has coverage between two specified limits |
-| Identify potential barcode regions           | `bamboozle.py --barcode -f <REFERENCE> --sortbam <BAMFILE1> <BAMFILE2> <...> -o <OUTPREFIX> [-q <QUALITY>] [--window_size <X>] [--primer_size <Y>]` | Output BED and TXT files of coordinates for potential barcoding regions in the specified BAM files     |
+| (Sorted) BAM input                           | `bamboozle.py -f <REFERENCE> -b <BAMFILE>`                                                    | Skips Bowtie2 and SAMtools, starts at BCFtools for SNP calling
+| Coverage statistics                          | `bamboozle.py coverage -b <BAMFILE> [-c <CONTIG>] [-d <THRESHOLD>] [-o <OUTPREFIX>] [--gff <GFF>]` | Retrieving a statistic for what percentage of bases in an assembly have >= Nx coverage; can also output this information (and overlapping genes) in a BED file |
+| Consensus sequence                           | `bamboozle.py consensus -f <REFERENCE> -b <BAMFILE> -c <CONTIG> -a <RANGE>`          | Extracting consensus sequence of aligned reads from a specific region of the reference sequence |
+| Zero coverage                                | `bamboozle.py zero -f <REFERENCE> -b <BAMFILE> -c <CONTIG>`                          | Finding areas of zero coverage and printing the reference sequence, along with a GC percentage  |
+| Identify deletions 1                         | `bamboozle.py deletion1 -b <BAMFILE> [-c <CONTIG>]`                                  | Identify deletions and print every deletion position                                            |
+| Identify deletions 2                         | `bamboozle.py deletion2 -b <BAMFILE> [-c <CONTIG>]`                                  | Identify deletions and combine adjacent positions into discrete events                          |
+| Identify deletions 3                         | `bamboozle.py deletion3 -b <BAMFILE> [-c <CONTIG>]`                                  | Identify deletions and only report events resulting in a frameshift (i.e. not divisible by 3)   |
+| Idenitfy deletions within exons              | `bamboozle.py deletionx -b <BAMFILE> -x <EXONS> [-c <CONTIG>]`                       | Identify deletions events occuring within exons                                                 |
+| Identify homozygous/heterozygous deletions   | `bamboozle.py homohetero -b <BAMFILE> [-c <CONTIG>]`                                 | Compares coverage between a deletion and the previous position to try and determine whether a deletion is homozygous or heterozygous |
+| Identify deviation from median (complex)     | `bamboozle.py median --complex [-c <CONTIG>] -b <BAMFILE> > <output.bed>`            | Find regions which differ from the contig median by +/- 50%, and output them in .bed format     |
+| Identify deviation from median (simple)      | `bamboozle.py median --simple [-c <CONTIG>] -b <BAMFILE> > <output.txt>`             | Output the median for one or all contigs in .txt format                                         |
+| Identify longest stretch of a given coverage | `bamboozle.py long_coverage -b <BAMFILE> -c <CONTIG> -l <LOWER LIMIT> <UPPER LIMIT>` | Identify the longest stretch in a given contig which has coverage between two specified limits  |
+| Identify potential barcode regions           | `bamboozle.py barcode -f <REFERENCE> -b <BAMFILE1> <BAMFILE2> <...> -o <OUTPREFIX> [-q <QUALITY>] [--window_size <X>] [--primer_size <Y>]` | Output BED and TXT files of coordinates for potential barcoding regions in the specified BAM files     |
 
 ***  
 | Utility script | Description |  
@@ -54,7 +53,7 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
 
 
 ## Additional notes
-* `--coverage`
+* `coverage`
   * `-c` flag is optional; if not specified, analysis will be run on the whole assembly
   * `-d` flag is optional; if not specified, coverage of >= 20x will be reported
   * If the `-o` flag is specified, a BED file of regions with coverage above the threshold will be generated
@@ -62,25 +61,25 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
   * Requires a version of samtools which allows the `depth -aa` option
   * Percentage values are rounded to 3 decimal places
 
-* `--consensus`
+* `consensus`
   * This function needs to be fixed...
 
-* `--zero`
+* `zero`
   * Percentage values are rounded to 3 decimal places
 
-* `--deletion1`, `--deletion2`, `--deletion3`, `--deletionx` and `--homohetero`
+* `deletion1`, `deletion2`, `deletion3`, `deletionx` and `homohetero`
   * `-c` flag is optional; if not specified, analysis will be run on the whole assembly
   * These functions use the default threshold of 20 for assessing the surrounding coverage;
     `-t` can therefore be used to try and find deletions in lower-coverage areas,
     however this hasn't been extensively tested
 
-* `--deletionx`
+* `deletionx`
   * `-x` flag - a .bed file of exons - is required
 
-* `--homohetero`
+* `homohetero`
   * Currently generates an (automatically-deleted) intermediate file
 
-* `--barcode`
+* `barcode`
   * Note that the bed file output uses 0-based coordinates, so the start positions are one lower
     than the actual start positions; the coordinates in the txt file output are correct
   * In addition to the bed and txt file output, this function also generates bgzipped vcf files
@@ -106,19 +105,15 @@ The steps include mapping, SNP calling, Fst statistics, filtering and plotting o
     * Try `mmap`? (https://www.quora.com/What-are-the-fastest-ways-to-read-text-lines-in-large-files-by-Python)
 
 * SPEED-UP CAN BE ACHIEVED USING `samtools depth -aa -r`
-  * Can't speed up functions which use `bedtools genomecov`, e.g. `--zero`
+  * Can't speed up functions which use `bedtools genomecov`, e.g. `zero`
     * Speed is definitely an issue here...
 * Code can be simplified thanks to this flag...
 
 * Add function for giving MEAN average, instead of/as well as median
 
-* `--homohetero` function bugs out if there is only one event in a given contig (`next` never assigned)
+* `homohetero` function bugs out if there is only one event in a given contig (`next` never assigned)
 
-* Play with groupings in help file
-
-* Additional features must be added to BarcodeSearch
-  * Determination of how samples differ from each other, as well as differing from the reference
-  * Allow the use of unsorted BAM input
+* Add mutual exclusivity to FASTQ/BAM input
 
 ## Known bugs
 * In the consensus sequence function, it is possible for two different comma-separated alternatives to be printed
