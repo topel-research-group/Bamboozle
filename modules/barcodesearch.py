@@ -264,6 +264,8 @@ def barcode(args):
 		print("\nFinding variants...")
 		current_contig = ""
 		if os.path.isfile(FileName(bam) + ".vcf.gz") == True:
+			if os.path.isfile(FileName(bam) + ".vcf.gz.csi") == False:
+				os.system("bcftools index --threads " + str(args.threads) + " " + vcf_file + ".gz")
 			for row2 in process2:
 				if not row2.startswith("#"):
 					current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
@@ -279,8 +281,7 @@ def barcode(args):
 						current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 			output_file.close()
 			os.system("bgzip -@ " + str(args.threads) + " " + vcf_file)
-		if os.path.isfile(FileName(bam) + ".vcf.gz.csi") == False:
-			os.system("bcftools index --threads " + str(args.threads) + " " + vcf_file + ".gz")
+			os.system("bcftools index -f --threads " + str(args.threads) + " " + vcf_file + ".gz")
 
 	# Get sorted lists of variant/SNP/indel positions, with duplicates removed
 	for contig in all_variants:
