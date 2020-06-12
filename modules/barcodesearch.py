@@ -224,10 +224,10 @@ def barcode(args):
 
 	if os.path.isfile(out_bed) == True:
 		print("Warning: Output file",out_bed,"already exists. Please choose another output prefix.")
-		sys.exit(0)
+		sys.exit(1)
 	if os.path.isfile(out_txt) == True:
 		print("Warning: Output file",out_txt,"already exists. Please choose another output prefix.")
-		sys.exit(0)
+		sys.exit(1)
 
 	# Record all contig lengths
 	contig_lengths = get_contig_lengths(args.sortbam[0])

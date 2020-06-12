@@ -77,7 +77,7 @@ def main(args):
 
 	if args.outprefix and os.path.isfile(outfile) == True:
 		print("The specified output file already exists; please adjust output prefix name [-o] or delete existing file.")
-		sys.exit()
+		sys.exit(1)
 
 	# Generate a dictionary of dictionaries of lists; contig -> gene name -> coordinates
 	if args.gff:

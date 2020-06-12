@@ -86,7 +86,7 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 
 	if os.path.isfile(temp_bed) == True:
 		print("Temporary file can't be written; please ensure",temp_bed,"is not a file.")
-		sys.exit()
+		sys.exit(1)
 
 	for item in mutation_list:
 		with open(temp_bed, "a") as output_file:
