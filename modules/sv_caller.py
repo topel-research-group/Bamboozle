@@ -116,8 +116,17 @@ def main(args, bam_name):
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
 	
-	#modify snpeff config file
-	
+	#location of snpeff config file
+	config_file = "%s/data/snpeff/snpEff.config" %s (args.bamboozledir)
+	#location of genome file
+	genome_loc = "%s/data/snpeff/" %s (args.bamboozledir)
+
+#	#modify snpeff config file
+#	with open(config_file, "w") as config:
+#		for line in lines:
+#			if line.strip().startswith("data.dir"):
+#				config.write("data.dir  = " + genome_loc)
+#	config.close()
 
 	#calling functions for sv_caller
 	ref_check(args.ref)
