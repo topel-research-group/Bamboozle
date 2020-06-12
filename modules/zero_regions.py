@@ -84,10 +84,6 @@ def zero_print(reference, contig, zero_dict):
 ## DevNote - How to ensure that bam is sorted?
 
 def main(args):
-	if not args.contig or not args.ref or not args.sortbam:
-		print("Please ensure all required flags are specified; see readme file")
-		sys.exit()
-
 	if args.verbose == True:
 		print("Finding zero coverage areas in contig",args.contig)
 
