@@ -93,9 +93,12 @@ def annotate(masked_vcf_out, bam_name, bamboozledir):
 	std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
-def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, bamboozledir2, snpeffdb2, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
-	cmd7 = "snpEff eff %s %s -c %s/data/snpeff/snpEff.config -dataDir %s/data/snpeff/%s -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir2, snpeffdb2, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
+	cmd7 = "snpEff eff %s %s -c %s/data/snpeff/snpEff.config -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
 
+# bamboozledir2, snpeffdb2,
+# bamboozledir2, snpeffdb2,
+#-dataDir %s/data/snpeff/%s
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_7.communicate()
 
@@ -117,9 +120,9 @@ def main(args, bam_name):
 	snpeff_db = str(args.snpeffdb).strip('[]')
 	
 	#location of snpeff config file
-	config_file = "%s/data/snpeff/snpEff.config" %s (args.bamboozledir)
+	config_file = "%s/data/snpeff/snpEff.config" % (args.bamboozledir)
 	#location of genome file
-	genome_loc = "%s/data/snpeff/" %s (args.bamboozledir)
+	genome_loc = "%s/data/snpeff/" % (args.bamboozledir)
 
 #	#modify snpeff config file
 #	with open(config_file, "w") as config:
@@ -135,7 +138,9 @@ def main(args, bam_name):
 	if args.masking:
 		masking(vcf_out, args.masking, masked_vcf_out)
 		annotate(masked_vcf_out, bam_name, args.bamboozledir)
-		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, args.bamboozledir, snpeff_db, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir,masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+#args.bamboozledir, snpeff_db,
 	else:
 		annotate(vcf_out, bam_name, args.bamboozledir)
-		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, args.bamboozledir, snpeff_db, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+#args.bamboozledir, snpeff_db,
