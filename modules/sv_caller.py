@@ -4,13 +4,6 @@
 #André Soares - 15/04/2020
 #Pseudocode for a script calling SVs and inferring their LOF potential from BAM/SAM files
 
-#Outputs: 
-#	1) VCF files of alterations in gene models, with LOF prediction.
-#	2) summary tables of alterations that should include type (deletion, insertion, inversion, duplication, other genomic rearrangmements),
-#size in bp, quality of call, LOF potential, gene product, genomic location, zygosity, ?...
-
-#5. Run snpEff snpSift to obtain summary tables
-
 #	SVCaller provides a pipeline to call and annotate structural variants
 #	from reads mapped to a reference genome.
 #
