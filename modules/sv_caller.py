@@ -95,10 +95,6 @@ def annotate(masked_vcf_out, bam_name, bamboozledir):
 # Checks for dependencies required for snpEff.
 def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
 	cmd7 = "snpEff eff %s %s -c %s/data/snpeff/snpEff.config -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-
-# bamboozledir2, snpeffdb2,
-# bamboozledir2, snpeffdb2,
-#-dataDir %s/data/snpeff/%s
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_7.communicate()
 
@@ -139,8 +135,6 @@ def main(args, bam_name):
 		masking(vcf_out, args.masking, masked_vcf_out)
 		annotate(masked_vcf_out, bam_name, args.bamboozledir)
 		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir,masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-#args.bamboozledir, snpeff_db,
 	else:
 		annotate(vcf_out, bam_name, args.bamboozledir)
 		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-#args.bamboozledir, snpeff_db,
