@@ -94,7 +94,7 @@ def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv,
 # Filters SnpEff (and GRIDSS) annotations and tidies headers
 def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean):
 	#removes FORMAT, INFO fields
-	cmd8 = "bcftools annotate -x FORMAT,INFO %s -Oz -o %s.gz && tabix -p %s.gz"  % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt)
+	cmd8 = "bcftools annotate -x FORMAT,INFO %s -Oz -o %s.gz && tabix -p vcf  %s.gz"  % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt)
 	proc_8 = subprocess.Popen(cmd8, shell=True)
 	std_out, std_error = proc_8.communicate()
 	#bgzips, indexes filt file
