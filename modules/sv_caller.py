@@ -92,23 +92,19 @@ def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv,
 	std_out, std_error = proc_7.communicate()
 
 # Filters SnpEff (and GRIDSS) annotations and tidies headers
-def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt):
-	#filters files
-	cmd8 = "bcftools query -f '%CHROM:%POS:%REF:%ALT %INFO/EVENT:%INFO/REF:%INFO/RP:%INFO/RPQ:%INFO/SVLEN:%INFO/SVTYPE:%INFO/SIMPLE_TYPE:%INFO/ANN:%INFO/LOF:%INFO/NMD\n' %s > %s"  % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt)
+def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean):
+	#removes FORMAT, INFO fields
+	cmd8 = "bcftools annotate -x FORMAT,INFO %s -Oz -o %s.gz && tabix -p %s.gz"  % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt)
 	proc_8 = subprocess.Popen(cmd8, shell=True)
-        std_out, std_error = proc_8.communicate()
-	#grabs headers from original vcf
-	cmd9 = "bcftools view -h %s > header.txt" % (masked_vcf_out_lof_ann)
+	std_out, std_error = proc_8.communicate()
+	#bgzips, indexes filt file
+	cmd9 = "bgzip %s && tabix -p vcf %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann)
 	proc_9 = subprocess.Popen(cmd9, shell=True)
-        std_out, std_error = proc_9.communicate()
-	#filters headers from original vcf
-	cmd10 = "grep -w 'fileformat\|REF\|RP\|RPQ\|SVLEN\|SVTYPE\|SIMPLE_TYPE\|ANN\|LOF\|NMD\|CHROM' header.txt > new_header.txt"
+	std_out, std_error = proc_9.communicate()
+	#adds only relevant header columns from filt file
+	cmd10 = " bcftools annotate -c INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD -a %s.gz %s.gz -Oz -o %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt_clean)
 	proc_10 =  subprocess.Popen(cmd10, shell=True)
 	std_out, std_error = proc_10.communicate()
-	#reheaders filtered vcf 
-	cmd11 = "bcftools reheader -h new_header.txt %s > %s" % (masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
-	proc_11 =  subprocess.Popen(cmd11, shell=True)
-        std_out, std_error = proc_11.communicate()
 
 def main(args, bam_name):
 	#gridss java
@@ -150,8 +146,8 @@ def main(args, bam_name):
 		masking(vcf_out, args.masking, masked_vcf_out)
 		annotate(masked_vcf_out, bam_name, args.bamboozledir)
 		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir,masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt)
+		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
 	else:
 		annotate(vcf_out, bam_name, args.bamboozledir)
 		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt)
+		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
