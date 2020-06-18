@@ -62,8 +62,6 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 	if not os.path.exists('sv_caller_output'):
 		os.makedirs('sv_caller_output')
 
-#	log_file=open('sv_caller_run.log','a')
-
 	cmd4 = "gridss.sh %s -r %s -a %s -o %s -t %s -j %s" % (bamfile, reference, assembly_bam_out, vcf_out, threads, java_gridss)
 	proc_4 = subprocess.Popen(cmd4, shell=True)
 	
@@ -125,19 +123,6 @@ def main(args, bam_name):
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
 	
-	#location of snpeff config file
-	config_file = "%s/data/snpeff/snpEff.config" % (args.bamboozledir)
-	#location of genome file
-	genome_loc = "%s/data/snpeff/" % (args.bamboozledir)
-
-#	#modify snpeff config file
-#	with open(config_file, "w") as config:
-#		for line in lines:
-#			if line.strip().startswith("data.dir"):
-#				config.write("data.dir  = " + genome_loc)
-#	config.close()
-
-
 	#calling functions for sv_caller
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
