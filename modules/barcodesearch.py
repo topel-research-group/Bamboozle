@@ -64,7 +64,7 @@ def bcf(infile, contig_list, quality, threads, reference):
 		process2 = gzip.open(FileName(infile) + ".vcf.gz", 'rt')
 	else:
 		cmd2 = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv | \
-			bcftools filter --threads %s -i '%s & GT=\"hom\"'" % \
+			bcftools filter --threads %s -i '%s'" % \
 			(threads, reference, infile, threads, threads, quality)]
 		process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 	return(process2)
@@ -80,10 +80,6 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 		contig = contig_name
 		print(contig)
 	variant_dict[contig_name].append(variant_position)
-
-	# If the VCF contains heterozygous sites (i.e. was made outside of Bamboozle), give warning
-	if not vcf_row.split("\t")[9].startswith("1/1"):
-		print("Heterozygous site at position " + variant_position + "; proceed with caution.")
 
 	if "INDEL" in vcf_row.split("\t")[7]:
 		indel_dict[contig_name].append(variant_position)
@@ -150,7 +146,9 @@ def check_unique_windows(windows, contig, reference, infiles):
 		for bam in infiles:
 			compare_seqs[FileName(bam)] = ""
 			vcf_zipped = FileName(bam) + ".vcf.gz"
-			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus --sample %s %s" % \
+
+			# In the interest of identifying reliable barcodes, only homozygous sites are considered
+			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus -i 'GT=\"hom\"' --sample %s %s" % \
 				(reference, contig, windows[contig][window][0], windows[contig][window][3], bam, vcf_zipped)]
 			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 			with process3.stdout as result3:
@@ -340,8 +338,6 @@ def barcode(args):
 				window_SNPs = 0
 				window_indels = 0
 
-				window_name = str(contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
-
 				conserved_1_start = final_dict[contig][window][0]
 				conserved_1_stop = final_dict[contig][window][1] - 1
 				variable_start = final_dict[contig][window][1]
@@ -362,6 +358,8 @@ def barcode(args):
 				for indel in all_indels[contig]:
 					if variable_start < int(indel) < variable_stop:
 						window_indels += 1
+
+				window_name = str(contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
 
 				# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
 				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
