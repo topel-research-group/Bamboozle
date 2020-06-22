@@ -3,7 +3,7 @@
 *.bam
 *.bai
 _*
-test*
+testbed/
 template_engine.py
 example/
 tmp/
