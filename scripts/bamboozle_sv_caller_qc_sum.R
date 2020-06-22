@@ -6,9 +6,9 @@ if (!require("VariantAnnotation")) BiocManager::install(c("VariantAnnotation"))
 if (!require("StructuralVariantAnnotation")) BiocManager::install(c("StructuralVariantAnnotation"))
 if (!require("stringr")) install.packages("stringr")
 
-library(VariantAnnotation)
-library(StructuralVariantAnnotation)
-library(stringr)
+suppressMessages(library(VariantAnnotation))
+suppressMessages(library(StructuralVariantAnnotation))
+suppressMessages(library(stringr))
 
 #' Simple SV type classifier in https://github.com/PapenfussLab/gridss/blob/master/example/simple-event-annotation.R
 simpleEventType <- function(gr) {
