@@ -321,7 +321,7 @@ def timing(function):
 	return wrapper
 
 #extracting sample name from input BAM, checking if sorted or not
-bam_name = args.bamfile[:-4]
+bam_name = os.path.basename(args.bamfile[:-4])
 bam_sorted = "%s_sorted.bam" % (bam_name)
 bam_index = "%s_sorted.bai" % (bam_name)
 
