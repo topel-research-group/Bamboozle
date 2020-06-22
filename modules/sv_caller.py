@@ -72,7 +72,7 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 # BEDTOOLS masking of SV calls goes here
 
 def masking(vcf_out, refpil, masked_vcf_out):
-	cmd5 = "bedtools intersect -v -b %s -a %s -sorted > %s" % (refpil, vcf_out, masked_vcf_out)
+	cmd5 = "bedtools intersect -v -b %s -a %s -sorted -header > %s" % (refpil, vcf_out, masked_vcf_out)
 	proc_5 = subprocess.Popen(cmd5, shell=True)
 	std_out, std_error = proc_5.communicate()
 
