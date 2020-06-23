@@ -242,8 +242,7 @@ if args.command in BamparseList:
 
 # DevNote - the check below can be removed once all functions are capable of accepting multiple inputs
 if len(args.bamfile) > 1 and args.command != "barcode":
-	print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
-	exit()
+	sys.exit("[Error] Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
 
 def bam_check(threads, bam_list):
 	args.sortbam = []
@@ -286,27 +285,23 @@ def check_samtools():
 	try:
 		subprocess.check_output('samtools --help', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
-		print("Please ensure that Samtools is in your PATH.")
-		exit()
+		sys.exit("[Error] Please ensure that Samtools is in your PATH.")
 	try:
 		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
-		print("This version of samtools does not support the `depth -aa` option; please update samtools.")
-		exit()
+		sys.exit("[Error] This version of samtools does not support the `depth -aa` option; please update samtools.")
 
 def check_bcftools():
 	try:
 		subprocess.check_output('bcftools --help', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
-		print("Please ensure that BCFtools is in your PATH.")
-		exit()
+		sys.exit("[Error] Please ensure that BCFtools is in your PATH.")
 
 def check_bedtools():
 	try:
 		subprocess.check_output('bedtools --help', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
-		print("Please ensure that bedtools is in your PATH.")
-		exit()
+		sys.exit("[Error] Please ensure that bedtools is in your PATH.")
 
 #######################################################################
 
@@ -359,8 +354,7 @@ def bowtie2():
 	try:
 		subprocess.check_output('bowtie2 --help', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
-		print("Please ensure that Bowtie2 is in your path.")
-		exit()
+		sys.exit("[Error] Please ensure that Bowtie2 is in your path.")
 
 	# Makes new directory 'Bowtie2' if it doesn't exists.
 	if not os.path.exists('Bowtie2'):
@@ -608,8 +602,7 @@ def bamparse_func():
 		import modules.coverage_stats as cs
 		check_samtools()
 		if args.gff and not args.outprefix:
-			print("If --gff is specified, please ensure that -o is also specified.")
-			exit()
+			sys.exit("[Error] If --gff is specified, please ensure that -o is also specified.")
 		if args.dev:
 			import cProfile
 			cProfile.runctx('cs.main(args)', globals(), locals())
@@ -625,8 +618,7 @@ def bamparse_func():
 			else:
 				con.main(args)
 		else:
-			print("Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
-			exit()
+			sys.exit("[Error] Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
 
 	elif args.command == "zero":
 		import modules.zero_regions as zr
@@ -638,15 +630,13 @@ def bamparse_func():
 			else:
 				zr.main(args)
 		else:
-			print("Please ensure that a reference [-f] and contig [-c] are given.")
-			exit()
+			sys.exit("[Error] Please ensure that a reference [-f] and contig [-c] are given.")
 
 	elif args.command in ["deletion1", "deletion2", "deletion3", "deletionx", "homohetero"]:
 		import modules.deletion as dl
 		check_samtools()
 		if args.command == "deletionx" and not args.exons:
-			print("Please ensure that a bed file of exons [-x] is given.")
-			exit()
+			sys.exit("[Error] Please ensure that a bed file of exons [-x] is given.")
 		elif args.dev:
 			import cProfile
 			cProfile.runctx('dl.main(args)', globals(), locals())
@@ -663,8 +653,7 @@ def bamparse_func():
 			else:
 				md.main(args)
 		else:
-			print("Please specify --simple for medians only or --complex for full output")
-			exit()
+			sys.exit("[Error] Please specify --simple for medians only or --complex for full output")
 
 	elif args.command == "long_coverage":
 		import modules.coverage_limits as cl
