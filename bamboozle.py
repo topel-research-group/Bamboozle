@@ -89,7 +89,7 @@ contig_command = argparse.ArgumentParser(add_help=False)
 contig_command.add_argument("-c", "--contig", \
 				help="Gives per-contig coverage stats")
 
-# Arguments included only in coverage, deletion1, deletion2, deletion3, deletionx, and homohetero
+# Arguments included only in coverage, deletion1, deletion2, deletion3, deletionx, homohetero, and barcode
 threshold_command = argparse.ArgumentParser(add_help=False)
 threshold_command.add_argument('-d', '--threshold', type=int, nargs='?', const='1', default='20', \
 				help='Threshold for calculating the coverage percentage (default: 20)')
@@ -177,7 +177,7 @@ long_coverage.add_argument("-l", "--limits", type=int, nargs=2, \
 			help="Specify lower and upper limits for long_coverage function")
 
 # Barcode command
-barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands, ref_command], \
+barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands, ref_command, threshold_command], \
 				usage="bamboozle.py barcode <args>", \
 				help="Search the input (sorted) BAM files for suitable barcode regions")
 barcode.add_argument("-q", "--quality", type=int, default="20", \
@@ -247,7 +247,7 @@ if len(args.bamfile) > 1 and args.command != "barcode":
 def bam_check(threads, bam_list):
 	args.sortbam = []
 	for bamfile in bam_list:
-		bam_name = os.path.basename(args.bamfile[:-4])
+		bam_name = os.path.basename(bamfile[:-4])
 		bam_sorted = "%s_sorted.bam" % (bam_name)
 		bam_index = "%s_sorted.bai" % (bam_name)
 
@@ -683,6 +683,7 @@ def main():
 		import modules.barcodesearch as bcs
 		check_samtools()
 		check_bcftools()
+		check_bedtools()
 		bam_check(args.threads, args.bamfile)
 		if args.dev:
 			import cProfile
