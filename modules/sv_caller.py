@@ -4,13 +4,6 @@
 #André Soares - 15/04/2020
 #Pseudocode for a script calling SVs and inferring their LOF potential from BAM/SAM files
 
-#Outputs: 
-#	1) VCF files of alterations in gene models, with LOF prediction.
-#	2) summary tables of alterations that should include type (deletion, insertion, inversion, duplication, other genomic rearrangmements),
-#size in bp, quality of call, LOF potential, gene product, genomic location, zygosity, ?...
-
-#5. Run snpEff snpSift to obtain summary tables
-
 #	SVCaller provides a pipeline to call and annotate structural variants
 #	from reads mapped to a reference genome.
 #
@@ -69,8 +62,6 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 	if not os.path.exists('sv_caller_output'):
 		os.makedirs('sv_caller_output')
 
-#	log_file=open('sv_caller_run.log','a')
-
 	cmd4 = "gridss.sh %s -r %s -a %s -o %s -t %s -j %s" % (bamfile, reference, assembly_bam_out, vcf_out, threads, java_gridss)
 	proc_4 = subprocess.Popen(cmd4, shell=True)
 	
@@ -81,60 +72,67 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 # BEDTOOLS masking of SV calls goes here
 
 def masking(vcf_out, refpil, masked_vcf_out):
-	cmd5 = "bedtools intersect -v -b %s -a %s -sorted > %s" % (refpil, vcf_out, masked_vcf_out)
+	cmd5 = "bedtools intersect -v -b %s -a %s -sorted -header > %s" % (refpil, vcf_out, masked_vcf_out)
 	proc_5 = subprocess.Popen(cmd5, shell=True)
 	std_out, std_error = proc_5.communicate()
 
 # Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
 
-def annotate(masked_vcf_out, bam_name):
-	cmd6 = "Rscript --vanilla scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (masked_vcf_out, bam_name)
+def annotate(masked_vcf_out, bam_name, bamboozledir):
+	cmd6 = "Rscript --vanilla %s/scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (bamboozledir, masked_vcf_out, bam_name)
 	proc_6 = subprocess.Popen(cmd6, shell=True)
 	std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
-def snpeff(snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
-
-	#SnpEff database being pulled locally from /home/andre/snpEff.config
-	#maybe put it elsewhere? create a v112 SnpEff db?
-
-	#REWRITE THIS
-#	try:
-#		cmd6 = "snpEff databases | grep Smarinoi.v112"
-#		################## this didn't work last I tried, check snpeff database!
-#		proc_6 = subprocess.check_output(cmd6, shell=True)
-#
-#	except subprocess.CalledProcessError as e:
-#		if e.returncode >= 1:
-#			print('snpEff: Skeletonema database not found, exit program...')
-#			exit()
-#
-	cmd7 = "snpEff eff %s %s -c data/snpeff/snpEff.config -dataDir data/snpeff/%s -csvStats %s > %s" % (snpeffdb, masked_ann_vcf_out, snpeffdb, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
+	cmd7 = "snpEff eff %s %s -c %s/data/snpeff/snpEff.config -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
 	proc_7 = subprocess.Popen(cmd7, shell=True)
 	std_out, std_error = proc_7.communicate()
 
+# Filters SnpEff (and GRIDSS) annotations and tidies headers
+def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean):
+	#removes FORMAT, INFO fields
+	cmd8 = "bcftools annotate -x FORMAT,INFO %s -Oz -o %s.gz && tabix -p vcf  %s.gz"  % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt)
+	proc_8 = subprocess.Popen(cmd8, shell=True)
+	std_out, std_error = proc_8.communicate()
+	#bgzips, indexes filt file
+	cmd9 = "bgzip %s && tabix -p vcf %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann)
+	proc_9 = subprocess.Popen(cmd9, shell=True)
+	std_out, std_error = proc_9.communicate()
+	#adds only relevant header columns from filt file
+	cmd10 = "bcftools annotate -c INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD -a %s.gz %s.gz -Oz -o %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
+	proc_10 =  subprocess.Popen(cmd10, shell=True)
+	std_out, std_error = proc_10.communicate()
+
 def main(args, bam_name):
-	print(os.getcwd())
 	#gridss java
 	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
 	#outputs for gridss
-	vcf_out = "sv_caller_output/%s_sorted.vcf" % (bam_name)
-	assembly_bam_out = "sv_caller_output/%s_sorted_assembly.vcf" % (bam_name)
+	vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
+	assembly_bam_out = "sv_caller_output/%s_assembly.vcf" % (bam_name)
 	#outputs for bedtools
 	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
 	#output for R script
-	masked_ann_vcf_out =  "sv_caller_output/%s.sv.annotated.vcf" % (bam_name)
+	masked_ann_vcf_out = "sv_caller_output/%s_sv_annotated.vcf" % (bam_name)
 	#outputs for snpeff
 	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
 	masked_vcf_out_lof_ann = "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
-
+	#outputs for bcftools
+	masked_vcf_out_lof_ann_filt = "sv_caller_output/%s_sorted_masked_lof_filt.vcf" % (bam_name)
+	masked_vcf_out_lof_ann_filt_clean = "sv_caller_output/%s_sorted_masked_lof_filt_clean.vcf" % (bam_name)
+	#clean database variable
+	snpeff_db = str(args.snpeffdb).strip('[]')
+	
+	#calling functions for sv_caller
 	ref_check(args.ref)
 	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	#only apply masking() if it's been called
 	if args.masking:
 		masking(vcf_out, args.masking, masked_vcf_out)
-		annotate(masked_vcf_out, bam_name)
-		snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+		annotate(masked_vcf_out, bam_name, args.bamboozledir)
+		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir,masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
 	else:
-		annotate(vcf_out, bam_name)
-		snpeff(args.snpeffdb, masked_ann_vcf_out, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+		annotate(vcf_out, bam_name, args.bamboozledir)
+		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
+		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
