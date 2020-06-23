@@ -248,7 +248,7 @@ if len(args.bamfile) > 1 and args.command != "barcode":
 def bam_check(threads, bam_list):
 	args.sortbam = []
 	for bamfile in bam_list:
-		bam_name = os.path.basename(args.bamfile[:-4])
+		bam_name = os.path.basename(bamfile[:-4])
 		bam_sorted = "%s_sorted.bam" % (bam_name)
 		bam_index = "%s_sorted.bai" % (bam_name)
 
