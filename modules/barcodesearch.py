@@ -64,7 +64,7 @@ def bcf(infile, contig_list, quality, threads, reference):
 		process2 = gzip.open(FileName(infile) + ".vcf.gz", 'rt')
 	else:
 		cmd2 = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv | \
-			bcftools filter --threads %s -i '%s & GT=\"hom\"'" % \
+			bcftools filter --threads %s -i '%s'" % \
 			(threads, reference, infile, threads, threads, quality)]
 		process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
 	return(process2)
@@ -146,7 +146,9 @@ def check_unique_windows(windows, contig, reference, infiles):
 		for bam in infiles:
 			compare_seqs[FileName(bam)] = ""
 			vcf_zipped = FileName(bam) + ".vcf.gz"
-			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus --sample %s %s" % \
+
+			# In the interest of identifying reliable barcodes, only homozygous sites are considered
+			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus -i 'GT=\"hom\"' --sample %s %s" % \
 				(reference, contig, windows[contig][window][0], windows[contig][window][3], bam, vcf_zipped)]
 			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
 			with process3.stdout as result3:
@@ -210,6 +212,7 @@ def check_unique_windows(windows, contig, reference, infiles):
 # Main function
 
 def barcode(args):
+
 	# Set number of threads
 	pool = Pool(processes = int(args.threads))
 
@@ -218,11 +221,9 @@ def barcode(args):
 	out_txt = args.outprefix + ".txt"
 
 	if os.path.isfile(out_bed) == True:
-		print("Warning: Output file",out_bed,"already exists. Please choose another output prefix.")
-		sys.exit(0)
+		sys.exit("[Error] Output BED file already exists. Please choose another output prefix.")
 	if os.path.isfile(out_txt) == True:
-		print("Warning: Output file",out_txt,"already exists. Please choose another output prefix.")
-		sys.exit(0)
+		sys.exit("[Error] Output TXT file already exists. Please choose another output prefix.")
 
 	# Record all contig lengths
 	contig_lengths = get_contig_lengths(args.sortbam[0])
@@ -257,6 +258,8 @@ def barcode(args):
 	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
 	for bam in args.sortbam:
+		vcf_file = FileName(bam) + ".vcf"
+
 		# Generate or read in a VCF file for the current BAM
 		process2 = bcf(bam, contig_lengths, filter_qual, args.threads, args.ref)
 
@@ -264,13 +267,14 @@ def barcode(args):
 		print("\nFinding variants...")
 		current_contig = ""
 		if os.path.isfile(FileName(bam) + ".vcf.gz") == True:
+			if os.path.isfile(FileName(bam) + ".vcf.gz.csi") == False:
+				os.system("bcftools index --threads " + str(args.threads) + " " + vcf_file + ".gz")
 			for row2 in process2:
 				if not row2.startswith("#"):
 					current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 
 		# If a VCF file doesn't already exist, generate one, generate variant the list, then bgzip and index the new VCF
 		else:
-			vcf_file = FileName(bam) + ".vcf"
 			with process2.stdout as result2, open(vcf_file, "a") as output_file:
 				rows2 = (line.decode() for line in result2)
 				for row2 in rows2:
@@ -279,8 +283,7 @@ def barcode(args):
 						current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 			output_file.close()
 			os.system("bgzip -@ " + str(args.threads) + " " + vcf_file)
-		if os.path.isfile(FileName(bam) + ".vcf.gz.csi") == False:
-			os.system("bcftools index --threads " + str(args.threads) + " " + vcf_file + ".gz")
+			os.system("bcftools index -f --threads " + str(args.threads) + " " + vcf_file + ".gz")
 
 	# Get sorted lists of variant/SNP/indel positions, with duplicates removed
 	for contig in all_variants:
@@ -326,7 +329,7 @@ def barcode(args):
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
 
-		output_txt.write("contig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
+		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
 
 		for contig in final_dict:
 			window_number = 0
@@ -356,11 +359,12 @@ def barcode(args):
 					if variable_start < int(indel) < variable_stop:
 						window_indels += 1
 
+				window_name = str(contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
+
 				# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
 				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
-						"window_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels) + \
-						"\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
-				line_out = str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
+						str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
+				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
 						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
 						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
 						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"

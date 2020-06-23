@@ -74,16 +74,14 @@ def main(args):
 	# If an output file of the desired name already exists, print warning and quit
 	if args.outprefix:
 		outfile = args.outprefix + ".bed"
-
-	if args.outprefix and os.path.isfile(outfile) == True:
-		print("The specified output file already exists; please adjust output prefix name [-o] or delete existing file.")
-		sys.exit()
+		if os.path.isfile(outfile) == True:
+			sys.exit("[Error] Output file already exists. Please choose another output prefix.")
 
 	# Generate a dictionary of dictionaries of lists; contig -> gene name -> coordinates
+	in_gff_loci = {}
 	if args.gff:
 		if args.verbose:
 			print("Parsing GFF file...")
-		in_gff_loci = {}
 
 		with open(args.gff, 'r') as input:
 			lines = (entry.split("\t") for entry in input)
