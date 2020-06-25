@@ -34,7 +34,7 @@ def check_input(input-vcf):
 		state="vcfs in list"
 		return state
 
-#summarize vcfs with metadata
+#summarize vcfs per sample with metadata
 def summarize(input-vcf, metadata):
 	#taking care of vcf first according to the nature of the input
 	if state == "single vcf":
@@ -46,8 +46,13 @@ def summarize(input-vcf, metadata):
 	elif state == "vcfs in list":
 		#
 #read input metadata table
-#
+	with open(metadata) as infile:
+		md = csv.reader(infile, delimiter="\t")
+		for row in md:
+			##do XXX
 #produce full output
+
+
 #main
 def main():
 	check_input(args.input-vcf)
