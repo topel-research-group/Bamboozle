@@ -1,47 +1,27 @@
-#André Soares - June 2020
+#!/usr/bin/env python3
 
-#Pseudocode/notes to write code to take in multiple .vcf inputs and metadata associated to them and plot useful stuff:
-#	0. check metadata table for requirements
-#		a. check that vcf file sample name matches metadata table column
-#		b. check if other columns exist
-#		c. check for integrity of other columns in metadata table
-#	1. associate vcfs to metadata (format? tsv, etc?)
-#		a. take sample names from vcf filename
-#		b. take sample name from metadata table column
-#	2. produce table(s) of SVs, metadata per sample (used to plot 4,5)
-#		a. number of SV types, avg length, per sample, per chromosome
-#	4. produce plots of SV types per sample (w metadata?)
-#	5. produce circos plot against ref genome?
+import argparse
+from pysam import VariantFile
 
-#	How about an interactive shiny app? or html being made available with all this in it?
-#		Sample-specific analysis via circos, other plots of interesting stuff
-#		General stats
-#	Could be a server-based solution, if circos plots or other results hard to generate
-#	
-#	OUTPUTS:
-#		1. TABLE
-#			COLLATE? VCF and add sample-specific metadata?
-#			a.
-#		2. INTERACTIVE HTML OUTPUT
+#read arguments
+parser = argparse.ArgumentParser(description='Process, summarize and plot VCF files and corresponding metadata')
+parser.add_argument("-v", "--input-vcf", nargs= '*', \
+			help="Input full path to VCF file or files. A single file, a list of comma-separated files, or a file with paragraphed file paths")
+parser.add_argument("-m", "--metadata", nargs= 1, \
+			help="Input metadata in a TSV format. First column should be named ID and consist of sample identifiers")
+#saving these for later
+#parser.add_argument("--no-circos", \
+#			help="Circos plots will not be generated for the sample(s). Returns an HTML report with SV plots and a summarized table")
+#parser.add_argument("--no-plots", \
+#			help="SV plots will not be generated for the sample(s). Returns an HTML report with Circos plots and a summarized table")
+#parser.add_argument("--just-the-table", \
+#			help="Will only produce a summarized table from input VCF(s) and metadata")
+
+args = parser.parse_args()
+
+#read input vcf(s)
+#detect if only one file, several comma-delimited ones or a .txt file with names of files
+bcf_in = VariantFile("test.bcf")  # auto-detect input format
+#read input metadata table
 #
-#			
-#			DASH BIO FOR CIRCOS
-#
-#		PLOT 1 - SV type length violin/point plot:
-#		 - OPTION to see by sample and/or by group
-#		 - OPTION to generate sample- or faceted group-level plot
-#			a. x = chr
-#			b. y = length
-#			c. colour = sv_type
-#			d. face
-#		PLOT 2 - Circos plot:
-#		 - OPTION to see by sample
-#		 - OPTION to see x many groups faceted
-#		(consider only first ANN in VCF?)
-#			L1: chromosome
-#			L2: indels (<=50bp), points?
-#			L3: SVs (>50bp), bars?
-#			L4: LOF Potential (bars, colours)
-#			L5: LOF Annotation (bars, colours)
-#coverage?
-#			Tracks:
+#produce full output
