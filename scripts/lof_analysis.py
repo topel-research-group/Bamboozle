@@ -20,8 +20,13 @@
 #	
 #	OUTPUTS:
 #		1. TABLE
+#			COLLATE? VCF and add sample-specific metadata?
 #			a.
-#		2. HTML OUTPUT
+#		2. INTERACTIVE HTML OUTPUT
+#
+#			
+#			DASH BIO FOR CIRCOS
+#
 #		PLOT 1 - SV type length violin/point plot:
 #		 - OPTION to see by sample and/or by group
 #		 - OPTION to generate sample- or faceted group-level plot
@@ -32,9 +37,11 @@
 #		PLOT 2 - Circos plot:
 #		 - OPTION to see by sample
 #		 - OPTION to see x many groups faceted
+#		(consider only first ANN in VCF?)
 #			L1: chromosome
 #			L2: indels (<=50bp), points?
 #			L3: SVs (>50bp), bars?
-#			L4: coverage
-#			L5: 
+#			L4: LOF Potential (bars, colours)
+#			L5: LOF Annotation (bars, colours)
+#coverage?
 #			Tracks:
