@@ -5,7 +5,7 @@ from pysam import VariantFile
 
 #read arguments
 parser = argparse.ArgumentParser(description='Process, summarize and plot VCF files and corresponding metadata')
-parser.add_argument("-v", "--input-vcf", nargs= '*', type=str, \
+parser.add_argument("-v", "--input_vcf", nargs= '*', type=str, \
 			help="Input full path to VCF file or files. A single file, a list of comma-separated files, or a file with paragraphed file paths")
 parser.add_argument("-m", "--metadata", nargs= 1, type=str, \
 			help="Input metadata in a TSV format. First column should be named ID and consist of sample identifiers")
@@ -21,16 +21,16 @@ args = parser.parse_args()
 
 #detect if only one file, several comma-delimited ones or a .txt file with names of files
 #return a state to inform other functions on how to work
-def check_input(input-vcf):
+def check_input(input_vcf):
 	#if it is indeed a string verify if a path to a file or to a .txt with data
-	if isinstance(input-vcf, str):
+	if isinstance(input_vcf, str):
 		if input-vcf.endswith(".vcf"):
 			state="single vcf"
 			return state
-		if input-vcf.endswith(".txt"):
+		if input_vcf.endswith(".txt"):
 			state="vcfs in file"	
 			return state
-	if isinstance(input-vcf, list):
+	if isinstance(input_vcf, list):
 		state="vcfs in list"
 		return state
 
@@ -39,11 +39,11 @@ def check_input(input-vcf):
 # but their effects need to be visualized and analysed in detail.
 #so we'll have fields sample, sv types, sv numbers, then metadata?
 #per chromosome!
-def summarize(input-vcf, metadata):
+def summarize(input_vcf, metadata):
 	#taking care of vcf first according to the nature of the input
 	if state == "single vcf":
 		#read in vcf input, take its name
-		vcf_in = VariantFile(input-vcf)
+		vcf_in = VariantFile(input_vcf)
 		data = pd.DataFrame(0, \
 	                columns = ['DEL','INS','DUP','INV','CTX','UNC'], \
         	        index = list(vcf_in.header.contigs))
@@ -53,22 +53,22 @@ def summarize(input-vcf, metadata):
                 		data.loc[line.chrom, line.info['SIMPLE_TYPE']] += 1
 		        else:
                 		data.loc[line.chrom, 'UNC'] += 1
-		data_out = input-vcf[:-4] + ".csv"
+		data_out = input_vcf[:-4] + ".csv"
 		data.to_csv(data_out)
 	#if more than one file as inputs
-	elif state == "vcfs in file" or "vcfs in list":
+#	elif state == "vcfs in file" or "vcfs in list":
 		#
 #read input metadata table
-	with open(metadata) as infile:
-		md = csv.reader(infile, delimiter="\t")
-		for row in md:
+#	with open(metadata) as infile:
+#		md = csv.reader(infile, delimiter="\t")
+#		for row in md:
 			##do XXX
 #produce full output
 
 
 #main
 def main():
-	check_input(args.input-vcf)
+	check_input(args.input_vcf)
 	#follow arguments if any has been given
 	if args.command == "no-circos":
 		summarize(args.input-vcf, args.metadata, state)
@@ -80,6 +80,6 @@ def main():
 		summarize(args.input-vcf, args.metadata, state)
 	#otherwise run everything
 	else:
-		summarize(args.input-vcf, args.metadata, state)
+		summarize(args.input_vcf, args.metadata, state)
 		plots()
 		circos()
