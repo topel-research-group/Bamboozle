@@ -9,6 +9,8 @@ parser.add_argument("-v", "--input_vcf", nargs= '*', type=str, \
 			help="Input full path to VCF file or files. A single file, a list of comma-separated files, or a file with paragraphed file paths")
 parser.add_argument("-m", "--metadata", nargs= 1, type=str, \
 			help="Input metadata in a TSV format. First column should be named ID and consist of sample identifiers")
+parser.add_argument("-o", "--out_prefix", nargs = 1, type=str, \
+			help="For multiple samples, add an output prefix")
 #saving these for later
 parser.add_argument("--no-circos", \
 			help="Circos plots will not be generated for the sample(s). Returns an HTML report with SV plots and a summarized table")
@@ -40,7 +42,6 @@ def check_input(input_vcf):
 #so we'll have fields sample, sv types, sv numbers, then metadata?
 #per chromosome!
 def summarize(input_vcf, metadata):
-	data_out = (%s.csv) % out_name
 	#taking care of vcf first according to the nature of the input
 	if state == "single vcf":
 		#read in vcf input, take its name
@@ -63,7 +64,7 @@ def summarize(input_vcf, metadata):
 			index = list(vcf_in.header.contigs))
 		for vcf in input_vcf:
 			vcf_in = VariantFile(vcf)
-			for contigs in list(vcf_in.header.contigs)):
+			for contigs in list(vcf_in.header.contigs):
 				data_multi.loc['VCF'] == vcf
 			#for all the chromosomes found in the vcf keep as row names
 			for line in vcf_in:
@@ -76,14 +77,14 @@ def summarize(input_vcf, metadata):
 
 	#if more than one file as .txt with \n-sep inputs
 	if state == "vcfs in file":
-			data_multi = pd.DataFrame(0, \
-				columns = ['DEL','INS','DUP','INV','CTX','UNC','VCF'], \
-				index = list(vcf_in.header.contigs))
+		data_multi = pd.DataFrame(0, \
+			columns = ['DEL','INS','DUP','INV','CTX','UNC','VCF'], \
+			index = list(vcf_in.header.contigs))
 		open_txt = open(input_vcf)
 		vcf_open = open_txt.readlines()
 		for vcf in vcf_open:
 			vcf_in = VariantFile(vcf)
-			for contigs in list(vcf_in.header.contigs)):
+			for contigs in list(vcf_in.header.contigs):
 				data_multi.loc['VCF'] == vcf
 			#for all the chromosomes found in the vcf keep as row names
 			for line in vcf_in:
@@ -100,9 +101,9 @@ def summarize(input_vcf, metadata):
 			##do XXX
 #produce full output
 
-
 #main
 def main():
+	data_out = "%s.csv" % args.out_prefix
 	check_input(args.input_vcf)
 	#follow arguments if any has been given
 	if args.command == "no-circos":
