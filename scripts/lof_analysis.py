@@ -35,15 +35,28 @@ def check_input(input-vcf):
 		return state
 
 #summarize vcfs per sample with metadata
+#this won't necessarily be the most correct summary. dels, ins, can be counted from file,
+# but their effects need to be visualized and analysed in detail.
+#so we'll have fields sample, sv types, sv numbers, then metadata?
+#per chromosome!
 def summarize(input-vcf, metadata):
 	#taking care of vcf first according to the nature of the input
 	if state == "single vcf":
 		#read in vcf input, take its name
 		vcf_in = VariantFile(input-vcf)
-		
-	elif state == "vcfs in file":
-		#
-	elif state == "vcfs in list":
+		data = pd.DataFrame(0, \
+	                columns = ['DEL','INS','DUP','INV','CTX','UNC'], \
+        	        index = list(vcf_in.header.contigs))
+		#for all the chromosomes found in the vcf keep as row names
+		for line in vcf_in:
+		        if 'SIMPLE_TYPE' in line.info:
+                		data.loc[line.chrom, line.info['SIMPLE_TYPE']] += 1
+		        else:
+                		data.loc[line.chrom, 'UNC'] += 1
+		data_out = input-vcf[:-4] + ".csv"
+		data.to_csv(data_out)
+	#if more than one file as inputs
+	elif state == "vcfs in file" or "vcfs in list":
 		#
 #read input metadata table
 	with open(metadata) as infile:
