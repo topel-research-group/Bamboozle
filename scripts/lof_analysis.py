@@ -78,7 +78,9 @@ def summarize(input_vcf, metadata):
 			data_multi = pd.DataFrame(0, \
 				columns = ['DEL','INS','DUP','INV','CTX','UNC','VCF'], \
 				index = list(vcf_in.header.contigs))
-		for vcf in input_vcf:
+		open_txt = open(input_vcf)
+		vcf_open = open_txt.readlines()
+		for vcf in vcf_open:
 			vcf_in = VariantFile(vcf)
 			#for all the chromosomes found in the vcf keep as row names
 			for line in vcf_in:
