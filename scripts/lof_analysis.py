@@ -55,9 +55,39 @@ def summarize(input_vcf, metadata):
                 		data.loc[line.chrom, 'UNC'] += 1
 		data_out = input_vcf[:-4] + ".csv"
 		data.to_csv(data_out)
-	#if more than one file as inputs
-#	elif state == "vcfs in file" or "vcfs in list":
-		#
+	#if more than one file as comma-sep inputs
+	if state == "vcfs in list":
+		data_multi = pd.DataFrame(0, \
+                        columns = ['DEL','INS','DUP','INV','CTX','UNC','VCF'], \
+                        index = list(vcf_in.header.contigs))
+		for vcf in input_vcf:
+			vcf_in = VariantFile(vcf)
+			for contigs in list(vcf_in.header.contigs)):
+				data_multi.loc['VCF'] == vcf
+	                #for all the chromosomes found in the vcf keep as row names
+	                for line in vcf_in:
+        	                if 'SIMPLE_TYPE' in line.info:
+                	                data_multi.loc[line.chrom, line.info['SIMPLE_TYPE']] += 1
+                        	else:
+                                	data_multi.loc[line.chrom, 'UNC'] += 1
+		#data_out = input_vcf[:-4] + ".csv"
+		#data.to_csv(data_out)
+
+	#if more than one file as .txt with \n-sep inputs
+	if state == "vcfs in file":
+                data_multi = pd.DataFrame(0, \
+                        columns = ['DEL','INS','DUP','INV','CTX','UNC','VCF'], \
+                        index = list(vcf_in.header.contigs))
+                for vcf in input_vcf:
+                        vcf_in = VariantFile(vcf)
+                #for all the chromosomes found in the vcf keep as row names
+                        for line in vcf_in:
+                                if 'SIMPLE_TYPE' in line.info:
+                                        data_multi.loc[line.chrom, line.info['SIMPLE_TYPE']] += 1
+                                else:
+                                        data_multi.loc[line.chrom, 'UNC'] += 1
+#                data_out = input_vcf[:-4] + ".csv"
+ #               data.to_csv(data_out)
 #read input metadata table
 #	with open(metadata) as infile:
 #		md = csv.reader(infile, delimiter="\t")
