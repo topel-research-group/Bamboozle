@@ -40,6 +40,7 @@ def check_input(input_vcf):
 #so we'll have fields sample, sv types, sv numbers, then metadata?
 #per chromosome!
 def summarize(input_vcf, metadata):
+	data_out = (%s.csv) % out_name
 	#taking care of vcf first according to the nature of the input
 	if state == "single vcf":
 		#read in vcf input, take its name
@@ -70,8 +71,8 @@ def summarize(input_vcf, metadata):
 					data_multi.loc[line.chrom, line.info['SIMPLE_TYPE']] += 1
 				else:
 					data_multi.loc[line.chrom, 'UNC'] += 1
-		#data_out = input_vcf[:-4] + ".csv"
-		#data.to_csv(data_out)
+		#there goes the output
+		data.to_csv(data_out)
 
 	#if more than one file as .txt with \n-sep inputs
 	if state == "vcfs in file":
@@ -82,14 +83,16 @@ def summarize(input_vcf, metadata):
 		vcf_open = open_txt.readlines()
 		for vcf in vcf_open:
 			vcf_in = VariantFile(vcf)
+			for contigs in list(vcf_in.header.contigs)):
+				data_multi.loc['VCF'] == vcf
 			#for all the chromosomes found in the vcf keep as row names
 			for line in vcf_in:
 				if 'SIMPLE_TYPE' in line.info:
 					data_multi.loc[line.chrom, line.info['SIMPLE_TYPE']] += 1
 				else:
 					data_multi.loc[line.chrom, 'UNC'] += 1
-#data_out = input_vcf[:-4] + ".csv"
-#data.to_csv(data_out)
+		#there goes the output
+		data.to_csv(data_out)
 #read input metadata table
 #	with open(metadata) as infile:
 #		md = csv.reader(infile, delimiter="\t")
