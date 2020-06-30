@@ -37,11 +37,12 @@ def check_input(input_vcf):
 	#if it is indeed a string verify if a path to a file or to a .txt with data
 	if isinstance(input_vcf, list):
 		if len(input_vcf) == 1:
-			return "single vcf"
+			if input_vcf[0].endswith(".vcf"):
+				return "single vcf"
+			if input_vcf[0].endswith(".txt"):
+				return "vcfs in file" 
 		if len(input_vcf) > 1:
 			return "vcfs in list"
-		if input_vcf.endswith(".txt"):
-			return "vcfs in file"
 
 #summarize vcfs per sample (with metadata?)
 def summarize(input_vcf, state, out_prefix):
@@ -78,22 +79,20 @@ def summarize(input_vcf, state, out_prefix):
 					data_multi.loc[line.chrom, 'UNC'] += 1
 			#there goes the output
 			#name output per sample
-			print(vcf)
 			data_out = vcf[:-4] + ".tsv"
-			print(data_out)
 			data_multi.to_csv(str(out_prefix).strip('[]')[1:-1] + "/" + data_out, sep='\t')
 
 	#if more than one file as .txt with \n-sep inputs
 	if state == "vcfs in file":
-		data_multi = pd.DataFrame(0, \
-			columns = ['DEL','INS','DUP','INV','CTX','UNC','VCF'], \
-			index = list(vcf_in.header.contigs))
-		open_txt = open(input_vcf)
+		if not os.path.exists(str(out_prefix).strip('[]')[1:-1]):
+			os.makedirs(str(out_prefix).strip('[]')[1:-1])
+		open_txt = open(input_vcf[0])
 		vcf_open = open_txt.readlines()
 		for vcf in vcf_open:
-			vcf_in = VariantFile(vcf)
-			for contigs in list(vcf_in.header.contigs):
-				data_multi.loc['VCF'] == vcf
+			vcf_in = VariantFile(vcf.strip("`b,").rstrip("\n"))
+			data_multi = pd.DataFrame(0, \
+				columns = ['DEL','INS','DUP','INV','CTX','UNC'], \
+				index = list(vcf_in.header.contigs))
 			#for all the chromosomes found in the vcf keep as row names
 			for line in vcf_in:
 				if 'SIMPLE_TYPE' in line.info:
@@ -101,7 +100,11 @@ def summarize(input_vcf, state, out_prefix):
 				else:
 					data_multi.loc[line.chrom, 'UNC'] += 1
 		#there goes the output
-		data.to_csv(data_out)
+			data_out = vcf.strip("`b,").rstrip("\n")[:-4] + ".tsv"
+#			print(str(out_prefix).strip('[]')[1:-1])
+#			print(os.path.basename(data_out))
+			data_multi.to_csv(str(out_prefix).strip('[]')[1:-1] + "/" + os.path.basename(data_out), sep='\t')
+
 #read input metadata table
 #	with open(metadata) as infile:
 #		md = csv.reader(infile, delimiter="\t")
