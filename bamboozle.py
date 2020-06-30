@@ -34,6 +34,7 @@ import fnmatch
 import glob
 from functools import reduce
 from functools import wraps
+from time import time
 import datetime
 
 #######################################################################
@@ -241,8 +242,13 @@ if args.command in BamparseList:
 #extracting sample name from input BAM, checking if sorted or not
 
 # DevNote - the check below can be removed once all functions are capable of accepting multiple inputs
-if len(args.bamfile) > 1 and args.command != "barcode":
+if args.bamfile and len(args.bamfile) > 1 and args.command != "barcode":
 	sys.exit("[Error] Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
+
+if args.forward and args.reverse and args.command == "barcode":
+	sys.exit("[Error] BarcodeSearch currently doesn't accept FASTQ input; please give BAM input instead.")
+
+# DevNote - ensure that there is also a .bai file present
 
 def bam_check(threads, bam_list):
 	args.sortbam = []
@@ -314,7 +320,9 @@ base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam'
 
-sorted_bam_out = ""
+sorted_bam_out = add2 + name + '_sorted.bam'
+sorted_bam_bai = add2 + name + '_sorted.bam.bai'
+
 #if args.sortbam:
 #	sorted_bam_out = add + str(args.sortbam)
 #else:
@@ -363,19 +371,25 @@ def bowtie2():
 	log_file=open('pipeline.log','a')
 	# Selected input files using forward and reverse flags,
 	# the flags can take several input files.
-	file1 = ''
-	file2 = ''
-	if args.forward:
-		f1 = []
-		for name in args.forward:
-			f1.append(add+name)
-		file1 += ','.join(map(str, f1))
 
-	if args.reverse:
-		f2 = []
-		for name2 in args.reverse:
-			f2.append(add+name2)
-		file2 += ','.join(map(str, f2))
+	if len(args.forward) == 1:
+		args.forward = add + args.forward[0]
+	if len(args.reverse) == 1:
+		args.reverse = add + args.reverse[0]
+
+#	file1 = ''
+#	file2 = ''
+#	if args.forward:
+#		f1 = []
+#		for name in args.forward:
+#			f1.append(add+name)
+#		file1 += ','.join(map(str, f1))
+#
+#	if args.reverse:
+#		f2 = []
+#		for name2 in args.reverse:
+#			f2.append(add+name2)
+#		file2 += ','.join(map(str, f2))
 
 	# Bowtie2-build, inputs are reference in fasta format and
 	# base name for index files, the output are the index files.
@@ -393,13 +407,16 @@ def bowtie2():
 	# fastq files (forward and reverse) the output is a SAM file.
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
+
+# The file1/file2 approach seems not to work... Does the version below work for both single and multiple inputs?
+
 			cmd2 = ['bowtie2', \
 				'-p', threads, \
 				'--no-unal', \
 				'--very-sensitive', \
 				'-x', base, \
-				'-1', file1, \
-				'-2', file2, \
+				'-1', args.forward, \
+				'-2', args.reverse, \
 				'-S', sam]
 			process2 = subprocess.Popen(cmd2, \
 				stdout=subprocess.PIPE, \
@@ -461,12 +478,15 @@ def samtools_sort():
 			while process4.wait() is None:
 				pass
 			process4.stdout.close()
+		args.sortbam = str('Bowtie2/' + name + '_sorted.bam')
 	log_file.close()
 
 #######################################################################
 # SAMTOOLS SORT - FROM BAM INPUT
 #	BAM input file by using the '-b' flag.
 #######################################################################
+
+# DevNote - with the inclusion of the bam_check function, is this redundant?
 
 @timing
 def bam_input():
@@ -517,15 +537,17 @@ def samtools_index():
 #	Remove SAM and BAM files.
 #######################################################################
 
+# DevNote - Add an 'else' statement if --clean has been used with BAM input?
 def clean():
 	if args.clean:
-		for samfile in os.listdir('Bowtie2'):
-			if fnmatch.fnmatch(samfile, '*.sam'):
-				os.remove('Bowtie2/' + samfile)
+		if args.forward and args.reverse:
+			for samfile in os.listdir('Bowtie2'):
+				if fnmatch.fnmatch(samfile, '*.sam'):
+					os.remove('Bowtie2/' + samfile)
 
-		for bamfile in os.listdir('Bowtie2'):
-			if fnmatch.fnmatch(bamfile, name + '.bam'):
-				os.remove('Bowtie2/' + bamfile)
+			for bamfile in os.listdir('Bowtie2'):
+				if fnmatch.fnmatch(bamfile, name + '.bam'):
+					os.remove('Bowtie2/' + bamfile)
 
 #######################################################################
 # DONE
@@ -543,49 +565,8 @@ def done():
 def exit():
 	sys.exit()
 
-#######################################################################
-# INPUT FILES
-#	Define pipeline based on the type of input file
-#	Mainly calls the Pipeline module
-#######################################################################
-
-# DevNote - This section will need revising, as it hasn't been addressed
-#		since the early days of the program
-
-def input_files():
-	import modules.pipeline as pl
-	pl.snpEff_test(args)
-
-	if args.sortbam:
-		bam_check(args.threads, args.bamfile)
-		pl.bcftools(args,threads,sorted_bam_out)
-		pl.annotation(args)
-
-#	elif args.bamfile:
-#		bam_input()
-#		samtools_index()
-#		pl.bcftools(args,threads,sorted_bam_out)
-#		pl.annotation(args)
-	else:
-		bowtie2()
-		samtools_view()
-		samtools_sort()
-		samtools_index()
-		pl.bcftools(args,threads,sorted_bam_out)
-		pl.annotation(args)
-
-	if args.snpsift:
-		pl.snpsift(args)
-
-	if args.clean:
-		clean()
-
-	if args.done:
-		done()
-
 ######################################################################
 
-# DevNote - ensure that there is also a .bai file present
 
 ######################################################################
 # BAMPARSER
@@ -669,14 +650,21 @@ def bamparse_func():
 		exit()
 
 def main():
+	# If FASTQ input is given, generate a BAM file; if BAM input is given, ensure it's sorted
+	if args.forward and args.reverse and not args.bamfile:
+		bowtie2()
+		samtools_view()
+		samtools_sort()
+		samtools_index()		
+	elif args.bamfile:
+		bam_check(args.threads, args.bamfile)
+
 	if args.command == "lof":
 		import modules.sv_caller as sv
 		check_samtools()
-		bam_check(args.threads, args.bamfile)
 		sv.main(args, bam_name)
 
 	if bamparse:
-		bam_check(args.threads, args.bamfile)
 		bamparse_func()
 
 	if args.command == "barcode":
@@ -684,7 +672,6 @@ def main():
 		check_samtools()
 		check_bcftools()
 		check_bedtools()
-		bam_check(args.threads, args.bamfile)
 		if args.dev:
 			import cProfile
 			cProfile.runctx('bcs.barcode(args)', globals(), locals())
@@ -693,15 +680,16 @@ def main():
 
 	if args.command == "pipeline":
 		import modules.pipeline as pl
-		try:
-			pl.annotation(args)
-		except:
-			input_files()
+		pl.snpEff_test(args)
+		pl.bcftools(args)
+		pl.annotation(args)
 
-	# If the command is not a 'bamparse', barcode or lof command, run [Vilma's pipeline]
-	if not bamparse and args.command not in ["barcode", "lof"]:
-		bam_check(args.threads, args.bamfile)
-		input_files()
+		if args.snpsift:
+			pl.snpsift(args)
+		if args.clean:
+			clean()
+		if args.done:
+			done()
 
 #######################################################################
 

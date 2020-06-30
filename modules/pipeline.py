@@ -69,16 +69,18 @@ def timing(function):
 # output file is a gzipped vcf file, 
 # makes new directory 'Bcftools' if it doesn't exists.
 @timing
-def bcftools(args,threads,sorted_bam_out):
+#def bcftools(args,threads,sorted_bam_out):
+def bcftools(args):
 	log_file=open('pipeline.log','a')
 	ref_path = add + str(args.ref)
+	input_path = add + str(args.sortbam)
 	if not os.path.exists('Bcftools'):
 		os.makedirs('Bcftools')
 
 	cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s \
 		| bcftools call --threads %s -Ou -mv \
 		| bcftools filter -s LowQual -e 'QUAL<20' -Oz -o %s") \
-	% (threads, ref_path, sorted_bam_out, threads, bcftools_out)
+	% (args.threads, ref_path, input_path, args.threads, bcftools_out)
 #	% (threads, add+args.ref, sorted_bam_out, threads, bcftools_out)
 	process7 = subprocess.Popen(cmd7, \
 		stdout=subprocess.PIPE, \
@@ -91,6 +93,7 @@ def bcftools(args,threads,sorted_bam_out):
 	log_file.close()
 				
 # Checks for dependencies required for snpEff. 
+# DevNote - This needs to be adjusted so that the database details aren't hardcoded. Config file?
 def snpEff_test(args):
 	# Checks if there is a Skeletonema database, 
 	# if it doesn't exists the program will exit 
@@ -125,6 +128,8 @@ def snpEff_test(args):
 # Annotating variant calling output using snpEff, output is a vcf, 
 # the vcf file is bgzipped to work as an input file to the Fst analysis,
 # the original vcf file is kept by using the -c flag. 
+# DevNote - this needs adjusting so that the snpEff database isn't hardcoded; perhaps in a config file?
+
 @timing
 def annotation(args):					
 	log_file=open('pipeline.log','a')
@@ -143,12 +148,20 @@ def annotation(args):
 			if args.snpeff:
 				opt = '-'+' -'.join(args.snpeff)
 				my_args = my_interval + " " + opt \
-					+ " Skeletonema_marinoi_v1.1.1.1 \
-					 -stats snpEff_summary.html"
+					+ " Skeletonema_marinoi_v1.1.2 \
+					-stats snpEff_summary.html"
 			else:
 				my_args = my_interval + \
-					" Skeletonema_marinoi_v1.1.1.1 \
+					" Skeletonema_marinoi_v1.1.2 \
 					-stats snpEff_summary.html"
+
+#				my_args = my_interval + " " + opt \
+#					+ " Skeletonema_marinoi_v1.1.1.1 \
+#					 -stats snpEff_summary.html"
+#			else:
+#				my_args = my_interval + \
+#					" Skeletonema_marinoi_v1.1.1.1 \
+#					-stats snpEff_summary.html"
 
 			cmd8 = ("snpEff	%s %s > %s") \
 				% (my_args, bcftools_out, my_output)
