@@ -32,8 +32,7 @@ import argparse
 import subprocess
 import fnmatch
 import glob
-from functools import reduce
-from functools import wraps
+from functools import reduce, wraps
 from time import time
 import datetime
 
@@ -49,23 +48,23 @@ subparsers = parser.add_subparsers(title="Commands", dest="command", metavar="")
 ## Inputs
 
 ## DevNote: The block below causes either a help conflict, or the inability to call help when an input file is required...
-#infiles = parser.add_mutually_exclusive_group()
+#input = parser.add_mutually_exclusive_group()
 #
-#fwd_rev = infiles.add_argument_group("FASTQ files")
+#fwd_rev = input.add_argument_group("FASTQ files")
 #fwd_rev.add_argument("-F", "--forward", nargs='*', \
 #				help="Forward reads")
 #fwd_rev.add_argument("-R", "--reverse", nargs='*', \
 #				help="Reverse reads")
 #
-#bam_input = infiles.add_argument_group("BAM file(s)")
+#bam_input = input.add_argument_group("BAM file(s)")
 #bam_input.add_argument("-b", "--bamfile", \
 #				help="BAM infile")
 
 input_commands = argparse.ArgumentParser(add_help=False)
 input_commands.add_argument("-F", "--forward", nargs='*', \
-				help="Forward reads; can be a single file or space-separated list")
+				help="Forward reads; can be a single file or a space-separated list")
 input_commands.add_argument("-R", "--reverse", nargs='*', \
-				help="Reverse reads; can be a single file or space-separated list")
+				help="Reverse reads; can be a single file or a space-separated list")
 input_commands.add_argument("-b", "--bamfile", nargs="*", \
 				help="BAM infile")
 
@@ -209,15 +208,6 @@ args = parser.parse_args()
 
 args.bamboozledir = os.path.dirname(os.path.realpath(__file__))
 
-if args.command == "pipeline":
-	if args.feature and args.gff is None:
-	        parser.error("--feature requires --gff")
-	elif args.gff and args.feature is None:
-	        parser.error("--feature requires --gff")
-
-if args.forward and args.reverse and args.ref is None:
-	parser.error("--ref [Reference is required]")
-
 #######################################################################
 # DEFINE FUNCTIONS USING BAMPARSER MODULE
 #######################################################################
@@ -228,18 +218,6 @@ BamparseList = ["coverage","consensus","zero","deletion1","deletion2","deletion3
 bamparse = None
 if args.command in BamparseList:
 	bamparse = True
-
-#######################################################################
-# HANDLING MULTIPLE INPUT FILES
-#	If input is given in a comma-separated list, convert it to
-#	a list rather than a string
-#######################################################################
-
-#if args.forward and "," in args.forward:
-
-#if args.reverse and "," in args.reverse:
-
-#if args.bamfile and "," in args.bamfile:
 
 #######################################################################
 # HANDLING BAM FILES
@@ -253,45 +231,38 @@ if args.command in BamparseList:
 
 #extracting sample name from input BAM, checking if sorted or not
 
-# DevNote - the check below can be removed once all functions are capable of accepting multiple inputs
-if args.bamfile and len(args.bamfile) > 1 and args.command != "barcode":
-	sys.exit("[Error] Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
-
-if args.forward and args.reverse and args.command == "barcode":
-	sys.exit("[Error] BarcodeSearch currently doesn't accept FASTQ input; please give BAM input instead.")
-
 # DevNote - ensure that there is also a .bai file present
 
-def bam_check(threads, bam_list):
-	args.sortbam = []
-	for bamfile in bam_list:
-		bam_name = os.path.basename(bamfile[:-4])
-		bam_sorted = "%s_sorted.bam" % (bam_name)
-		bam_index = "%s_sorted.bai" % (bam_name)
-
-		#command to check out first line of BAM header and look for "coordinate" (= sorted)
-		cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
-		proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
-
-		#if coordinate is present in bam header, bam is sorted
-		std_out, std_error = proc_1.communicate()
-		if std_out.rstrip('\n') == "coordinate":
-			if args.verbose:
-				print("Input BAM " + bamfile + " is already sorted")
-			args.sortbam.append(bamfile)
-		else:
-			print("Input BAM " + bamfile + " is unsorted. Sorting...")
-			cmd2 = "samtools sort -@ %s %s -o %s" % (threads, bamfile,bam_sorted)
-			proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-			std_out, std_error = proc_2.communicate()
-			cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
-			proc_3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-			std_out, std_error = proc_3.communicate()
-			print("Input BAM " + bamfile + " has been sorted")
-			args.sortbam.append(bam_sorted)
-
-	if len(args.sortbam) == 1:
-		args.sortbam = args.sortbam[0]
+#def bam_check(threads, bam_list):
+#	args.sortbam = []
+#	for bamfile in bam_list:
+#		bam_name = os.path.basename(bamfile[:-4])
+#		bam_sorted = "%s_sorted.bam" % (bam_name)
+#		bam_index = "%s_sorted.bai" % (bam_name)
+#
+#		#command to check out first line of BAM header and look for "coordinate" (= sorted)
+#		cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
+#		proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
+#
+#		#if coordinate is present in bam header, bam is sorted
+#		std_out, std_error = proc_1.communicate()
+#		if std_out.rstrip('\n') == "coordinate":
+#			if args.verbose:
+#				print("Input BAM " + bamfile + " is already sorted")
+#			args.sortbam.append(bamfile)
+#		else:
+#			print("Input BAM " + bamfile + " is unsorted. Sorting...")
+#			cmd2 = "samtools sort -@ %s %s -o %s" % (threads, bamfile,bam_sorted)
+#			proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+#			std_out, std_error = proc_2.communicate()
+#			cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
+#			proc_3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+#			std_out, std_error = proc_3.communicate()
+#			print("Input BAM " + bamfile + " has been sorted")
+#			args.sortbam.append(bam_sorted)
+#
+#	if len(args.sortbam) == 1:
+#		args.sortbam = args.sortbam[0]
 
 #######################################################################
 # CHECK DEPENDENCIES
@@ -322,27 +293,6 @@ def check_bedtools():
 		sys.exit("[Error] Please ensure that bedtools is in your PATH.")
 
 #######################################################################
-
-current_directory = os.getcwd()
-name = os.path.basename(current_directory)
-add = '../'
-add2 = '../Bowtie2/'
-threads = str(args.threads)
-base = name + '.contigs'
-sam = name + '.sam'
-bam = name + '.bam'
-
-sorted_bam_out = add2 + name + '_sorted.bam'
-sorted_bam_bai = add2 + name + '_sorted.bam.bai'
-
-#if args.sortbam:
-#	sorted_bam_out = add + str(args.sortbam)
-#else:
-#	sorted_bam_out = add2 + name + '_sorted.bam'
-#
-#sorted_bam_bai = name + '_sorted.bam.bai'
-
-#######################################################################
 # TIME DECORATOR
 #######################################################################
 
@@ -365,200 +315,21 @@ def timing(function):
 	return wrapper
 
 #######################################################################
-# BOWTIE2
-#	Running bowtie2-build to index reference genome and bowtie2 to align.
-#######################################################################
-
-@timing
-def bowtie2():
-	try:
-		subprocess.check_output('bowtie2 --help', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
-		sys.exit("[Error] Please ensure that Bowtie2 is in your path.")
-
-	# Makes new directory 'Bowtie2' if it doesn't exists.
-	if not os.path.exists('Bowtie2'):
-		os.makedirs('Bowtie2')
-
-	log_file=open('pipeline.log','a')
-	# Selected input files using forward and reverse flags,
-	# the flags can take several input files.
-
-	file1 = ''
-	file2 = ''
-	if args.forward:
-		if isinstance(args.forward, str):
-			file1 = args.forward
-		else:
-			f1 = []
-			for name in args.forward:
-				f1.append(add+name)
-			file1 += ','.join(map(str, f1))
-
-	if args.reverse:
-		if isinstance(args.reverse, str):
-			file2 = args.reverse
-		else:
-			f2 = []
-			for name2 in args.reverse:
-				f2.append(add+name2)
-			file2 += ','.join(map(str, f2))
-
-	# Bowtie2-build, inputs are reference in fasta format and
-	# base name for index files, the output are the index files.
-
-	cmd1 = ['bowtie2-build', add+args.ref, base]
-	process1 = subprocess.Popen(cmd1, \
-		stdout=subprocess.PIPE, \
-		stderr = log_file, \
-		cwd='Bowtie2')
-	while process1.wait() is None:
-		pass
-	process1.stdout.close()
-
-	# Bowtie2 align step, input are the index files from Bowtie2-build,
-	# fastq files (forward and reverse) the output is a SAM file.
-	for file in os.listdir('Bowtie2'):
-		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
-
-			cmd2 = ['bowtie2', \
-				'-p', threads, \
-				'--no-unal', \
-				'--very-sensitive', \
-				'-x', base, \
-				'-1', file1, \
-				'-2', file2, \
-				'-S', sam]
-			process2 = subprocess.Popen(cmd2, \
-				stdout=subprocess.PIPE, \
-				stderr = log_file, \
-				cwd='Bowtie2')
-			while process2.wait() is None:
-				pass
-			process2.stdout.close()
-	log_file.close()
-
-#######################################################################
-# SAMTOOLS VIEW
-#	Converting SAM to BAM using samtools view.
-#######################################################################
-
-@timing
-def samtools_view():
-	check_samtools()
-	log_file=open('pipeline.log','a')
-	for file in os.listdir('Bowtie2'):
-		if fnmatch.fnmatch(file, '*.sam'):
-			cmd3 = ('samtools view -@ %s \
-				-b \
-				-o %s \
-				%s') \
-				% (args.threads, bam, sam)
-			process3 = subprocess.Popen(cmd3, \
-				stdout=subprocess.PIPE, \
-				stderr = log_file, \
-				shell=True, \
-				cwd='Bowtie2')
-			while process3.wait() is None:
-				pass
-			process3.stdout.close()
-	log_file.close()
-
-#######################################################################
-# SAMTOOLS SORT - FROM BOWTIE PIPELINE
-#	Sort BAM files.
-#######################################################################
-
-@timing
-def samtools_sort():
-	check_samtools()
-	log_file=open('pipeline.log','a')
-#	if glob.glob("Bowtie2/*sorted.bam"):
-#		print("Please remove bam files from the Bowtie2 directory before retrying.")
-#		exit()
-	for file in os.listdir('Bowtie2'):
-		if fnmatch.fnmatch(file, '*.bam'):
-			cmd4 = ['samtools', 'sort', \
-				'-@', threads, \
-				bam, \
-				'-o', sorted_bam_out]
-			process4 = subprocess.Popen(cmd4, \
-				stdout=subprocess.PIPE, \
-				stderr = log_file, \
-				cwd='Bowtie2')
-			while process4.wait() is None:
-				pass
-			process4.stdout.close()
-		args.sortbam = str('Bowtie2/' + name + '_sorted.bam')
-	log_file.close()
-
-#######################################################################
-# SAMTOOLS SORT - FROM BAM INPUT
-#	BAM input file by using the '-b' flag.
-#######################################################################
-
-# DevNote - with the inclusion of the bam_check function, is this redundant?
-
-@timing
-def bam_input():
-	check_samtools()
-	log_file=open('pipeline.log','a')
-#	if glob.glob("Bowtie2/*sorted.bam"):
-#		print("Please remove bam files from the Bowtie2 directory before retrying.")
-#		exit()
-	cmd5 = ['samtools', 'sort', \
-		'-@', threads, \
-		add+args.bamfile, \
-		'-o', sorted_bam_out]
-	process5 = subprocess.Popen(cmd5, \
-		stdout=subprocess.PIPE, \
-		stderr = log_file, \
-		cwd='Bowtie2')
-	while process5.wait() is None:
-		pass
-	process5.stdout.close()
-	log_file.close()
-
-#######################################################################
-# SAMTOOLS INDEX
-#	Index sorted BAM files.
-#######################################################################
-
-@timing
-def samtools_index():
-	check_samtools()
-	log_file=open('pipeline.log','a')
-	for file in os.listdir('Bowtie2'):
-		if fnmatch.fnmatch(file, '*_sorted.bam'):
-			cmd6 = ['samtools','index', \
-				'-@', threads, \
-				sorted_bam_out, \
-				sorted_bam_bai]
-			process6 = subprocess.Popen(cmd6, \
-				stdout=subprocess.PIPE, \
-				stderr = log_file, \
-				cwd='Bowtie2')
-			while process6.wait() is None:
-				pass
-			process6.stdout.close()
-	log_file.close()
-
-#######################################################################
 # CLEANUP STEP
 #	Remove SAM and BAM files.
 #######################################################################
 
 # DevNote - Add an 'else' statement if --clean has been used with BAM input?
 def clean():
-	if args.clean:
-		if args.forward and args.reverse:
-			for samfile in os.listdir('Bowtie2'):
-				if fnmatch.fnmatch(samfile, '*.sam'):
-					os.remove('Bowtie2/' + samfile)
+	if args.forward and args.reverse:
+		for samfile in os.listdir('Bowtie2'):
+			if fnmatch.fnmatch(samfile, '*.sam'):
+				os.remove('Bowtie2/' + samfile)
 
-			for bamfile in os.listdir('Bowtie2'):
-				if fnmatch.fnmatch(bamfile, name + '.bam'):
-					os.remove('Bowtie2/' + bamfile)
+		name = os.path.basename(os.getcwd())
+		for bamfile in os.listdir('Bowtie2'):
+			if fnmatch.fnmatch(bamfile, name + '.bam'):
+				os.remove('Bowtie2/' + bamfile)
 
 #######################################################################
 # DONE
@@ -585,14 +356,12 @@ def exit():
 ######################################################################
 
 def bamparse_func():
-#	input_files()
 
 #	if not args.sortbam:
 #		args.sortbam = "Bowtie2/*sorted.bam" 
 
 	if args.command == "coverage":
 		import modules.coverage_stats as cs
-		check_samtools()
 		if args.gff and not args.outprefix:
 			sys.exit("[Error] If --gff is specified, please ensure that -o is also specified.")
 		if args.dev:
@@ -626,7 +395,6 @@ def bamparse_func():
 
 	elif args.command in ["deletion1", "deletion2", "deletion3", "deletionx", "homohetero"]:
 		import modules.deletion as dl
-		check_samtools()
 		if args.command == "deletionx" and not args.exons:
 			sys.exit("[Error] Please ensure that a bed file of exons [-x] is given.")
 		elif args.dev:
@@ -637,7 +405,6 @@ def bamparse_func():
 
 	elif args.command == "median":
 		import modules.median_deviation as md
-		check_samtools()
 		if args.simple or args.complex:
 			if args.dev:
 				import cProfile
@@ -649,7 +416,6 @@ def bamparse_func():
 
 	elif args.command == "long_coverage":
 		import modules.coverage_limits as cl
-		check_samtools()
 		if args.dev:
 			import cProfile
 			cProfile.runctx('cl.main(args)', globals(), locals())
@@ -661,18 +427,14 @@ def bamparse_func():
 		exit()
 
 def main():
-	# If FASTQ input is given, generate a BAM file; if BAM input is given, ensure it's sorted
-	if args.forward and args.reverse and not args.bamfile:
-		bowtie2()
-		samtools_view()
-		samtools_sort()
-		samtools_index()		
-	elif args.bamfile:
-		bam_check(args.threads, args.bamfile)
+	check_samtools()
+
+	# Ensure that the input into the main pipeline is in sorted BAM format
+	import modules.input_files as infiles
+	infiles.main(args)
 
 	if args.command == "lof":
 		import modules.sv_caller as sv
-		check_samtools()
 		sv.main(args, bam_name)
 
 	if bamparse:
@@ -680,7 +442,6 @@ def main():
 
 	if args.command == "barcode":
 		import modules.barcodesearch as bcs
-		check_samtools()
 		check_bcftools()
 		check_bedtools()
 		if args.dev:
@@ -690,6 +451,9 @@ def main():
 			bcs.barcode(args)
 
 	if args.command == "pipeline":
+		if bool(args.feature) != bool(args.gff):
+			sys.exit("[Error] --feature requires --gff, and vice versa.")
+
 		import modules.pipeline as pl
 		pl.snpEff_test(args)
 		pl.bcftools(args)
