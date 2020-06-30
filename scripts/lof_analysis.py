@@ -77,8 +77,10 @@ def summarize(input_vcf, state, out_prefix):
 				else:
 					data_multi.loc[line.chrom, 'UNC'] += 1
 			#there goes the output
-			#name output per sample 
+			#name output per sample
+			print(vcf)
 			data_out = vcf[:-4] + ".tsv"
+			print(data_out)
 			data_multi.to_csv(str(out_prefix).strip('[]')[1:-1] + "/" + data_out, sep='\t')
 
 	#if more than one file as .txt with \n-sep inputs
