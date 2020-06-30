@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
+import pandas as pd
 from pysam import VariantFile
 
 #read arguments
@@ -39,16 +41,12 @@ def check_input(input_vcf):
 		if input_vcf.endswith(".txt"):
 			return "vcfs in file"
 
-#summarize vcfs per sample with metadata
-#this won't necessarily be the most correct summary. dels, ins, can be counted from file,
-# but their effects need to be visualized and analysed in detail.
-#so we'll have fields sample, sv types, sv numbers, then metadata?
-#per chromosome!
-def summarize(input_vcf, metadata):
+#summarize vcfs per sample (with metadata?)
+def summarize(input_vcf, state):
 	#taking care of vcf first according to the nature of the input
 	if state == "single vcf":
 		#read in vcf input, take its name
-		vcf_in = VariantFile(input_vcf)
+		vcf_in = VariantFile(",".join(input_vcf))
 		data = pd.DataFrame(0, \
 			columns = ['DEL','INS','DUP','INV','CTX','UNC'], \
 			index = list(vcf_in.header.contigs))
@@ -58,25 +56,29 @@ def summarize(input_vcf, metadata):
 				data.loc[line.chrom, line.info['SIMPLE_TYPE']] += 1
 			else:
 				data.loc[line.chrom, 'UNC'] += 1
-		data_out = input_vcf[:-4] + ".csv"
-		data.to_csv(data_out)
+		data_out = ",".join(input_vcf)[:-4] + ".tsv"
+		data.to_csv(data_out, sep='\t')
 	#if more than one file as comma-sep inputs
 	if state == "vcfs in list":
-		data_multi = pd.DataFrame(0, \
-			columns = ['DEL','INS','DUP','INV','CTX','UNC','VCF'], \
-			index = list(vcf_in.header.contigs))
+		#create folder if it doesn't exist
+		directory = args.out_prefix
+		if not os.path.exists(directory):
+			os.makedirs(directory)
 		for vcf in input_vcf:
 			vcf_in = VariantFile(vcf)
-			for contigs in list(vcf_in.header.contigs):
-				data_multi.loc['VCF'] == vcf
+			data_multi = pd.DataFrame(0, \
+				columns = ['DEL','INS','DUP','INV','CTX','UNC'], \
+				index = list(vcf_in.header.contigs))
 			#for all the chromosomes found in the vcf keep as row names
 			for line in vcf_in:
 				if 'SIMPLE_TYPE' in line.info:
 					data_multi.loc[line.chrom, line.info['SIMPLE_TYPE']] += 1
 				else:
 					data_multi.loc[line.chrom, 'UNC'] += 1
-		#there goes the output
-		data.to_csv(data_out)
+			#there goes the output
+			#name output per sample 
+			data_out = ",".join(vcf)[:-4] + ".tsv"
+			data.to_csv(out_folder + data_out, sep='\t'))
 
 	#if more than one file as .txt with \n-sep inputs
 	if state == "vcfs in file":
@@ -105,7 +107,7 @@ def summarize(input_vcf, metadata):
 def main():
 	#start things out
 	state = check_input(args.input_vcf)
-
+	print(state)
 	#follow arguments if any has been given
 	if args.no_circos:
 		summarize(args.input_vcf, state)
@@ -115,9 +117,6 @@ def main():
 		#circos()
 	if args.just_the_table:
 		summarize(args.input_vcf, state)
-	#if multiple samples generate output name
-	if args.out_prefix:
-		data_out = "%s.csv" % args.out_prefix
 	#otherwise run everything
 	else:
 		summarize(args.input_vcf, state)
