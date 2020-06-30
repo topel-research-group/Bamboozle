@@ -7,6 +7,8 @@ from pysam import VariantFile
 
 #read arguments
 parser = argparse.ArgumentParser(description='Process, summarize and plot VCF files and corresponding metadata')
+
+#args in
 parser.add_argument("-v", "--input_vcf", \
 	nargs= '*', type=str, \
 	help="Input full path to VCF file or files. \
@@ -42,7 +44,7 @@ def check_input(input_vcf):
 			return "vcfs in file"
 
 #summarize vcfs per sample (with metadata?)
-def summarize(input_vcf, state):
+def summarize(input_vcf, state, out_prefix):
 	#taking care of vcf first according to the nature of the input
 	if state == "single vcf":
 		#read in vcf input, take its name
@@ -61,11 +63,10 @@ def summarize(input_vcf, state):
 	#if more than one file as comma-sep inputs
 	if state == "vcfs in list":
 		#create folder if it doesn't exist
-		directory = args.out_prefix
-		if not os.path.exists(directory):
-			os.makedirs(directory)
+		if not os.path.exists(str(out_prefix).strip('[]')[1:-1]):
+			os.makedirs(str(out_prefix).strip('[]')[1:-1])
 		for vcf in input_vcf:
-			vcf_in = VariantFile(vcf)
+			vcf_in = VariantFile(vcf.strip("`b,"))
 			data_multi = pd.DataFrame(0, \
 				columns = ['DEL','INS','DUP','INV','CTX','UNC'], \
 				index = list(vcf_in.header.contigs))
@@ -77,8 +78,8 @@ def summarize(input_vcf, state):
 					data_multi.loc[line.chrom, 'UNC'] += 1
 			#there goes the output
 			#name output per sample 
-			data_out = ",".join(vcf)[:-4] + ".tsv"
-			data.to_csv(out_folder + data_out, sep='\t'))
+			data_out = vcf[:-4] + ".tsv"
+			data_multi.to_csv(str(out_prefix).strip('[]')[1:-1] + "/" + data_out, sep='\t')
 
 	#if more than one file as .txt with \n-sep inputs
 	if state == "vcfs in file":
@@ -107,7 +108,6 @@ def summarize(input_vcf, state):
 def main():
 	#start things out
 	state = check_input(args.input_vcf)
-	print(state)
 	#follow arguments if any has been given
 	if args.no_circos:
 		summarize(args.input_vcf, state)
@@ -119,7 +119,7 @@ def main():
 		summarize(args.input_vcf, state)
 	#otherwise run everything
 	else:
-		summarize(args.input_vcf, state)
+		summarize(args.input_vcf, state, args.out_prefix)
 #		plots()
 #		circos()
 
