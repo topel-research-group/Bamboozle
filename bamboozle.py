@@ -63,9 +63,9 @@ subparsers = parser.add_subparsers(title="Commands", dest="command", metavar="")
 
 input_commands = argparse.ArgumentParser(add_help=False)
 input_commands.add_argument("-F", "--forward", nargs='*', \
-				help="Forward reads")
+				help="Forward reads; can be a single file or space-separated list")
 input_commands.add_argument("-R", "--reverse", nargs='*', \
-				help="Reverse reads")
+				help="Reverse reads; can be a single file or space-separated list")
 input_commands.add_argument("-b", "--bamfile", nargs="*", \
 				help="BAM infile")
 
@@ -230,6 +230,18 @@ if args.command in BamparseList:
 	bamparse = True
 
 #######################################################################
+# HANDLING MULTIPLE INPUT FILES
+#	If input is given in a comma-separated list, convert it to
+#	a list rather than a string
+#######################################################################
+
+#if args.forward and "," in args.forward:
+
+#if args.reverse and "," in args.reverse:
+
+#if args.bamfile and "," in args.bamfile:
+
+#######################################################################
 # HANDLING BAM FILES
 #	First, ensure that all BAM input files are sorted
 #	Otherwise, sort them
@@ -372,24 +384,25 @@ def bowtie2():
 	# Selected input files using forward and reverse flags,
 	# the flags can take several input files.
 
-	if len(args.forward) == 1:
-		args.forward = add + args.forward[0]
-	if len(args.reverse) == 1:
-		args.reverse = add + args.reverse[0]
+	file1 = ''
+	file2 = ''
+	if args.forward:
+		if isinstance(args.forward, str):
+			file1 = args.forward
+		else:
+			f1 = []
+			for name in args.forward:
+				f1.append(add+name)
+			file1 += ','.join(map(str, f1))
 
-#	file1 = ''
-#	file2 = ''
-#	if args.forward:
-#		f1 = []
-#		for name in args.forward:
-#			f1.append(add+name)
-#		file1 += ','.join(map(str, f1))
-#
-#	if args.reverse:
-#		f2 = []
-#		for name2 in args.reverse:
-#			f2.append(add+name2)
-#		file2 += ','.join(map(str, f2))
+	if args.reverse:
+		if isinstance(args.reverse, str):
+			file2 = args.reverse
+		else:
+			f2 = []
+			for name2 in args.reverse:
+				f2.append(add+name2)
+			file2 += ','.join(map(str, f2))
 
 	# Bowtie2-build, inputs are reference in fasta format and
 	# base name for index files, the output are the index files.
@@ -408,15 +421,13 @@ def bowtie2():
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.rev.1.bt2'):
 
-# The file1/file2 approach seems not to work... Does the version below work for both single and multiple inputs?
-
 			cmd2 = ['bowtie2', \
 				'-p', threads, \
 				'--no-unal', \
 				'--very-sensitive', \
 				'-x', base, \
-				'-1', args.forward, \
-				'-2', args.reverse, \
+				'-1', file1, \
+				'-2', file2, \
 				'-S', sam]
 			process2 = subprocess.Popen(cmd2, \
 				stdout=subprocess.PIPE, \
