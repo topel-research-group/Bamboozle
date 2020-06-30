@@ -5,19 +5,25 @@ from pysam import VariantFile
 
 #read arguments
 parser = argparse.ArgumentParser(description='Process, summarize and plot VCF files and corresponding metadata')
-parser.add_argument("-v", "--input_vcf", nargs= '*', type=str, \
-			help="Input full path to VCF file or files. A single file, a list of comma-separated files, or a file with paragraphed file paths")
-parser.add_argument("-m", "--metadata", nargs= 1, type=str, \
-			help="Input metadata in a TSV format. First column should be named ID and consist of sample identifiers")
-parser.add_argument("-o", "--out_prefix", nargs = 1, type=str, \
-			help="For multiple samples, add an output prefix")
+parser.add_argument("-v", "--input_vcf", \
+	nargs= '*', type=str, \
+	help="Input full path to VCF file or files. \
+	A single file, a list of comma-separated files, or a file with paragraphed file paths")
+parser.add_argument("-m", "--metadata", \
+	nargs= 1, type=str, \
+	help="Input metadata in a TSV format.")
+parser.add_argument("-o", "--out_prefix", \
+	nargs = 1, type=str, \
+	help="For multiple samples, add an output prefix")
 #saving these for later
-parser.add_argument("--no-circos", \
-			help="Circos plots will not be generated for the sample(s). Returns an HTML report with SV plots and a summarized table")
-parser.add_argument("--no-plots", \
-			help="SV plots will not be generated for the sample(s). Returns an HTML report with Circos plots and a summarized table")
-parser.add_argument("--just-the-table", \
-			help="Will only produce a summarized table from input VCF(s) and metadata")
+parser.add_argument("--no_circos", \
+	help="Circos plots will not be generated for the sample(s). \
+		Returns an HTML report with SV plots and a summarized table")
+parser.add_argument("--no_plots", \
+	help="SV plots will not be generated for the sample(s). \
+		Returns an HTML report with Circos plots and a summarized table")
+parser.add_argument("--just_the_table", \
+	help="Will only produce a summarized table from input VCF(s) and metadata")
 
 args = parser.parse_args()
 
@@ -25,16 +31,13 @@ args = parser.parse_args()
 #return a state to inform other functions on how to work
 def check_input(input_vcf):
 	#if it is indeed a string verify if a path to a file or to a .txt with data
-	if isinstance(input_vcf, str):
-		if input-vcf.endswith(".vcf"):
-			state="single vcf"
-			return state
-		if input_vcf.endswith(".txt"):
-			state="vcfs in file"	
-			return state
 	if isinstance(input_vcf, list):
-		state="vcfs in list"
-		return state
+		if len(input_vcf) == 1:
+			return "single vcf"
+		if len(input_vcf) > 1:
+			return "vcfs in list"
+		if input_vcf.endswith(".txt"):
+			return "vcfs in file"
 
 #summarize vcfs per sample with metadata
 #this won't necessarily be the most correct summary. dels, ins, can be counted from file,
@@ -99,23 +102,27 @@ def summarize(input_vcf, metadata):
 #		md = csv.reader(infile, delimiter="\t")
 #		for row in md:
 			##do XXX
-#produce full output
-
-#main
 def main():
-	data_out = "%s.csv" % args.out_prefix
-	check_input(args.input_vcf)
+	#start things out
+	state = check_input(args.input_vcf)
+
 	#follow arguments if any has been given
-	if args.command == "no-circos":
-		summarize(args.input-vcf, args.metadata, state)
-		plots()
-	elif args.command == "no-plots":
-		summarize(args.input-vcf, args.metadata, state)
-		circos()
-	elif args.command == "just-the-table":
-		summarize(args.input-vcf, args.metadata, state)
+	if args.no_circos:
+		summarize(args.input_vcf, state)
+		#plots()
+	if args.no_plots:
+		summarize(args.input_vcf, state)
+		#circos()
+	if args.just_the_table:
+		summarize(args.input_vcf, state)
+	#if multiple samples generate output name
+	if args.out_prefix:
+		data_out = "%s.csv" % args.out_prefix
 	#otherwise run everything
 	else:
-		summarize(args.input_vcf, args.metadata, state)
-		plots()
-		circos()
+		summarize(args.input_vcf, state)
+#		plots()
+#		circos()
+
+if __name__ == "__main__":
+    main()
