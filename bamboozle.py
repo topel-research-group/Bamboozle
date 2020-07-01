@@ -214,7 +214,7 @@ args.bamboozledir = os.path.dirname(os.path.realpath(__file__))
 # CHECK DEPENDENCIES
 #######################################################################
 
-# DevNote - add checks for snpEff/Java?
+# DevNote - add checks for Java?
 
 def check_samtools():
 	try:
@@ -237,6 +237,12 @@ def check_bedtools():
 		subprocess.check_output('bedtools --help', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
 		sys.exit("[Error] Please ensure that bedtools is in your PATH.")
+
+def check_snpeff():
+	try:
+		subprocess.check_output('snpEff -version', stderr=subprocess.PIPE, shell=True)
+	except subprocess.CalledProcessError:
+		sys.exit("[Error] Please ensure that snpEff is in your PATH.")
 
 #######################################################################
 # TIME DECORATOR
@@ -308,7 +314,7 @@ def main():
 		import modules.sv_caller as sv
 		sv.main(args, bam_name)
 
-	if args.command == "coverage":
+	elif args.command == "coverage":
 		import modules.coverage_stats as cs
 		if args.gff and not args.outprefix:
 			sys.exit("[Error] If --gff is specified, please ensure that -o is also specified.")
@@ -318,7 +324,7 @@ def main():
 		else:
 			cs.main(args)
 
-	if args.command == "consensus":
+	elif args.command == "consensus":
 		import modules.consensus as con
 		if args.ref and args.contig and args.range:
 			if args.dev:
@@ -329,7 +335,7 @@ def main():
 		else:
 			sys.exit("[Error] Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
 
-	if args.command == "zero":
+	elif args.command == "zero":
 		import modules.zero_regions as zr
 		check_bedtools()
 		if args.ref and args.contig:
@@ -341,7 +347,7 @@ def main():
 		else:
 			sys.exit("[Error] Please ensure that a reference [-f] and contig [-c] are given.")
 
-	if args.command in ["deletion1", "deletion2", "deletion3", "deletionx", "homohetero"]:
+	elif args.command in ["deletion1", "deletion2", "deletion3", "deletionx", "homohetero"]:
 		import modules.deletion as dl
 		if args.command == "deletionx" and not args.exons:
 			sys.exit("[Error] Please ensure that a bed file of exons [-x] is given.")
@@ -351,7 +357,7 @@ def main():
 		else:
 			dl.main(args)
 
-	if args.command == "median":
+	elif args.command == "median":
 		import modules.median_deviation as md
 		if args.simple or args.complex:
 			if args.dev:
@@ -362,7 +368,7 @@ def main():
 		else:
 			sys.exit("[Error] Please specify --simple for medians only or --complex for full output")
 
-	if args.command == "long_coverage":
+	elif args.command == "long_coverage":
 		import modules.coverage_limits as cl
 		if args.dev:
 			import cProfile
@@ -370,7 +376,7 @@ def main():
 		else:
 			cl.main(args)
 
-	if args.command == "barcode":
+	elif args.command == "barcode":
 		import modules.barcodesearch as bcs
 		check_bcftools()
 		check_bedtools()
@@ -380,11 +386,13 @@ def main():
 		else:
 			bcs.barcode(args)
 
-	if args.command == "pipeline":
+	elif args.command == "pipeline":
 		if bool(args.feature) != bool(args.gff):
 			sys.exit("[Error] --feature requires --gff, and vice versa.")
 
 		import modules.pipeline as pl
+		check_bcftools()
+		check_snpeff()
 		pl.snpEff_test(args)
 		pl.bcftools(args)
 		pl.annotation(args)
