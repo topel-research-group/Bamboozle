@@ -188,12 +188,11 @@ def annotation(args):
 			# Add headers to gff parsed vcf file for fst statistics.
 			if args.gff and args.feature:
 				my_output_hdr = name + '_' + args.feature + '_hdr_snpeff_annotated.vcf'
-				cmd_a = ("bcftools view -h %s > hdr.txt") \
-					% (my_output)
+				cmd_a = ["bcftools", "view", "-h", my_output, "-o", "hdr.txt"]
 				process_a = subprocess.Popen(cmd_a, \
 					stdout=subprocess.PIPE, \
 					stderr = log_file, \
-					shell=True, \
+					shell=False, \
 					cwd='Bcftools')
 				while process_a.wait() is None:
 					pass
@@ -212,13 +211,12 @@ def annotation(args):
 				while process_b.wait() is None:
 					pass
 				process_b.stdout.close()
-				
-				cmd_c = ("bcftools reheader -h hdr.txt %s > %s") \
-					% (my_output, my_output_hdr)
+
+				cmd_c = ["bcftools", "reheader", "-h", "hdr.txt", my_output, "-o", my_output_hdr]
 				process_c = subprocess.Popen(cmd_c, \
 					stdout=subprocess.PIPE, \
 					stderr = log_file, \
-					shell=True, \
+					shell=False, \
 					cwd='Bcftools')
 				while process_c.wait() is None:
 					pass
