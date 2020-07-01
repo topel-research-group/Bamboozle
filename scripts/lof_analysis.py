@@ -116,6 +116,7 @@ def summarize(input_vcf, state, out_prefix):
 #python dashboard
 #interactive plots?
 #circos of all but CTX? per sample
+#maybe like a heatmap?
 
 def main():
 	#start things out
