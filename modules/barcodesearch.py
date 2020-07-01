@@ -42,8 +42,8 @@ def FileName(long_name):
 def get_contig_lengths(firstbam):
 	contig_lengths = {}
 
-	cmd = ["samtools idxstats %s" % (firstbam)]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	cmd = ["samtools", "idxstats", firstbam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 
 	with process.stdout as result:
 		rows = (line.decode() for line in result)
