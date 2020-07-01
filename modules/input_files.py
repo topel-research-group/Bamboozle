@@ -102,11 +102,11 @@ def bam_check(args):
 			if not os.path.exists('Bowtie2'):
 				os.makedirs('Bowtie2')
 
-			cmd2 = "samtools sort -@ %s %s -o %s" % (args.threads, bamfile, bam_sorted)
-			proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+			cmd2 = ["samtools", "sort", "-@", str(args.threads), bamfile, "-o", bam_sorted]
+			proc_2 = subprocess.Popen(cmd2, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 			std_out, std_error = proc_2.communicate()
-			cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
-			proc_3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+			cmd3 = ["samtools", "index", bam_sorted, bam_index]
+			proc_3 = subprocess.Popen(cmd3, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 			std_out, std_error = proc_3.communicate()
 			print("Input BAM " + bamfile + " has been sorted")
 			args.sortbam.append(bam_sorted)
@@ -226,15 +226,11 @@ def samtools_view(args):
 	log_file=open('pipeline.log','a')
 	for file in os.listdir('Bowtie2'):
 		if fnmatch.fnmatch(file, '*.sam'):
-			cmd3 = ('samtools view -@ %s \
-				-b \
-				-o %s \
-				%s') \
-				% (args.threads, bam, sam)
+			cmd3 = ["samtools", "view", "-@", str(args.threads), "-b", "-o", bam, sam]
 			process3 = subprocess.Popen(cmd3, \
 				stdout=subprocess.PIPE, \
 				stderr = log_file, \
-				shell=True, \
+				shell=False, \
 				cwd='Bowtie2')
 			while process3.wait() is None:
 				pass
