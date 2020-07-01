@@ -83,8 +83,8 @@ def make_bed(contig_lib,this_contig):
 
 def main(args):
 	if args.contig:
-		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
-		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+		cmd = ["samtools", "depth", "-aa", args.sortbam, "-r", args.contig]
+		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 
 		cov_stats = {}
 		current_contig = args.contig
@@ -101,8 +101,8 @@ def main(args):
 			print(current_contig,median(cov_stats.values()),sep="\t")
 
 	else:
-		cmd = ["samtools depth -aa %s" % args.sortbam]
-		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+		cmd = ["samtools", "depth", "-aa", args.sortbam]
+		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 
 		cov_stats = {}
 		current_contig = "None"
