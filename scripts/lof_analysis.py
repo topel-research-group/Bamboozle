@@ -105,11 +105,18 @@ def summarize(input_vcf, state, out_prefix):
 #			print(os.path.basename(data_out))
 			data_multi.to_csv(str(out_prefix).strip('[]')[1:-1] + "/" + os.path.basename(data_out), sep='\t')
 
+#what should this do?...
+#
 #read input metadata table
 #	with open(metadata) as infile:
 #		md = csv.reader(infile, delimiter="\t")
 #		for row in md:
 			##do XXX
+
+#python dashboard
+#interactive plots?
+#circos of all but CTX? per sample
+
 def main():
 	#start things out
 	state = check_input(args.input_vcf)
