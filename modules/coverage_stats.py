@@ -109,8 +109,8 @@ def main(args):
 
 	contig_lengths = {}
 
-	cmd2 = ["samtools idxstats %s" % (args.sortbam)]
-	process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+	cmd2 = ["samtools", "idxstats", args.sortbam]
+	process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=False)
 
 	with process2.stdout as result2:
 		rows2 = (line2.decode() for line2 in result2)
@@ -123,13 +123,13 @@ def main(args):
 	# Run samtools depth to obtain required coverage info
 
 	if args.contig:
-		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
+		cmd = ["samtools", "depth", "-aa", args.sortbam, "-r", args.contig]
 		sequence = "contig"
 	else:
-		cmd = ["samtools depth -aa %s" % args.sortbam]
+		cmd = ["samtools", "depth", "-aa", args.sortbam]
 		sequence = "assembly"
 
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 
 	if args.verbose == True:
 		if args.contig:
