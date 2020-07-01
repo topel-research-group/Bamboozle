@@ -95,11 +95,11 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 	# Compare the coverage
 
 	if contig:
-		cmd = ["samtools depth -aa -b %s -r %s %s" % (temp_bed, contig, infile)]
+		cmd = ["samtools", "depth", "-aa", "-b", temp_bed, "-r", contig, infile]
 	else:
-		cmd = ["samtools depth -aa -b %s %s" % (temp_bed, infile)]
+		cmd = ["samtools", "depth", "-aa", "-b", temp_bed, infile]
 
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 
 	coverage = []
 
@@ -167,11 +167,11 @@ def main(args):
 			print("Determining potentially homozygous/heterozygous deletions in",args.contig)
 
 	if args.contig and args.contig != "assembly":
-		cmd = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
+		cmd = ["samtools", "depth", "-aa", args.sortbam, "-r", args.contig]
 	else:
-		cmd = ["samtools depth -aa %s" % args.sortbam]
+		cmd = ["samtools", "depth", "-aa", args.sortbam]
 
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 	
 	old_position = 0
 	deletion = []
