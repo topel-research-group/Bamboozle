@@ -75,13 +75,6 @@ def list_format(args):
 
 # Extracting sample name from input BAM, checking if sorted or not
 
-# DevNote - the check below can be removed once all functions are capable of accepting multiple inputs
-#if args.bamfile and len(args.bamfile) > 1 and args.command != "barcode":
-#	sys.exit("[Error] Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
-
-#if args.forward and args.reverse and args.command == "barcode":
-#	sys.exit("[Error] BarcodeSearch currently doesn't accept FASTQ input; please give BAM input instead.")
-
 # DevNote - ensure that there is also a .bai file present
 
 # DevNote - combine this with the samtools sort/index commands below, rather than having the same function run twice

@@ -40,6 +40,8 @@ import datetime
 # ARGUMENTS
 #######################################################################
 
+# DevNote: Any way to put module-specific arguments into the module rather than the main script?
+
 parser = argparse.ArgumentParser(usage="bamboozle.py <command> <args>")
 
 subparsers = parser.add_subparsers(title="Commands", dest="command", metavar="")
@@ -209,62 +211,6 @@ args = parser.parse_args()
 args.bamboozledir = os.path.dirname(os.path.realpath(__file__))
 
 #######################################################################
-# DEFINE FUNCTIONS USING BAMPARSER MODULE
-#######################################################################
-
-BamparseList = ["coverage","consensus","zero","deletion1","deletion2","deletion3",\
-		"deletionx","homohetero","median","long_coverage"]
-
-bamparse = None
-if args.command in BamparseList:
-	bamparse = True
-
-#######################################################################
-# HANDLING BAM FILES
-#	First, ensure that all BAM input files are sorted
-#	Otherwise, sort them
-#	Then, assign all sorted BAMs to args.sortbam
-#	Finally, ensure that if multiple BAMs are specified,
-#		the barcode command is being run
-#		Else warn the user and exit
-#######################################################################
-
-#extracting sample name from input BAM, checking if sorted or not
-
-# DevNote - ensure that there is also a .bai file present
-
-#def bam_check(threads, bam_list):
-#	args.sortbam = []
-#	for bamfile in bam_list:
-#		bam_name = os.path.basename(bamfile[:-4])
-#		bam_sorted = "%s_sorted.bam" % (bam_name)
-#		bam_index = "%s_sorted.bai" % (bam_name)
-#
-#		#command to check out first line of BAM header and look for "coordinate" (= sorted)
-#		cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
-#		proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
-#
-#		#if coordinate is present in bam header, bam is sorted
-#		std_out, std_error = proc_1.communicate()
-#		if std_out.rstrip('\n') == "coordinate":
-#			if args.verbose:
-#				print("Input BAM " + bamfile + " is already sorted")
-#			args.sortbam.append(bamfile)
-#		else:
-#			print("Input BAM " + bamfile + " is unsorted. Sorting...")
-#			cmd2 = "samtools sort -@ %s %s -o %s" % (threads, bamfile,bam_sorted)
-#			proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-#			std_out, std_error = proc_2.communicate()
-#			cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
-#			proc_3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-#			std_out, std_error = proc_3.communicate()
-#			print("Input BAM " + bamfile + " has been sorted")
-#			args.sortbam.append(bam_sorted)
-#
-#	if len(args.sortbam) == 1:
-#		args.sortbam = args.sortbam[0]
-
-#######################################################################
 # CHECK DEPENDENCIES
 #######################################################################
 
@@ -347,84 +293,9 @@ def done():
 def exit():
 	sys.exit()
 
-######################################################################
-
-
-######################################################################
-# BAMPARSER
-#	Define pipeline based on which Bamparser function is called
-######################################################################
-
-def bamparse_func():
-
-#	if not args.sortbam:
-#		args.sortbam = "Bowtie2/*sorted.bam" 
-
-	if args.command == "coverage":
-		import modules.coverage_stats as cs
-		if args.gff and not args.outprefix:
-			sys.exit("[Error] If --gff is specified, please ensure that -o is also specified.")
-		if args.dev:
-			import cProfile
-			cProfile.runctx('cs.main(args)', globals(), locals())
-		else:
-			cs.main(args)
-
-	elif args.command == "consensus":
-		import modules.consensus as con
-		if args.ref and args.contig and args.range:
-			if args.dev:
-				import cProfile
-				cProfile.runctx('con.main(args)', globals(), locals())
-			else:
-				con.main(args)
-		else:
-			sys.exit("[Error] Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
-
-	elif args.command == "zero":
-		import modules.zero_regions as zr
-		check_bedtools()
-		if args.ref and args.contig:
-			if args.dev:
-				import cProfile
-				cProfile.runctx('zr.main(args)', globals(), locals())
-			else:
-				zr.main(args)
-		else:
-			sys.exit("[Error] Please ensure that a reference [-f] and contig [-c] are given.")
-
-	elif args.command in ["deletion1", "deletion2", "deletion3", "deletionx", "homohetero"]:
-		import modules.deletion as dl
-		if args.command == "deletionx" and not args.exons:
-			sys.exit("[Error] Please ensure that a bed file of exons [-x] is given.")
-		elif args.dev:
-			import cProfile
-			cProfile.runctx('dl.main(args)', globals(), locals())
-		else:
-			dl.main(args)
-
-	elif args.command == "median":
-		import modules.median_deviation as md
-		if args.simple or args.complex:
-			if args.dev:
-				import cProfile
-				cProfile.runctx('md.main(args)', globals(), locals())
-			else:
-				md.main(args)
-		else:
-			sys.exit("[Error] Please specify --simple for medians only or --complex for full output")
-
-	elif args.command == "long_coverage":
-		import modules.coverage_limits as cl
-		if args.dev:
-			import cProfile
-			cProfile.runctx('cl.main(args)', globals(), locals())
-		else:
-			cl.main(args)
-
-	else:
-		parser.print_help(sys.stderr)
-		exit()
+#######################################################################
+# MAIN FUNCTION
+#######################################################################
 
 def main():
 	check_samtools()
@@ -437,8 +308,67 @@ def main():
 		import modules.sv_caller as sv
 		sv.main(args, bam_name)
 
-	if bamparse:
-		bamparse_func()
+	if args.command == "coverage":
+		import modules.coverage_stats as cs
+		if args.gff and not args.outprefix:
+			sys.exit("[Error] If --gff is specified, please ensure that -o is also specified.")
+		if args.dev:
+			import cProfile
+			cProfile.runctx('cs.main(args)', globals(), locals())
+		else:
+			cs.main(args)
+
+	if args.command == "consensus":
+		import modules.consensus as con
+		if args.ref and args.contig and args.range:
+			if args.dev:
+				import cProfile
+				cProfile.runctx('con.main(args)', globals(), locals())
+			else:
+				con.main(args)
+		else:
+			sys.exit("[Error] Please ensure that a reference [-f], contig [-c] and range [-a] are given.")
+
+	if args.command == "zero":
+		import modules.zero_regions as zr
+		check_bedtools()
+		if args.ref and args.contig:
+			if args.dev:
+				import cProfile
+				cProfile.runctx('zr.main(args)', globals(), locals())
+			else:
+				zr.main(args)
+		else:
+			sys.exit("[Error] Please ensure that a reference [-f] and contig [-c] are given.")
+
+	if args.command in ["deletion1", "deletion2", "deletion3", "deletionx", "homohetero"]:
+		import modules.deletion as dl
+		if args.command == "deletionx" and not args.exons:
+			sys.exit("[Error] Please ensure that a bed file of exons [-x] is given.")
+		elif args.dev:
+			import cProfile
+			cProfile.runctx('dl.main(args)', globals(), locals())
+		else:
+			dl.main(args)
+
+	if args.command == "median":
+		import modules.median_deviation as md
+		if args.simple or args.complex:
+			if args.dev:
+				import cProfile
+				cProfile.runctx('md.main(args)', globals(), locals())
+			else:
+				md.main(args)
+		else:
+			sys.exit("[Error] Please specify --simple for medians only or --complex for full output")
+
+	if args.command == "long_coverage":
+		import modules.coverage_limits as cl
+		if args.dev:
+			import cProfile
+			cProfile.runctx('cl.main(args)', globals(), locals())
+		else:
+			cl.main(args)
 
 	if args.command == "barcode":
 		import modules.barcodesearch as bcs
@@ -461,10 +391,16 @@ def main():
 
 		if args.snpsift:
 			pl.snpsift(args)
+
 		if args.clean:
 			clean()
+
 		if args.done:
 			done()
+
+	else:
+		parser.print_help(sys.stderr)
+		exit()
 
 #######################################################################
 
