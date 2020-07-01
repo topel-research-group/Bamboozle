@@ -8,6 +8,7 @@
 #       Copyright (C) 2018 Vilma Canfjorden. vilma.canfjorden@gmail.com
 #       Copyright (C) 2018 Matthew Pinder. matt_pinder13@hotmail.com
 #	Copyright (C) 2018 Mats Topel. mats.topel@marine.gu.se
+#       Copyright (C) 2020 André Soares, andre.soares@bioenv.gu.se
 #
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
