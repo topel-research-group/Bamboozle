@@ -87,8 +87,8 @@ def main(args):
 	if args.verbose == True:
 		print("Finding zero coverage areas in contig",args.contig)
 
-	cmd = ["bedtools genomecov -bga -ibam %s" % args.sortbam]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	cmd = ["bedtools", "genomecov", "-bga", "-ibam", args.sortbam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 	zeroes = {}
 	correct_contig = 0
 
