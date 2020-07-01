@@ -42,7 +42,6 @@ current_directory = os.getcwd()
 name = os.path.basename(current_directory)
 add = '../'
 add2 = '../Bowtie2/'
-#threads = str(args.threads)
 base = name + '.contigs'
 sam = name + '.sam'
 bam = name + '.bam'
@@ -83,8 +82,8 @@ def bam_check(args):
 	args.sortbam = []
 	for bamfile in args.bamfile:
 		bam_name = os.path.basename(bamfile[:-4])
-		bam_sorted = "%s_sorted.bam" % (bam_name)
-		bam_index = "%s_sorted.bai" % (bam_name)
+		bam_sorted = "Bowtie2/%s_sorted.bam" % (bam_name)
+		bam_index = "Bowtie2/%s_sorted.bai" % (bam_name)
 
 		#command to check out first line of BAM header and look for "coordinate" (= sorted)
 		cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
@@ -98,7 +97,12 @@ def bam_check(args):
 			args.sortbam.append(bamfile)
 		else:
 			print("Input BAM " + bamfile + " is unsorted. Sorting...")
-			cmd2 = "samtools sort -@ %s %s -o %s" % (args.threads, bamfile,bam_sorted)
+
+			# Makes new directory 'Bowtie2' if it doesn't exists.
+			if not os.path.exists('Bowtie2'):
+				os.makedirs('Bowtie2')
+
+			cmd2 = "samtools sort -@ %s %s -o %s" % (args.threads, bamfile, bam_sorted)
 			proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 			std_out, std_error = proc_2.communicate()
 			cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
