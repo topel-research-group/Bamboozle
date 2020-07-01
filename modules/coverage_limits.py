@@ -32,8 +32,8 @@ import subprocess
 #######################################################################
 
 def main(args):
-	command = ["samtools depth -aa %s -r %s" % (args.sortbam, args.contig)]
-	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+	command = ["samtools", "depth", "-aa", args.sortbam, "-r", args.contig]
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=False)
 
 	if args.limits[0] < args.limits[1]:
 		lower = args.limits[0]
