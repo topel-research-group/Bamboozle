@@ -392,6 +392,8 @@ def main():
 	elif args.command == "pipeline":
 		if bool(args.feature) != bool(args.gff):
 			sys.exit("[Error] --feature requires --gff, and vice versa.")
+		if not args.ref:
+			sys.exit("[Error] Please ensure that a reference [-f] is given.")
 
 		import modules.pipeline as pl
 		check_bcftools()
