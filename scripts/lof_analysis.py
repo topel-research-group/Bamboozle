@@ -53,6 +53,11 @@ def check_input(input_vcf):
 #output a bed-formatted output with metadata in it to input into the html plotly
 #plots there:
 #	horizontal 'barplot' with SVs per chrm with annotations highlighted
+#		1. needs chromosome layout per sample, that is
+#			proportional to contig/chrom size
+#			"mappable"? to locs in BED input
+#		2. needs to plot bars? at right height too
+#		3. maybe dendrogram for n. of samples plotted
 #	point plot? comparing populations by hierarchical clustering?
 
 def summarize(input_vcf, state, out_prefix):
