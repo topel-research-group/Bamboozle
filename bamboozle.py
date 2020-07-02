@@ -43,7 +43,7 @@ import datetime
 
 # DevNote: Any way to put module-specific arguments into the module rather than the main script?
 
-parser = argparse.ArgumentParser(usage="bamboozle.py <command> <args>")
+parser = argparse.ArgumentParser(usage="bamboozle.py <command> [options]")
 
 subparsers = parser.add_subparsers(title="Commands", dest="command", metavar="")
 
@@ -64,6 +64,8 @@ subparsers = parser.add_subparsers(title="Commands", dest="command", metavar="")
 #				help="BAM infile")
 
 input_commands = argparse.ArgumentParser(add_help=False)
+input_commands.add_argument("-f", "--ref", \
+				help="Reference")
 input_commands.add_argument("-F", "--forward", nargs='*', \
 				help="Forward reads; can be a single file or a space-separated list")
 input_commands.add_argument("-R", "--reverse", nargs='*', \
@@ -82,11 +84,6 @@ other_commands.add_argument("-v", "--verbose", action="store_true", \
 other_commands.add_argument('--dev', \
 				help=argparse.SUPPRESS, action="store_true")
 
-# Argument included only in pipeline, consensus, zero, barcode, and lof
-ref_command = argparse.ArgumentParser(add_help=False)
-ref_command.add_argument("-f", "--ref", \
-				help="Reference")
-
 # Argument included only in coverage, consensus, zero, deletion1, deletion2, deletion3, deletionx, homohetero, median, and long_coverage
 contig_command = argparse.ArgumentParser(add_help=False)
 contig_command.add_argument("-c", "--contig", \
@@ -103,7 +100,7 @@ gff_command.add_argument("--gff", \
 				help="gff infile")
 
 # Pipeline command
-pipeline = subparsers.add_parser("pipeline", parents=[input_commands, other_commands, ref_command, gff_command], \
+pipeline = subparsers.add_parser("pipeline", parents=[input_commands, other_commands, gff_command], \
 				usage="bamboozle.py pipeline <args>", \
 				help="[Vilma's pipeline]")
 pipeline.add_argument("--contigsizes", \
@@ -121,67 +118,67 @@ pipeline.add_argument("-p", "--done", action="store_true", \
 
 # Coverage command
 coverage = subparsers.add_parser("coverage", parents=[input_commands, other_commands, contig_command, threshold_command, gff_command], \
-				usage="bamboozle.py coverage <args>", \
+				usage="bamboozle.py coverage {-f <ref> -F <fwd> -R <rev> | -b <bam>} [options]", \
 				help="Print a statistic for what percentage of bases in an assembly have >=Nx coverage")
 
 # Consensus command
-consensus = subparsers.add_parser("consensus", parents=[input_commands, other_commands, ref_command, contig_command], \
-				usage="bamboozle.py consensus <args>", \
+consensus = subparsers.add_parser("consensus", parents=[input_commands, other_commands, contig_command], \
+				usage="bamboozle.py consensus -f <ref> {-F <fwd> -R <rev> | -b <bam>} -c <contig> -a <range> [options]", \
 				help="Extract the consensus sequence of aligned reads from a region of the reference (WIP)")
 consensus.add_argument("-a", "--range", \
 			help="somethingsomsing")
 
 # Zero command
-zero = subparsers.add_parser("zero", parents=[input_commands, other_commands, ref_command, contig_command], \
-				usage="bamboozle.py zero <args>", \
+zero = subparsers.add_parser("zero", parents=[input_commands, other_commands, contig_command], \
+				usage="bamboozle.py zero -f <ref> {-F <fwd> -R <rev> | -b <bam>} -c <contig> [options]", \
 				help="Find areas of zero coverage and print the reference sequence, along with a GC percentage")
 
 # Deletion1 command
 deletion1 = subparsers.add_parser("deletion1", parents=[input_commands, other_commands, contig_command, threshold_command], \
-				usage="bamboozle.py deletion1 <args>", \
+				usage="bamboozle.py deletion1 {-f <ref> -F <fwd> -R <rev> | -b <bam>} [options]", \
 				help="Find deletions")
 
 # Deletion2 command
 deletion2 = subparsers.add_parser("deletion2", parents=[input_commands, other_commands, contig_command, threshold_command], \
-				usage="bamboozle.py deletion2 <args>", \
+				usage="bamboozle.py deletion2 {-f <ref> -F <fwd> -R <rev> | -b <bam>} [options]", \
 				help="Find deletion events")
 
 # Deletion3 command
 deletion3 = subparsers.add_parser("deletion3", parents=[input_commands, other_commands, contig_command, threshold_command], \
-				usage="bamboozle.py deletion3 <args>", \
+				usage="bamboozle.py deletion3 {-f <ref> -F <fwd> -R <rev> | -b <bam>} [options]", \
 				help="Find frameshift deletion events")
 
 # Deletionx command
 deletionx = subparsers.add_parser("deletionx", parents=[input_commands, other_commands, contig_command, threshold_command], \
-				usage="bamboozle.py deletionx <args>", \
+				usage="bamboozle.py deletionx {-f <ref> -F <fwd> -R <rev> | -b <bam>} -x <bed> [options]", \
 				help="Find deletions occurring within exons")
 deletionx.add_argument("-x", "--exons", \
 			help="Bed file containing exon coordinates (0-based)")
 
 # Homohetero command
 homohetero = subparsers.add_parser("homohetero", parents=[input_commands, other_commands, contig_command, threshold_command], \
-				usage="bamboozle.py homohetero <args>", \
+				usage="bamboozle.py homohetero {-f <ref> -F <fwd> -R <rev> | -b <bam>} [options]", \
 				help="Attempt to determine whether a deletion is homozygous or heterozygous")
 
 # Median command
 median = subparsers.add_parser("median", parents=[input_commands, other_commands, contig_command], \
-				usage="bamboozle.py median <args>", \
+				usage="bamboozle.py median {-f <ref> -F <fwd> -R <rev> | -b <bam>} {--simple | --complex} [options]", \
 				help="Find regions differing from contig median by +/- 50%%, or just contig medians")
+median.add_argument("--simple", action="store_true", \
+			help="Print median coverage per contig")
 median.add_argument("--complex", action="store_true", \
 			help="Print full bed output for median")
-median.add_argument("--simple", action="store_true", \
-			help="Print median coverage only for median")
 
 # Long_coverage command
 long_coverage = subparsers.add_parser("long_coverage", parents=[input_commands, other_commands, contig_command], \
-				usage="bamboozle.py long_coverage <args>",
+				usage="bamboozle.py long_coverage {-f <ref> -F <fwd> -R <rev> | -b <bam>} -c <contig> -l <upper limit> <lower limit> [options]",
 				help="Find the longest region between given coverage limits for a given contig")
 long_coverage.add_argument("-l", "--limits", type=int, nargs=2, \
 			help="Specify lower and upper limits for long_coverage function")
 
 # Barcode command
-barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands, ref_command, threshold_command], \
-				usage="bamboozle.py barcode <args>", \
+barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands, threshold_command], \
+				usage="bamboozle.py barcode -f <ref> -b <bam1> <bam2> ... <bamN> -o <prefix> [options]", \
 				help="Search the input (sorted) BAM files for suitable barcode regions")
 barcode.add_argument("-q", "--quality", type=int, default="20", \
 			help="Quality threshold for filtering variants (default: 20)")
@@ -191,7 +188,7 @@ barcode.add_argument("--primer_size", type=int, default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode (default: 21)")
 
 # SV caller command
-sv = subparsers.add_parser("lof", parents=[input_commands, other_commands, ref_command], \
+sv = subparsers.add_parser("lof", parents=[input_commands, other_commands], \
 				usage="bamboozle.py lof <args>", \
 				help="Run loss-of-function pipeline")
 sv.add_argument("--snpeffdb", \
@@ -367,21 +364,26 @@ def main():
 			else:
 				md.main(args)
 		else:
-			sys.exit("[Error] Please specify --simple for medians only or --complex for full output")
+			sys.exit("[Error] Please specify --simple for medians only or --complex for full output.")
 
 	elif args.command == "long_coverage":
 		import modules.coverage_limits as cl
-		if args.dev:
-			import cProfile
-			cProfile.runctx('cl.main(args)', globals(), locals())
+		if args.contig and args.limits:
+			if args.dev:
+				import cProfile
+				cProfile.runctx('cl.main(args)', globals(), locals())
+			else:
+				cl.main(args)
 		else:
-			cl.main(args)
+			sys.exit("[Error] Please ensure that a contig [-c] and coverage limits [-l] are given.")
 
 	elif args.command == "barcode":
 		import modules.barcodesearch as bcs
 		check_bcftools()
 		check_bedtools()
-		if args.dev:
+		if not args.outprefix:
+			sys.exit("[Error] Please ensure that an output file prefix [-o] is given.")
+		elif args.dev:
 			import cProfile
 			cProfile.runctx('bcs.barcode(args)', globals(), locals())
 		else:
