@@ -310,6 +310,8 @@ def main(args):
 	elif args.bamfile:
 		if len(args.bamfile) > 1 and args.command != "barcode":
 			sys.exit("[Error] Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
+		elif len(args.bamfile) == 1 and args.command == "barcode":
+			sys.exit("[Error] Please note that BarcodeSearch requires multiple BAM inputs.")
 		else:
 			bam_check(args)
 
