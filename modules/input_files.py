@@ -86,12 +86,12 @@ def bam_check(args):
 		bam_index = "Bowtie2/%s_sorted.bai" % (bam_name)
 
 		#command to check out first line of BAM header and look for "coordinate" (= sorted)
-		cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
-		proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
+		cmd1 = ["samtools", "view", "-H", bamfile]
+		proc_1 = subprocess.Popen(cmd1, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
 
 		#if coordinate is present in bam header, bam is sorted
 		std_out, std_error = proc_1.communicate()
-		if std_out.rstrip('\n') == "coordinate":
+		if "coordinate" in std_out.split("\n")[0]:
 			if args.verbose:
 				print("Input BAM " + bamfile + " is already sorted")
 			args.sortbam.append(bamfile)
