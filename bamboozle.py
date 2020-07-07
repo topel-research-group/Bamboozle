@@ -216,8 +216,8 @@ args.bamboozledir = os.path.dirname(os.path.realpath(__file__))
 
 def check_samtools():
 	try:
-		subprocess.check_output('samtools --help', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
+		subprocess.check_output(['samtools', '--help'])
+	except FileNotFoundError:
 		sys.exit("[Error] Please ensure that Samtools is in your PATH.")
 	try:
 		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
@@ -226,20 +226,20 @@ def check_samtools():
 
 def check_bcftools():
 	try:
-		subprocess.check_output('bcftools --help', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
+		subprocess.check_output(['bcftools', '--help'])
+	except FileNotFoundError:
 		sys.exit("[Error] Please ensure that BCFtools is in your PATH.")
 
 def check_bedtools():
 	try:
-		subprocess.check_output('bedtools --help', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
+		subprocess.check_output(['bedtools', '--help'])
+	except FileNotFoundError:
 		sys.exit("[Error] Please ensure that bedtools is in your PATH.")
 
 def check_snpeff():
 	try:
-		subprocess.check_output('snpEff -version', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
+		subprocess.check_output(['snpEff', '-version'])
+	except FileNotFoundError:
 		sys.exit("[Error] Please ensure that snpEff is in your PATH.")
 
 #######################################################################
