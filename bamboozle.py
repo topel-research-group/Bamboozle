@@ -219,6 +219,8 @@ def check_samtools():
 		subprocess.check_output(['samtools', '--help'])
 	except FileNotFoundError:
 		sys.exit("[Error] Please ensure that Samtools is in your PATH.")
+
+	# DevNote - This instance of shell=True shouldn't be vulnerable to shell injection, but find a way to remove it if possible
 	try:
 		subprocess.check_output('samtools depth 2>&1 | grep -- "-aa"', stderr=subprocess.PIPE, shell=True)
 	except subprocess.CalledProcessError:
