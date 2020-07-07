@@ -146,8 +146,8 @@ def timing(function):
 @timing
 def bowtie2(args):
 	try:
-		subprocess.check_output('bowtie2 --help', stderr=subprocess.PIPE, shell=True)
-	except subprocess.CalledProcessError:
+		subprocess.check_output(['bowtie2', '--help'])
+	except FileNotFoundError:
 		sys.exit("[Error] Please ensure that Bowtie2 is in your path.")
 
 	# Ensure that a reference is provided
