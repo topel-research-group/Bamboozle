@@ -153,9 +153,14 @@ def check_unique_windows(windows, contig, reference, infiles):
 			vcf_zipped = FileName(bam) + ".vcf.gz"
 
 			# In the interest of identifying reliable barcodes, only homozygous sites are considered
-			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus -i 'GT=\"hom\"' --sample %s %s" % \
-				(reference, contig, windows[contig][window][0], windows[contig][window][3], bam, vcf_zipped)]
-			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+
+			con_range = contig + ":" + str(windows[contig][window][0]) + "-" + str(windows[contig][window][3])
+			cmdD = ["samtools", "faidx", reference, con_range]
+			procD =  subprocess.Popen(cmdD, stdout=subprocess.PIPE, shell=False)
+
+			cmdE = ["bcftools", "consensus", "-i", "GT=\"hom\"", "--sample", bam, vcf_zipped]
+			process3 = subprocess.Popen(cmdE, stdin=procD.stdout, stdout=subprocess.PIPE, shell=False)
+
 			with process3.stdout as result3:
 				rows3 = (line.decode() for line in result3)
 				for row3 in rows3:
