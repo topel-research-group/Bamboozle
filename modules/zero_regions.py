@@ -28,6 +28,7 @@
 #######################################################################
 
 import sys
+import os
 import subprocess
 
 #######################################################################
@@ -88,7 +89,7 @@ def main(args):
 
 	if not args.outprefix:
 		args.outprefix = os.path.basename(args.sortbam[:-4])
-	output_file = args.outprefix + ".txt"
+	output_file = args.outprefix + ".zero_regions.txt"
 
 	cmd = ["bedtools", "genomecov", "-bga", "-ibam", args.sortbam]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
