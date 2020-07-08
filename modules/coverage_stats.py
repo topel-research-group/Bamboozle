@@ -38,20 +38,21 @@ import os.path
 # PRINT WINDOW TO BED FILE
 #######################################################################
 
-#def print_to_bed(start_coord, stop_coord, contig, gff_file, output_file):
 def print_to_bed(start_coord, stop_coord, contig, gff_loci, output_file):
 	print_genes = []
 
 	# Determine whether the window overlaps with a feature in the gff file
-	# DevNote - Any way to make this less wordy?
-#	if gff_file:
 	if gff_loci:
 		if contig in gff_loci.keys():
 			for gene in gff_loci[contig]:
-				if start_coord <= int(gff_loci[contig][gene][0]) <= stop_coord \
-				or start_coord <= int(gff_loci[contig][gene][1]) <= stop_coord \
-				or int(gff_loci[contig][gene][0]) <= start_coord <= int(gff_loci[contig][gene][1]) \
-				or int(gff_loci[contig][gene][0]) <= stop_coord <= int(gff_loci[contig][gene][1]):
+				gene_start = int(gff_loci[contig][gene][0])
+				gene_stop = int(gff_loci[contig][gene][1])
+
+				# DevNote - Removing the last two 'or's gives a different result; why?
+				if start_coord <= gene_start <= stop_coord \
+				or start_coord <= gene_stop <= stop_coord \
+				or gene_start <= start_coord <= gene_stop \
+				or gene_start <= stop_coord <= gene_stop:
 					print_genes.append(gene)
 
 	# Define BED file entry depending on whether any genes were found
