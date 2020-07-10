@@ -51,13 +51,15 @@ def check_input(input_vcf):
                         ##do XXX
 
 #output a bed-formatted output with metadata in it to input into the html plotly
-#plots there:
+#       build on this first!
+#plots:
 #	horizontal 'barplot' with SVs per chrm with annotations highlighted
 #		1. needs chromosome layout per sample, that is
 #			proportional to contig/chrom size
 #			"mappable"? to locs in BED input
 #		2. needs to plot bars? at right height too
 #		3. maybe dendrogram for n. of samples plotted
+#		a) maybe just facet_grid?
 #	point plot? comparing populations by hierarchical clustering?
 
 def summarize(input_vcf, state, out_prefix):
@@ -68,6 +70,7 @@ def summarize(input_vcf, state, out_prefix):
 		data = pd.DataFrame(0, \
 			columns = ['DEL','INS','DUP','INV','CTX','UNC'], \
 			index = list(vcf_in.header.contigs))
+		#per chrom
 		#for all the chromosomes found in the vcf keep as row names
 		for line in vcf_in:
 			if 'SIMPLE_TYPE' in line.info:
@@ -76,6 +79,7 @@ def summarize(input_vcf, state, out_prefix):
 				data.loc[line.chrom, 'UNC'] += 1
 		data_out = ",".join(input_vcf)[:-4] + ".tsv"
 		data.to_csv(data_out, sep='\t')
+				
 	#if more than one file as comma-sep inputs
 	if state == "vcfs in list":
 		#create folder if it doesn't exist
