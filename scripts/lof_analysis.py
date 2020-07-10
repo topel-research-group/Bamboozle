@@ -38,12 +38,6 @@ def check_input(input_vcf):
 		if len(input_vcf) > 1:
 			return "vcfs in list"
 
-#read input metadata table
-#       with open(metadata) as infile:
-#               md = csv.reader(infile, delimiter="\t")
-#               for row in md:
-                        ##do XXX
-
 def summarize(input_vcf, state, out_prefix):
 	#taking care of vcf first according to the nature of the input
 	if state == "single vcf":
@@ -103,11 +97,16 @@ def summarize(input_vcf, state, out_prefix):
 			data_out = vcf.strip("`b,").rstrip("\n")[:-4] + ".tsv"
 			data_multi.to_csv(str(out_prefix).strip('[]')[1:-1] + "/" + os.path.basename(data_out), sep='\t')
 
-import seaborn as sns
-
 def mplot(input_vcf, state, metadata):
 	#take in only multiple vcfs
+	if state == "single vcf":
+		sys.exit("Please enter VCFs and metadata corresponding to two or more populations.")
 	#check metadata in
+	with open(metadata) as infile:
+		md = csv.reader(infile, delimiter="\t")
+		for row in md:
+			#use second column to generate subfiles?
+		#do XXX
 	#merge vcfs
 	#split metadata by populations?
 	#vcftools fst w/merged vcf, multiple txt files
