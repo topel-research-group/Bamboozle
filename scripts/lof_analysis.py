@@ -121,6 +121,45 @@ def summarize(input_vcf, state, out_prefix):
 			data_out = vcf.strip("`b,").rstrip("\n")[:-4] + ".tsv"
 			data_multi.to_csv(str(out_prefix).strip('[]')[1:-1] + "/" + os.path.basename(data_out), sep='\t')
 
+import seaborn as sns
+
+def plot(input_vcf, state, metadata):
+	#read in vcf
+	#create dictionaries for x, y, sv type, chromosome, sample
+	#plot point plot
+	#x = start
+	#y = indel/small/large SV
+	#colour = SV type
+	#facet_grid: x = chromosome, y = sample
+	#calculate sv length? for facet_grid()
+
+	if state == "single vcf":
+                #read in vcf input, take its name
+		vcf_in = VariantFile(",".join(input_vcf))
+		vcf_x = []
+		vcf_y = []
+		svtype = []
+		chrom = []
+		#sample not needed in this case
+		for line in vcf_in:
+			vcf_x.append(line.start)
+			if line.end - line.start == 1:
+				vcf_y.append("SNV")
+			if 1 <= line.end - line.start <= 49:
+				vcf_y.append("INDEL")
+			if 50 <= line.end - line.start <= 500:
+				vcf_y.append("Small SV")
+			if line.end - line.start >= 501:
+				vcf_y.append("Large SV")
+			if 'SIMPLE_TYPE' in line.info:
+					svtype.append(line.info['SIMPLE_TYPE'])
+				else:
+					svtype.append("UNC")
+			chrom.append(line.chrom)
+		#plot
+		sns.catplot(x = vcf_x, y = vcf_y, \
+						
+
 #python dashboard
 #interactive plots?
 #maybe like a heatmap?
