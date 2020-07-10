@@ -108,6 +108,10 @@ import seaborn as sns
 def mplot(input_vcf, state, metadata):
 	#take in only multiple vcfs
 	#check metadata in
+	#merge vcfs
+	#split metadata by populations?
+	#vcftools fst w/merged vcf, multiple txt files
+	#manhattan plot
 
 #python dashboard
 #interactive plots?
