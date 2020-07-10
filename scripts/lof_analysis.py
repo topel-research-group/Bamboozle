@@ -20,9 +20,6 @@ parser.add_argument("-o", "--out_prefix", \
 	nargs = 1, type=str, \
 	help="For multiple samples, add an output prefix")
 #saving these for later
-parser.add_argument("--no_plots", \
-	help="SV plots will not be generated for the sample(s). \
-		Returns an HTML report with Circos plots and a summarized table")
 parser.add_argument("--just_the_table", \
 	help="Will only produce a summarized table from input VCF(s) and metadata")
 
@@ -41,26 +38,11 @@ def check_input(input_vcf):
 		if len(input_vcf) > 1:
 			return "vcfs in list"
 
-#summarize vcfs per sample (with metadata?)	-	sorted
-#what should this do?...
-#
 #read input metadata table
 #       with open(metadata) as infile:
 #               md = csv.reader(infile, delimiter="\t")
 #               for row in md:
                         ##do XXX
-
-#output a bed-formatted output with metadata in it to input into the html plotly
-#       build on this first!
-#plots:
-#	horizontal 'barplot' with SVs per chrm with annotations highlighted
-#		1. needs chromosome layout per sample, that is
-#			proportional to contig/chrom size
-#			"mappable"? to locs in BED input
-#		2. needs to plot bars? at right height too
-#		3. maybe dendrogram for n. of samples plotted
-#		a) maybe just facet_grid?
-#	point plot? comparing populations by hierarchical clustering?
 
 def summarize(input_vcf, state, out_prefix):
 	#taking care of vcf first according to the nature of the input
@@ -123,42 +105,9 @@ def summarize(input_vcf, state, out_prefix):
 
 import seaborn as sns
 
-def plot(input_vcf, state, metadata):
-	#read in vcf
-	#create dictionaries for x, y, sv type, chromosome, sample
-	#plot point plot
-	#x = start
-	#y = indel/small/large SV
-	#colour = SV type
-	#facet_grid: x = chromosome, y = sample
-	#calculate sv length? for facet_grid()
-
-	if state == "single vcf":
-                #read in vcf input, take its name
-		vcf_in = VariantFile(",".join(input_vcf))
-		vcf_x = []
-		vcf_y = []
-		svtype = []
-		chrom = []
-		#sample not needed in this case
-		for line in vcf_in:
-			vcf_x.append(line.start)
-			if line.end - line.start == 1:
-				vcf_y.append("SNV")
-			if 1 <= line.end - line.start <= 49:
-				vcf_y.append("INDEL")
-			if 50 <= line.end - line.start <= 500:
-				vcf_y.append("Small SV")
-			if line.end - line.start >= 501:
-				vcf_y.append("Large SV")
-			if 'SIMPLE_TYPE' in line.info:
-					svtype.append(line.info['SIMPLE_TYPE'])
-				else:
-					svtype.append("UNC")
-			chrom.append(line.chrom)
-		#plot
-		sns.catplot(x = vcf_x, y = vcf_y, \
-						
+def mplot(input_vcf, state, metadata):
+	#take in only multiple vcfs
+	#check metadata in
 
 #python dashboard
 #interactive plots?
@@ -168,16 +117,9 @@ def main():
 	#start things out
 	state = check_input(args.input_vcf)
 	#follow arguments if any has been given
-	if args.no_plots:
-		summarize(args.input_vcf, state)
-		#circos()
 	if args.just_the_table:
 		summarize(args.input_vcf, state)
-	#otherwise run everything
-	else:
-		summarize(args.input_vcf, state, args.out_prefix)
-#		plots()
-#		circos()
+	
 
 if __name__ == "__main__":
     main()
