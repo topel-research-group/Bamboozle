@@ -100,7 +100,7 @@ def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_l
 	proc_9 = subprocess.Popen(cmd9, shell=True)
 	std_out, std_error = proc_9.communicate()
 	#adds only relevant header columns from filt file
-	cmd10 = "bcftools annotate -c INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD -a %s.gz %s.gz -Oz -o %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
+	cmd10 = "bcftools annotate -c FORMAT/GT,INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD -a %s.gz %s.gz -Oz -o %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
 	proc_10 =  subprocess.Popen(cmd10, shell=True)
 	std_out, std_error = proc_10.communicate()
 
