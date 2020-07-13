@@ -50,7 +50,7 @@ def ref_check(reference):
 	#if list of bwa indices in folder is <1, create indices
 	if len(suf_list) < 1:
 		#this doesn't overwrite the reference if called
-		cmd3 = ['bwa index', reference]
+		cmd3 = ['bwa','index', reference]
 		proc_3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE,
 			shell=False, universal_newlines=True)
 		std_out, std_error = proc_3.communicate()
@@ -64,7 +64,7 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 		os.makedirs('sv_caller_output')
 
 	cmd4 = ['gridss.sh', bamfile, '-r', reference, '-a', assembly_bam_out, '-o', vcf_out, '-t', threads, '-j', java_gridss]
-	proc_4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=False)
+	proc_4 = subprocess.Popen(cmd4, shell=False)
 	std_out, std_error = proc_4.communicate()
 
 # BEDTOOLS masking of SV calls goes here
