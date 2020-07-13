@@ -684,6 +684,7 @@ def main():
 		import modules.sv_caller as sv
 		check_samtools()
 		bam_check(args.threads, args.bamfile)
+		bam_name = os.path.basename(args.bamfile[0])[:-4]
 		sv.main(args, bam_name)
 
 	if bamparse:
