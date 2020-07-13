@@ -50,8 +50,9 @@ def ref_check(reference):
 	#if list of bwa indices in folder is <1, create indices
 	if len(suf_list) < 1:
 		#this doesn't overwrite the reference if called
-		cmd3 = "bwa index %s" % (reference)
-		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
+		cmd3 = ['bwa index', reference]
+		proc_3 = subprocess.Popen(cmd3,
+			shell=False, universal_newlines=True)
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
 
@@ -62,46 +63,43 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 	if not os.path.exists('sv_caller_output'):
 		os.makedirs('sv_caller_output')
 
-	cmd4 = "gridss.sh %s -r %s -a %s -o %s -t %s -j %s" % (bamfile, reference, assembly_bam_out, vcf_out, threads, java_gridss)
-	proc_4 = subprocess.Popen(cmd4, shell=True)
-	
+	cmd4 = ['gridss.sh', bamfile, '-r', reference, '-a', assembly_bam_out, '-o', vcf_out, '-t', threads, '-j', java_gridss]
+	proc_4 = subprocess.Popen(cmd4, shell=False)
 	std_out, std_error = proc_4.communicate()
-	
-	print("GRIDSS finished calling SVs")
 
 # BEDTOOLS masking of SV calls goes here
 
 def masking(vcf_out, refpil, masked_vcf_out):
-	cmd5 = "bedtools intersect -v -b %s -a %s -sorted -header > %s" % (refpil, vcf_out, masked_vcf_out)
-	proc_5 = subprocess.Popen(cmd5, shell=True)
+	cmd5 = ['bedtools intersect -v -b', refpil, '-a', vcf_out, '-sorted -header >', masked_vcf_out]
+	proc_5 = subprocess.Popen(cmd5, shell=False)
 	std_out, std_error = proc_5.communicate()
 
 # Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
 
 def annotate(masked_vcf_out, bam_name, bamboozledir):
-	cmd6 = "Rscript --vanilla %s/scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (bamboozledir, masked_vcf_out, bam_name)
-	proc_6 = subprocess.Popen(cmd6, shell=True)
+	cmd6 = ['Rscript --vanilla', bamboozledir+'/scripts/bamboozle_sv_caller_qc_sum.R', masked_vcf_out, bam_name]
+	proc_6 = subprocess.Popen(cmd6, shell=False)
 	std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
 def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
-	cmd7 = "snpEff eff %s %s -c %s/data/snpeff/snpEff.config -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-	proc_7 = subprocess.Popen(cmd7, shell=True)
+	cmd7 = ['snpEff eff', snpeffdb1, masked_ann_vcf_out, '-c', bamboozledir1+'/data/snpeff/snpEff.config -csvStats', masked_vcf_out_lof_csv, '>', masked_vcf_out_lof_ann]
+	proc_7 = subprocess.Popen(cmd7, shell=False)
 	std_out, std_error = proc_7.communicate()
 
 # Filters SnpEff (and GRIDSS) annotations and tidies headers
 def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean):
 	#removes FORMAT, INFO fields
-	cmd8 = "bcftools annotate -x FORMAT,INFO %s -Oz -o %s.gz && tabix -p vcf  %s.gz"  % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt)
-	proc_8 = subprocess.Popen(cmd8, shell=True)
+	cmd8 = ['bcftools annotate -x FORMAT,INFO', masked_vcf_out_lof_ann, '-Oz -o', masked_vcf_out_lof_ann_filt+'.gz && tabix -p vcf', masked_vcf_out_lof_ann_filt+'.gz']
+	proc_8 = subprocess.Popen(cmd8, shell=False)
 	std_out, std_error = proc_8.communicate()
 	#bgzips, indexes filt file
-	cmd9 = "bgzip %s && tabix -p vcf %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann)
-	proc_9 = subprocess.Popen(cmd9, shell=True)
+	cmd9 = ['bgzip', masked_vcf_out_lof_ann, '&& tabix -p vcf', masked_vcf_out_lof_ann+'.gz']
+	proc_9 = subprocess.Popen(cmd9, shell=False)
 	std_out, std_error = proc_9.communicate()
 	#adds only relevant header columns from filt file
-	cmd10 = "bcftools annotate -c FORMAT/GT,INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD -a %s.gz %s.gz -Oz -o %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
-	proc_10 =  subprocess.Popen(cmd10, shell=True)
+	cmd10 = ['bcftools annotate -c FORMAT/GT,INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD -a', masked_vcf_out_lof_ann+'.gz', masked_vcf_out_lof_ann_filt+'.gz -Oz -o', masked_vcf_out_lof_ann_filt_clean+'.gz']
+	proc_10 =  subprocess.Popen(cmd10, shell=False)
 	std_out, std_error = proc_10.communicate()
 
 def main(args, bam_name):
