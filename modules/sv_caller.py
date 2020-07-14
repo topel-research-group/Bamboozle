@@ -63,43 +63,55 @@ def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
 	if not os.path.exists('sv_caller_output'):
 		os.makedirs('sv_caller_output')
 
-	cmd4 = ['gridss.sh', bamfile, '-r', reference, '-a', assembly_bam_out, '-o', vcf_out, '-t', threads, '-j', java_gridss]
+	cmd4 = ['gridss.sh', bamfile, '-r', reference, '-a', assembly_bam_out, '-o', vcf_out, '-t', str(threads), '-j', java_gridss]
 	proc_4 = subprocess.Popen(cmd4, shell=False)
 	std_out, std_error = proc_4.communicate()
 
 # BEDTOOLS masking of SV calls goes here
 
 def masking(vcf_out, refpil, masked_vcf_out):
-	cmd5 = ['bedtools intersect -v -b', refpil, '-a', vcf_out, '-sorted -header >', masked_vcf_out]
-	proc_5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=False)
-	std_out, std_error = proc_5.communicate()
+	cmd5 = ['bedtools', 'intersect', '-v','-b', refpil, '-a', vcf_out, '-sorted', '-header']
+	with open(masked_vcf_out, "w+") as f:
+		proc_5 = subprocess.Popen(cmd5, stdout=f, shell=False)
+	std_error = proc_5.communicate()
 
 # Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
 
 def annotate(masked_vcf_out, bam_name, bamboozledir):
-	cmd6 = ['Rscript --vanilla', bamboozledir+'/scripts/bamboozle_sv_caller_qc_sum.R', masked_vcf_out, bam_name]
-	proc_6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=False)
+	cmd6 = ['Rscript', '--vanilla', bamboozledir+'/scripts/bamboozle_sv_caller_qc_sum.R', masked_vcf_out, bam_name]
+	proc_6 = subprocess.Popen(cmd6, shell=False)
 	std_out, std_error = proc_6.communicate()
 
 # Checks for dependencies required for snpEff.
 def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
-	cmd7 = ['snpEff eff', snpeffdb1, masked_ann_vcf_out, '-c', bamboozledir1+'/data/snpeff/snpEff.config -csvStats', masked_vcf_out_lof_csv, '>', masked_vcf_out_lof_ann]
-	proc_7 = subprocess.Popen(cmd7, stdout=subprocess.PIPE, shell=False)
-	std_out, std_error = proc_7.communicate()
+	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""), masked_ann_vcf_out, '-c', bamboozledir1+'/data/snpeff/snpEff.config', '-csvStats', masked_vcf_out_lof_csv]
+	with open(masked_vcf_out_lof_ann, "w+") as f:
+		proc_7 = subprocess.Popen(cmd7, stdout=f, shell=False)
+	std_error = proc_7.communicate()
 
 # Filters SnpEff (and GRIDSS) annotations and tidies headers
 def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean):
 	#removes FORMAT, INFO fields
-	cmd8 = ['bcftools annotate -x FORMAT,INFO', masked_vcf_out_lof_ann, '-Oz -o', masked_vcf_out_lof_ann_filt+'.gz && tabix -p vcf', masked_vcf_out_lof_ann_filt+'.gz']
-	proc_8 = subprocess.Popen(cmd8, stdout=subprocess.PIPE, shell=False)
+	cmd8 = ['bcftools', 'annotate', '-x', 'FORMAT,INFO', masked_vcf_out_lof_ann, '-Oz', '-o', masked_vcf_out_lof_ann_filt+'.gz']
+	proc_8 = subprocess.Popen(cmd8, shell=False)
 	std_out, std_error = proc_8.communicate()
+
+	cmd8_5 = ['tabix', '-p', 'vcf', masked_vcf_out_lof_ann_filt+'.gz']
+	proc_8_5 = subprocess.Popen(cmd8_5, shell=False)
+	std_out, std_error = proc_8_5.communicate()
+
 	#bgzips, indexes filt file
-	cmd9 = ['bgzip', masked_vcf_out_lof_ann, '&& tabix -p vcf', masked_vcf_out_lof_ann+'.gz']
-	proc_9 = subprocess.Popen(cmd9, stdout=subprocess.PIPE, shell=False)
+	cmd9 = ['bgzip', masked_vcf_out_lof_ann]
+	proc_9 = subprocess.Popen(cmd9, shell=False)
 	std_out, std_error = proc_9.communicate()
+
+	cmd9_5 = ['tabix', '-p', 'vcf', masked_vcf_out_lof_ann+'.gz']
+	proc_9_5 = subprocess.Popen(cmd9_5, shell=False)
+	std_out, std_error = proc_9_5.communicate()
+
 	#adds only relevant header columns from filt file
-	cmd10 = ['bcftools annotate -c FORMAT/GT,INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD -a', masked_vcf_out_lof_ann+'.gz', masked_vcf_out_lof_ann_filt+'.gz -Oz -o', masked_vcf_out_lof_ann_filt_clean+'.gz']
-	proc_10 =  subprocess.Popen(cmd10, stdout=subprocess.PIPE, shell=False)
+	cmd10 = ['bcftools', 'annotate', '-c', 'FORMAT/GT,INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD', '-a', masked_vcf_out_lof_ann+'.gz', masked_vcf_out_lof_ann_filt+'.gz', '-Oz', '-o', masked_vcf_out_lof_ann_filt_clean+'.gz']
+	proc_10 =  subprocess.Popen(cmd10, shell=False)
 	std_out, std_error = proc_10.communicate()
 
 def main(args, bam_name):
@@ -123,7 +135,7 @@ def main(args, bam_name):
 	
 	#calling functions for sv_caller
 	ref_check(args.ref)
-	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
+	gridss(args.sortbam, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
 	#only apply masking() if it's been called
 	if args.masking:
 		masking(vcf_out, args.masking, masked_vcf_out)
