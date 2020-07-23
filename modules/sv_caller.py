@@ -58,10 +58,10 @@ def ref_check(reference):
 		print("GATK refernce index didn't exist but they sure do now")
 
 #GATK
-def run_gatk(#BAM_IN, #BAM_OUT, bam_name):
+def run_gatk(bam_in, bam_rg, bam_dup, bam_fm, vcf_out, bam_name):
 	#format input BAMs to make GATK happy
 	cmd4a = ['java','-jar',java_picard,'AddOrReplaceReadGroups',\
-		'I='+BAM_IN,'O='+BAM_OUT,\
+		'I='+bam_in,'O='+bam_rg,\
 		'SORT_ORDER=coordinate','RGID=foo','RGLB=bar',\
 		'RGPL=illumina','RGSM='+bam_name,\
 		'RGPU=bc1','CREATE_INDEX=True']
@@ -71,7 +71,7 @@ def run_gatk(#BAM_IN, #BAM_OUT, bam_name):
 
 	#mark duplicate reads in input BAMs
 	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
-		'I='+BAM_IN,'O='+BAM_OUT,\
+		'I='+bam_rg,'O='+bam_dup,\
 		'M=marked_dup_metrics.txt']
 	proc_4b = subprocess.Popen(cmd4b,
 		shell=False)
@@ -79,7 +79,7 @@ def run_gatk(#BAM_IN, #BAM_OUT, bam_name):
 
 	#"ensures that all mate-pair information is in sync between each read and its mate pair"
 	cmd4c = ['java','-jar',java_picard,'FixMateInformation',\
-		'I='+BAM_IN,'O='+BAM_OUT,\
+		'I='+bam_dup,'O='+bam_fm,\
 		'ADD_MATE_CIGAR=true']
 	proc_4c = subprocess.Popen(cmd4c,
 		shell=False)
@@ -104,7 +104,7 @@ def run_gatk(#BAM_IN, #BAM_OUT, bam_name):
 	cmd4f = ['gatk', '--java-options', '"-Xmx4g"', 'HaplotypeCaller',\
 		'-R', reference,\
 		'-I', BAM_OUT, \
-		'-O', BAM_OUT_svs]
+		'-O', vcf_out]
 
 	proc_4f = subprocess.Popen(cmd4f,
 		shell=False)
@@ -158,14 +158,14 @@ def main(args, bam_name):
 	#picard java
 	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
 	#ref_dict
-	ref_dict = reference.replace('.fasta','.dict')
-	#outputs for gridss
+	ref_dict = "sv_caller_output/"+reference.replace('.fasta','.dict')
+	#outputs for gatk
+	bam_rg = "sv_caller_output/%s_rdgrp.bam" % (bam_name)
+	bam_dup = "sv_caller_output/%s_rdgrp_nodups.bam" % (bam_name)
+	bam_fm = "sv_caller_output/%s_rdgrp_nodups_fixmate.bam" % (bam_name)
 	vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
-	assembly_bam_out = "sv_caller_output/%s_assembly.vcf" % (bam_name)
 	#outputs for bedtools
 	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
-	#output for R script
-	masked_ann_vcf_out = "sv_caller_output/%s_sv_annotated.vcf" % (bam_name)
 	#outputs for snpeff
 	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
 	masked_vcf_out_lof_ann = "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
