@@ -37,7 +37,7 @@ import datetime
 
 #checks for the presence of indices for the FASTA reference
 #if non existing, uses bwa to create new indices
-def ref_check(reference):
+def ref_check(reference, ref_dict):
 	#list of bwa index files
 	ref_dict_suf = ".dict"
 
@@ -79,7 +79,7 @@ def run_gatk(bam_in, bam_rg, bam_dup, bam_fm, vcf_out, bam_name, reference, java
 
 	#"ensures that all mate-pair information is in sync between each read and its mate pair"
 	cmd4c = ['java','-jar',java_picard,'FixMateInformation',\
-		'I='+bam_dup,'O='+bam_fm,\
+ww		'I='+bam_dup,'O='+bam_fm,\
 		'ADD_MATE_CIGAR=true']
 	proc_4c = subprocess.Popen(cmd4c,
 		shell=False)
@@ -122,7 +122,7 @@ def masking(vcf_out, refpil, masked_vcf_out):
 	std_error = proc_5.communicate()
 
 # Checks for dependencies required for snpEff.
-def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
+def snpeff(snpeffdb1, masked_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
 	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""),\
 		 masked_ann_vcf_out, \
 		'-c', bamboozledir1+'/data/snpeff/snpEff.config', \
@@ -150,8 +150,8 @@ def main(args, bam_name):
 	snpeff_db = str(args.snpeffdb).strip('[]')
 	
 	#calling functions for sv_caller
-	ref_check(args.ref)
-	gridss(args.sortbam, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
+	ref_check(args.ref, ref_dict)
+	run_gatk(args.sortbam, bam_rg, bam_dup, bam_fm, vcf_out, bam_name, args.ref, java_picard)
 	#only apply masking() if it's been called
 	if args.masking:
 		masking(vcf_out, args.masking, masked_vcf_out)
