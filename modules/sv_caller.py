@@ -56,16 +56,9 @@ def ref_check(reference):
 		std_out, std_error = proc_3.communicate()
 		print("bwa-mem indices didn't exist but they sure do now")
 
-#GRIDSS
-
-def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
-	#create output folder if it doesn't exist
-	if not os.path.exists('sv_caller_output'):
-		os.makedirs('sv_caller_output')
-
-	cmd4 = ['gridss.sh', bamfile, '-r', reference, '-a', assembly_bam_out, '-o', vcf_out, '-t', str(threads), '-j', java_gridss]
-	proc_4 = subprocess.Popen(cmd4, shell=False)
-	std_out, std_error = proc_4.communicate()
+#
+#GATK goes here
+#
 
 # BEDTOOLS masking of SV calls goes here
 
@@ -75,12 +68,9 @@ def masking(vcf_out, refpil, masked_vcf_out):
 		proc_5 = subprocess.Popen(cmd5, stdout=f, shell=False)
 	std_error = proc_5.communicate()
 
-# Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
-
-def annotate(masked_vcf_out, bam_name, bamboozledir):
-	cmd6 = ['Rscript', '--vanilla', bamboozledir+'/scripts/bamboozle_sv_caller_qc_sum.R', masked_vcf_out, bam_name]
-	proc_6 = subprocess.Popen(cmd6, shell=False)
-	std_out, std_error = proc_6.communicate()
+#
+#R script was removed from here
+#
 
 # Checks for dependencies required for snpEff.
 def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
