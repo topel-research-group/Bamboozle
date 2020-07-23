@@ -86,8 +86,29 @@ def run_gatk(#BAM_IN, #BAM_OUT, bam_name):
 	std_out, std_error = proc_4c.communicate()
 
 	#index output bam
-	#validade output bam
+
+	cmd4d = ['samtools', 'index', BAM_OUT]
+	proc_4d = subprocess.Popen(cmd4d,
+		shell=False)
+	std_out, std_error = proc_4d.communicate()
+
+	#validate output bam
+
+	cmd4e = ['ValidateSamFile', '-I', BAM_OUT, '-MODE', 'SUMMARY']
+	proc_4d = subprocess.Popen(cmd4d,
+		shell=False)
+	std_out, std_error = proc_4d.communicate()
+
 	#run haplotype caller
+
+	cmd4f = ['gatk', '--java-options', '"-Xmx4g"', 'HaplotypeCaller',\
+		'-R', reference,\
+		'-I', BAM_OUT, \
+		'-O', BAM_OUT_svs]
+
+	proc_4f = subprocess.Popen(cmd4f,
+		shell=False)
+	std_out, std_error = proc_4f.communicate()
 
 # BEDTOOLS masking of SV calls goes here
 
