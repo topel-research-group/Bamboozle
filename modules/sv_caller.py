@@ -129,31 +129,6 @@ def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv,
 		proc_7 = subprocess.Popen(cmd7, stdout=f, shell=False)
 	std_error = proc_7.communicate()
 
-# Filters SnpEff (and GRIDSS) annotations and tidies headers
-def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean):
-	#removes FORMAT, INFO fields
-	cmd8 = ['bcftools', 'annotate', '-x', 'FORMAT,INFO', masked_vcf_out_lof_ann, '-Oz', '-o', masked_vcf_out_lof_ann_filt+'.gz']
-	proc_8 = subprocess.Popen(cmd8, shell=False)
-	std_out, std_error = proc_8.communicate()
-
-	cmd8_5 = ['tabix', '-p', 'vcf', masked_vcf_out_lof_ann_filt+'.gz']
-	proc_8_5 = subprocess.Popen(cmd8_5, shell=False)
-	std_out, std_error = proc_8_5.communicate()
-
-	#bgzips, indexes filt file
-	cmd9 = ['bgzip', masked_vcf_out_lof_ann]
-	proc_9 = subprocess.Popen(cmd9, shell=False)
-	std_out, std_error = proc_9.communicate()
-
-	cmd9_5 = ['tabix', '-p', 'vcf', masked_vcf_out_lof_ann+'.gz']
-	proc_9_5 = subprocess.Popen(cmd9_5, shell=False)
-	std_out, std_error = proc_9_5.communicate()
-
-	#adds only relevant header columns from filt file
-	cmd10 = ['bcftools', 'annotate', '-c', 'FORMAT/GT,INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD', '-a', masked_vcf_out_lof_ann+'.gz', masked_vcf_out_lof_ann_filt+'.gz', '-Oz', '-o', masked_vcf_out_lof_ann_filt_clean+'.gz']
-	proc_10 =  subprocess.Popen(cmd10, shell=False)
-	std_out, std_error = proc_10.communicate()
-
 def main(args, bam_name):
 	#picard java
 	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
@@ -169,9 +144,6 @@ def main(args, bam_name):
 	#outputs for snpeff
 	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
 	masked_vcf_out_lof_ann = "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
-	#outputs for bcftools
-	masked_vcf_out_lof_ann_filt = "sv_caller_output/%s_sorted_masked_lof_filt.vcf" % (bam_name)
-	masked_vcf_out_lof_ann_filt_clean = "sv_caller_output/%s_sorted_masked_lof_filt_clean.vcf" % (bam_name)
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
 	
@@ -183,8 +155,6 @@ def main(args, bam_name):
 		masking(vcf_out, args.masking, masked_vcf_out)
 		annotate(masked_vcf_out, bam_name, args.bamboozledir)
 		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir,masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
 	else:
 		annotate(vcf_out, bam_name, args.bamboozledir)
 		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
