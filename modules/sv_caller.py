@@ -58,7 +58,7 @@ def ref_check(reference):
 		print("GATK refernce index didn't exist but they sure do now")
 
 #GATK
-def run_gatk(bam_in, bam_rg, bam_dup, bam_fm, vcf_out, bam_name):
+def run_gatk(bam_in, bam_rg, bam_dup, bam_fm, vcf_out, bam_name, reference, java_picard):
 	#format input BAMs to make GATK happy
 	cmd4a = ['java','-jar',java_picard,'AddOrReplaceReadGroups',\
 		'I='+bam_in,'O='+bam_rg,\
@@ -72,7 +72,7 @@ def run_gatk(bam_in, bam_rg, bam_dup, bam_fm, vcf_out, bam_name):
 	#mark duplicate reads in input BAMs
 	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
 		'I='+bam_rg,'O='+bam_dup,\
-		'M=marked_dup_metrics.txt']
+		'M=sv_caller_output/marked_dup_metrics.txt']
 	proc_4b = subprocess.Popen(cmd4b,
 		shell=False)
 	std_out, std_error = proc_4b.communicate()
@@ -86,24 +86,24 @@ def run_gatk(bam_in, bam_rg, bam_dup, bam_fm, vcf_out, bam_name):
 	std_out, std_error = proc_4c.communicate()
 
 	#index output bam
-
-	cmd4d = ['samtools', 'index', BAM_OUT]
+	cmd4d = ['samtools', 'index', bam_fm]
 	proc_4d = subprocess.Popen(cmd4d,
 		shell=False)
 	std_out, std_error = proc_4d.communicate()
 
 	#validate output bam
-
-	cmd4e = ['ValidateSamFile', '-I', BAM_OUT, '-MODE', 'SUMMARY']
+	cmd4e = ['ValidateSamFile', '-I', bam_fm, '-MODE', 'SUMMARY']
 	proc_4d = subprocess.Popen(cmd4d,
 		shell=False)
 	std_out, std_error = proc_4d.communicate()
 
 	#run haplotype caller
-
 	cmd4f = ['gatk', '--java-options', '"-Xmx4g"', 'HaplotypeCaller',\
+		'-G', 'StandardAnnotation',\
+		'-G', 'AS_StandardAnnotation',\
+		'-G', 'StandardHCAnnotation',\
 		'-R', reference,\
-		'-I', BAM_OUT, \
+		'-I', bam_fm,\
 		'-O', vcf_out]
 
 	proc_4f = subprocess.Popen(cmd4f,
@@ -113,18 +113,20 @@ def run_gatk(bam_in, bam_rg, bam_dup, bam_fm, vcf_out, bam_name):
 # BEDTOOLS masking of SV calls goes here
 
 def masking(vcf_out, refpil, masked_vcf_out):
-	cmd5 = ['bedtools', 'intersect', '-v','-b', refpil, '-a', vcf_out, '-sorted', '-header']
+	cmd5 = ['bedtools', 'intersect', '-v','-b', \
+		refpil, \
+		'-a', vcf_out, \
+		'-sorted', '-header']
 	with open(masked_vcf_out, "w+") as f:
 		proc_5 = subprocess.Popen(cmd5, stdout=f, shell=False)
 	std_error = proc_5.communicate()
 
-#
-#R script was removed from here
-#
-
 # Checks for dependencies required for snpEff.
 def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
-	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""), masked_ann_vcf_out, '-c', bamboozledir1+'/data/snpeff/snpEff.config', '-csvStats', masked_vcf_out_lof_csv]
+	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""),\
+		 masked_ann_vcf_out, \
+		'-c', bamboozledir1+'/data/snpeff/snpEff.config', \
+		'-csvStats', masked_vcf_out_lof_csv]
 	with open(masked_vcf_out_lof_ann, "w+") as f:
 		proc_7 = subprocess.Popen(cmd7, stdout=f, shell=False)
 	std_error = proc_7.communicate()
