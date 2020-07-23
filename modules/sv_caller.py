@@ -39,22 +39,23 @@ import datetime
 #if non existing, uses bwa to create new indices
 def ref_check(reference):
 	#list of bwa index files
-	bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
+	ref_dict_suf = ".dict"
 
 	#creating a list of bwa indices if they exist
 	suf_list = []
 	for file in os.listdir(os.path.dirname(reference)):
-		if file.endswith(bwa_suf):
+		if file.endswith(ref_dict_suf):
 			print(file + " is already in the directory")
 			suf_list.append(file)
 	#if list of bwa indices in folder is <1, create indices
-	if len(suf_list) < 1:
+	if len(ref_dict_suf) < 1:
 		#this doesn't overwrite the reference if called
-		cmd3 = ['bwa','index', reference]
-		proc_3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE,
-			shell=False, universal_newlines=True)
+		cmd3 = ['java','-jar',java_picard,'CreateSequenceDictionary',\
+			'REFERENCE='+reference,'OUTPUT='+ref_dict]
+		proc_3 = subprocess.Popen(cmd3,
+			shell=False)
 		std_out, std_error = proc_3.communicate()
-		print("bwa-mem indices didn't exist but they sure do now")
+		print("GATK refernce index didn't exist but they sure do now")
 
 #
 #GATK goes here
@@ -105,8 +106,10 @@ def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_l
 	std_out, std_error = proc_10.communicate()
 
 def main(args, bam_name):
-	#gridss java
-	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
+	#picard java
+	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
+	#ref_dict
+	ref_dict = reference.replace('.fasta','.dict')
 	#outputs for gridss
 	vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
 	assembly_bam_out = "sv_caller_output/%s_assembly.vcf" % (bam_name)
