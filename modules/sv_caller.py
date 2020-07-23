@@ -57,9 +57,37 @@ def ref_check(reference):
 		std_out, std_error = proc_3.communicate()
 		print("GATK refernce index didn't exist but they sure do now")
 
-#
-#GATK goes here
-#
+#GATK
+def run_gatk(#BAM_IN, #BAM_OUT, bam_name):
+	#format input BAMs to make GATK happy
+	cmd4a = ['java','-jar',java_picard,'AddOrReplaceReadGroups',\
+		'I='+BAM_IN,'O='+BAM_OUT,\
+		'SORT_ORDER=coordinate','RGID=foo','RGLB=bar',\
+		'RGPL=illumina','RGSM='+bam_name,\
+		'RGPU=bc1','CREATE_INDEX=True']
+	proc_4a = subprocess.Popen(cmd4a,
+		shell=False)
+	std_out, std_error = proc_4a.communicate()
+
+	#mark duplicate reads in input BAMs
+	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
+		'I='+BAM_IN,'O='+BAM_OUT,\
+		'M=marked_dup_metrics.txt']
+	proc_4b = subprocess.Popen(cmd4b,
+		shell=False)
+	std_out, std_error = proc_4b.communicate()
+
+	#"ensures that all mate-pair information is in sync between each read and its mate pair"
+	cmd4c = ['java','-jar',java_picard,'FixMateInformation',\
+		'I='+BAM_IN,'O='+BAM_OUT,\
+		'ADD_MATE_CIGAR=true']
+	proc_4c = subprocess.Popen(cmd4c,
+		shell=False)
+	std_out, std_error = proc_4c.communicate()
+
+	#index output bam
+	#validade output bam
+	#run haplotype caller
 
 # BEDTOOLS masking of SV calls goes here
 
