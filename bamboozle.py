@@ -244,7 +244,7 @@ if args.command in BamparseList:
 if len(args.bamfile) > 1 and args.command != "barcode":
 	print("Please note that only BarcodeSearch currently accepts multiple BAM inputs.")
 	exit()
-
+import re
 def bam_check(threads, bam_list):
 	args.sortbam = []
 	for bamfile in bam_list:
@@ -253,28 +253,35 @@ def bam_check(threads, bam_list):
 		bam_index = "%s_sorted.bai" % (bam_name)
 
 		#command to check out first line of BAM header and look for "coordinate" (= sorted)
-		cmd1 = "samtools view -H %s | head -n1 | cut -f3 | cut -f2 -d$':'" % (bamfile)
-		proc_1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
+		cmd1 = ['samtools', 'stats', bamfile]
+		proc_1 = subprocess.Popen(cmd1, shell=False,
+			stdout=subprocess.PIPE
 
 		#if coordinate is present in bam header, bam is sorted
-		std_out, std_error = proc_1.communicate()
-		if std_out.rstrip('\n') == "coordinate":
-			if args.verbose:
-				print("Input BAM " + bamfile + " is already sorted")
-			args.sortbam.append(bamfile)
-		else:
-			print("Input BAM " + bamfile + " is unsorted. Sorting...")
-			cmd2 = "samtools sort -@ %s %s -o %s" % (threads, bamfile,bam_sorted)
-			proc_2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-			std_out, std_error = proc_2.communicate()
-			cmd3 = "samtools index %s %s" % (bam_sorted, bam_index)
-			proc_3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-			std_out, std_error = proc_3.communicate()
-			print("Input BAM " + bamfile + " has been sorted")
-			args.sortbam.append(bam_sorted)
+		bam_stats_out = proc.stdout.read()
+		for line in bam_stats_out:
+			if re.search("coordinate", line):
+				if args.verbose:
+					print("Input BAM " + bamfile + " is already sorted")
+					args.sortbam.append(bamfile)
+				else:
+					print("Input BAM " + bamfile + " is unsorted. Sorting...")
+					cmd2 = ['samtools', 'sort', '-@', \
+						threads, bamfile, \
+						'-o' bam_sorted]
+					proc_2 = subprocess.Popen(cmd2, shell=False)
+					std_out, std_error = proc_2.communicate()
 
-	if len(args.sortbam) == 1:
-		args.sortbam = args.sortbam[0]
+					cmd3 = ['samtools', 'index', \
+						bam_sorted, bam_index]
+					proc_3 = subprocess.Popen(cmd3, shell=False)
+					std_out, std_error = proc_3.communicate()
+
+					print("Input BAM " + bamfile + " has been sorted")
+					args.sortbam.append(bam_sorted)
+
+		if len(args.sortbam) == 1:
+			args.sortbam = args.sortbam[0]
 
 #######################################################################
 # CHECK DEPENDENCIES
