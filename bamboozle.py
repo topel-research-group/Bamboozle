@@ -255,10 +255,10 @@ def bam_check(threads, bam_list):
 		#command to check out first line of BAM header and look for "coordinate" (= sorted)
 		cmd1 = ['samtools', 'stats', bamfile]
 		proc_1 = subprocess.Popen(cmd1, shell=False,
-			stdout=subprocess.PIPE
+			stdout=subprocess.PIPE)
 
 		#if coordinate is present in bam header, bam is sorted
-		bam_stats_out = proc.stdout.read()
+		bam_stats_out = proc_1.stdout.read()
 		for line in bam_stats_out:
 			if re.search("coordinate", line):
 				if args.verbose:
@@ -268,7 +268,7 @@ def bam_check(threads, bam_list):
 					print("Input BAM " + bamfile + " is unsorted. Sorting...")
 					cmd2 = ['samtools', 'sort', '-@', \
 						threads, bamfile, \
-						'-o' bam_sorted]
+						'-o', bam_sorted]
 					proc_2 = subprocess.Popen(cmd2, shell=False)
 					std_out, std_error = proc_2.communicate()
 
