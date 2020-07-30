@@ -61,27 +61,27 @@ def ref_check(reference, ref_dict):
 def run_gatk(bam_in, bam_rg, bam_dup, bam_fm, vcf_out, bam_name, reference, java_picard):
 	#format input BAMs to make GATK happy
 	cmd4a = ['java','-jar',java_picard,'AddOrReplaceReadGroups',\
-		'I='+bam_in,'O='+bam_rg,\
+		'I=', bam_in, 'O=', bam_rg,\
 		'SORT_ORDER=coordinate','RGID=foo','RGLB=bar',\
 		'RGPL=illumina','RGSM='+bam_name,\
 		'RGPU=bc1','CREATE_INDEX=True']
-	proc_4a = subprocess.Popen(cmd4a,
-		shell=False)
+	print(cmd4a)
+	proc_4a = subprocess.Popen(cmd4a, shell=False)
 	std_out, std_error = proc_4a.communicate()
 
 	#mark duplicate reads in input BAMs
 	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
-		'I='+bam_rg,'O='+bam_dup,\
+		'I='+bam_rg,'O=', bam_dup,\
 		'M=sv_caller_output/marked_dup_metrics.txt']
-	proc_4b = subprocess.Popen(cmd4b,
+	proc_4b = subprocess.Popen(cmd4b, \
 		shell=False)
 	std_out, std_error = proc_4b.communicate()
 
 	#"ensures that all mate-pair information is in sync between each read and its mate pair"
 	cmd4c = ['java','-jar',java_picard,'FixMateInformation',\
-ww		'I='+bam_dup,'O='+bam_fm,\
+		'I=', bam_dup,'O=', bam_fm,\
 		'ADD_MATE_CIGAR=true']
-	proc_4c = subprocess.Popen(cmd4c,
+	proc_4c = subprocess.Popen(cmd4c, \
 		shell=False)
 	std_out, std_error = proc_4c.communicate()
 
@@ -135,7 +135,7 @@ def main(args, bam_name):
 	#picard java
 	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
 	#ref_dict
-	ref_dict = "sv_caller_output/"+reference.replace('.fasta','.dict')
+	ref_dict = "sv_caller_output/"+args.ref.replace(".fasta",".dict")
 	#outputs for gatk
 	bam_rg = "sv_caller_output/%s_rdgrp.bam" % (bam_name)
 	bam_dup = "sv_caller_output/%s_rdgrp_nodups.bam" % (bam_name)
@@ -151,6 +151,7 @@ def main(args, bam_name):
 	
 	#calling functions for sv_caller
 	ref_check(args.ref, ref_dict)
+	print(args.sortbam)
 	run_gatk(args.sortbam, bam_rg, bam_dup, bam_fm, vcf_out, bam_name, args.ref, java_picard)
 	#only apply masking() if it's been called
 	if args.masking:
