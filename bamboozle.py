@@ -260,28 +260,27 @@ def bam_check(threads, bam_list):
 		#if coordinate is present in bam header, bam is sorted
 		bam_stats_out = proc_1.stdout.read()
 		for line in bam_stats_out:
-			if re.search("coordinate", line):
+			if re.search("coordinate", str(line)):
 				if args.verbose:
 					print("Input BAM " + bamfile + " is already sorted")
-					args.sortbam.append(bamfile)
-				else:
-					print("Input BAM " + bamfile + " is unsorted. Sorting...")
-					cmd2 = ['samtools', 'sort', '-@', \
-						threads, bamfile, \
-						'-o', bam_sorted]
-					proc_2 = subprocess.Popen(cmd2, shell=False)
-					std_out, std_error = proc_2.communicate()
+				args.sortbam.append(bamfile)
+			else:
+				print("Input BAM " + bamfile + " is unsorted. Sorting...")
+				cmd2 = ['samtools', 'sort', '-@', \
+					threads, bamfile, \
+					'-o', bam_sorted]
+				proc_2 = subprocess.Popen(cmd2, shell=False)
+				std_out, std_error = proc_2.communicate()
 
-					cmd3 = ['samtools', 'index', \
-						bam_sorted, bam_index]
-					proc_3 = subprocess.Popen(cmd3, shell=False)
-					std_out, std_error = proc_3.communicate()
+				cmd3 = ['samtools', 'index', \
+					bam_sorted, bam_index]
+				proc_3 = subprocess.Popen(cmd3, shell=False)
+				std_out, std_error = proc_3.communicate()
 
-					print("Input BAM " + bamfile + " has been sorted")
-					args.sortbam.append(bam_sorted)
-
-		if len(args.sortbam) == 1:
-			args.sortbam = args.sortbam[0]
+				print("Input BAM " + bamfile + " has been sorted")
+				args.sortbam.extend(bam_sorted)
+			if len(args.sortbam) == 1:
+				args.sortbam = args.sortbam[0]
 
 #######################################################################
 # CHECK DEPENDENCIES
