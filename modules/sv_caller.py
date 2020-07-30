@@ -58,15 +58,15 @@ def ref_check(reference, ref_dict):
 		print("GATK refernce index didn't exist but they sure do now")
 
 #GATK
-def run_gatk(args.sortbam, reference, java_picard):
-	for bamfile in args.sortbam:
+def run_gatk(sortbam, reference, java_picard):
+	for bamfile in sortbam:
 	#generate variables for the function
 		bam_name = os.path.basename(bamfile[:-4])
 		bam_in = bamfile
 		bam_rg = "sv_caller_output/%s_rdgrp.bam" % (bam_name)
-	        bam_dup = "sv_caller_output/%s_rdgrp_nodups.bam" % (bam_name)
-        	bam_fm = "sv_caller_output/%s_rdgrp_nodups_fixmate.bam" % (bam_name)
-	        vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
+		bam_dup = "sv_caller_output/%s_rdgrp_nodups.bam" % (bam_name)
+		bam_fm = "sv_caller_output/%s_rdgrp_nodups_fixmate.bam" % (bam_name)
+		vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
 	#format input BAMs to make GATK happy
 		cmd4a = ['java','-jar',java_picard,'AddOrReplaceReadGroups',\
 			'I=', bam_in, 'O=', bam_rg,\
@@ -111,12 +111,14 @@ def run_gatk(args.sortbam, reference, java_picard):
 			shell=False)
 		std_out, std_error = proc_4f.communicate()
 
-def masking(args.sortbam, refpil):
-	for bamfile in args.sortbam:
+#masks the output for each called vcf with previous calls using reads generated to correct the assembly
+
+def masking(sortbam, refpil):
+	for bamfile in sortbam:
 		#generating variables for function
 		bam_name = os.path.basename(bamfile[:-4])
 		vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
-        	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
+		masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
 
 		cmd5 = ['bedtools', 'intersect', '-v','-b', \
 			refpil, \
@@ -127,8 +129,8 @@ def masking(args.sortbam, refpil):
 		std_error = proc_5.communicate()
 
 # Checks for dependencies required for snpEff.
-def snpeff(snpeffdb1, args.sortbam, bamboozledir1):
-	for bamfile in args.sortbam:
+def snpeff(snpeffdb1, sortbam, bamboozledir1):
+	for bamfile in sortbam:
 	#generating variables for function
 		bam_name = os.path.basename(bamfile[:-4])
 		masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
@@ -151,7 +153,6 @@ def main(args):
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
 	
-
 	#calling functions for sv_caller
 	ref_check(args.ref, ref_dict)
 	run_gatk(args.sortbam, args.ref, java_picard)
