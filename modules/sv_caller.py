@@ -39,23 +39,20 @@ import datetime
 #if non existing, uses bwa to create new indices
 def ref_check(reference, ref_dict):
 	#list of bwa index files
-	ref_dict_suf = ".dict"
-
+	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
 	#creating a list of bwa indices if they exist
 	suf_list = []
-	for file in os.listdir(os.path.dirname(reference)):
-		if file.endswith(ref_dict_suf):
-			print(file + " is already in the directory")
-			suf_list.append(file)
-	#if list of bwa indices in folder is <1, create indices
-	if len(ref_dict_suf) < 1:
+	if ref_dict.exists():
+		print("Reference dictionary is already in the directory")
+	else:
 		#this doesn't overwrite the reference if called
 		cmd3 = ['java','-jar',java_picard,'CreateSequenceDictionary',\
-			'REFERENCE='+reference,'OUTPUT='+ref_dict]
-		proc_3 = subprocess.Popen(cmd3,
+			'R='+reference,\
+			'O='+ref_dict]
+		proc_3 = subprocess.Popen(cmd3, \
 			shell=False)
 		std_out, std_error = proc_3.communicate()
-		print("GATK refernce index didn't exist but they sure do now")
+		print("GATK reference index didn't exist but it sure does now")
 
 #GATK
 def run_gatk(bamfile, reference, java_picard, threads):
@@ -73,7 +70,8 @@ def run_gatk(bamfile, reference, java_picard, threads):
 		'SORT_ORDER=coordinate','RGID=foo','RGLB=bar',\
 		'RGPL=illumina','RGSM='+bam_name,\
 		'RGPU=bc1','CREATE_INDEX=True']
-	proc_4a = subprocess.Popen(cmd4a, shell=False)
+	proc_4a = subprocess.Popen(cmd4a, \
+		shell=False)
 	std_out, std_error = proc_4a.communicate()
 	#mark duplicate reads in input BAMs
 	out_metrics = "%s/%s/marked_dup_metrics.txt" % (out_dir, bam_name)
@@ -92,7 +90,7 @@ def run_gatk(bamfile, reference, java_picard, threads):
 	std_out, std_error = proc_4c.communicate()
 	#index output bam
 	cmd4d = ['samtools', 'index', bam_fm]
-	proc_4d = subprocess.Popen(cmd4d,
+	proc_4d = subprocess.Popen(cmd4d, \
 		shell=False)
 	std_out, std_error = proc_4d.communicate()
 	#validate output bam
@@ -101,7 +99,9 @@ def run_gatk(bamfile, reference, java_picard, threads):
 		shell=False)
 	std_out, std_error = proc_4d.communicate()
 	#run haplotype caller
-	cmd4f = ['gatk', '--java-options', '"-Xmx4g"', 'HaplotypeCaller',\
+	cmd4f = ['gatk', \
+#		'--java-options "-Xmx4g"', \
+		'HaplotypeCaller',\
 		'-G', 'StandardAnnotation',\
 		'-G', 'AS_StandardAnnotation',\
 		'-G', 'StandardHCAnnotation',\
@@ -140,7 +140,7 @@ def snpeff(snpeffdb1, bamfile, bamboozledir1, threads):
 	masked_vcf_out_lof_ann = "%s/%s_sorted_masked_lof.vcf" % (out_dir, bam_name)
 
 	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""),\
-		masked_ann_vcf_out, \
+		masked_vcf_out, \
 		'-t', threads, \
 		'-c', bamboozledir1+'/data/snpeff/snpEff.config', \
 		'-csvStats', masked_vcf_out_lof_csv]
@@ -152,7 +152,7 @@ def main(args):
 	#picard java
 	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
 	#ref_dict
-	ref_dict = "sv_caller_output/"+args.ref.replace(".fasta",".dict")
+	ref_dict = args.ref.replace(".fasta",".dict")
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
 
