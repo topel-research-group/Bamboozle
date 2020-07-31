@@ -37,102 +37,154 @@ import datetime
 
 #checks for the presence of indices for the FASTA reference
 #if non existing, uses bwa to create new indices
-def ref_check(reference):
+def ref_check(reference, ref_dict):
 	#list of bwa index files
-	bwa_suf = (".amb",".ann",".bwt",".pac",".sa")
+	ref_dict_suf = ".dict"
 
 	#creating a list of bwa indices if they exist
 	suf_list = []
 	for file in os.listdir(os.path.dirname(reference)):
-		if file.endswith(bwa_suf):
+		if file.endswith(ref_dict_suf):
 			print(file + " is already in the directory")
 			suf_list.append(file)
 	#if list of bwa indices in folder is <1, create indices
-	if len(suf_list) < 1:
+	if len(ref_dict_suf) < 1:
 		#this doesn't overwrite the reference if called
-		cmd3 = "bwa index %s" % (reference)
-		proc_3 = subprocess.Popen(cmd3, shell=True, universal_newlines=True)
+		cmd3 = ['java','-jar',java_picard,'CreateSequenceDictionary',\
+			'REFERENCE='+reference,'OUTPUT='+ref_dict]
+		proc_3 = subprocess.Popen(cmd3,
+			shell=False)
 		std_out, std_error = proc_3.communicate()
-		print("bwa-mem indices didn't exist but they sure do now")
+		print("GATK refernce index didn't exist but they sure do now")
 
-#GRIDSS
+#GATK
+def run_gatk(bamfile, reference, java_picard, threads):
+	#generate variables for the function
+	bam_name = os.path.basename(bamfile[:-4])
+	out_dir = "sv_caller_output/%s" % (bam_name)
+	bam_in = bamfile
+	bam_rg = "%s/%s_rdgrp.bam" % (out_dir, bam_name)
+	bam_dup = "%s/%s_rdgrp_nodups.bam" % (out_dir, bam_name)
+	bam_fm = "%s/%s_rdgrp_nodups_fixmate.bam" % (out_dir, bam_name)
+	vcf_out = "%s/%s_svcalls.vcf" % (out_dir, bam_name)
+	#format input BAMs to make GATK happy
+	cmd4a = ['java','-jar',java_picard,'AddOrReplaceReadGroups',\
+		'I=', bam_in, 'O=', bam_rg,\
+		'SORT_ORDER=coordinate','RGID=foo','RGLB=bar',\
+		'RGPL=illumina','RGSM='+bam_name,\
+		'RGPU=bc1','CREATE_INDEX=True']
+	proc_4a = subprocess.Popen(cmd4a, shell=False)
+	std_out, std_error = proc_4a.communicate()
+	#mark duplicate reads in input BAMs
+	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
+		'I='+bam_rg,'O=', bam_dup,\
+		'M=sv_caller_output/marked_dup_metrics.txt']
+	proc_4b = subprocess.Popen(cmd4b, \
+		shell=False)
+	std_out, std_error = proc_4b.communicate()
+	#"ensures that all mate-pair information is in sync between each read and its mate pair"
+	cmd4c = ['java','-jar',java_picard,'FixMateInformation',\
+		'I=', bam_dup,'O=', bam_fm,\
+		'ADD_MATE_CIGAR=true']
+	proc_4c = subprocess.Popen(cmd4c, \
+		shell=False)
+	std_out, std_error = proc_4c.communicate()
+	#index output bam
+	cmd4d = ['samtools', 'index', bam_fm]
+	proc_4d = subprocess.Popen(cmd4d,
+		shell=False)
+	std_out, std_error = proc_4d.communicate()
+	#validate output bam
+	cmd4e = ['ValidateSamFile', '-I', bam_fm, '-MODE', 'SUMMARY']
+	proc_4d = subprocess.Popen(cmd4d,
+		shell=False)
+	std_out, std_error = proc_4d.communicate()
+	#run haplotype caller
+	cmd4f = ['gatk', '--java-options', '"-Xmx4g"', 'HaplotypeCaller',\
+		'-G', 'StandardAnnotation',\
+		'-G', 'AS_StandardAnnotation',\
+		'-G', 'StandardHCAnnotation',\
+		'-R', reference,\
+		'--native-pair-hmm-threads', threads, \
+		'-I', bam_fm,\
+		'-O', vcf_out]
+	proc_4f = subprocess.Popen(cmd4f,
+		shell=False)
+	std_out, std_error = proc_4f.communicate()
 
-def gridss(bamfile, reference, threads, java_gridss, assembly_bam_out, vcf_out):
-	#create output folder if it doesn't exist
-	if not os.path.exists('sv_caller_output'):
-		os.makedirs('sv_caller_output')
+#masks the output for each called vcf with previous calls using reads generated to correct the assembly
 
-	cmd4 = "gridss.sh %s -r %s -a %s -o %s -t %s -j %s" % (bamfile, reference, assembly_bam_out, vcf_out, threads, java_gridss)
-	proc_4 = subprocess.Popen(cmd4, shell=True)
-	
-	std_out, std_error = proc_4.communicate()
-	
-	print("GRIDSS finished calling SVs")
+def masking(bamfile, refpil):
+	#generating variables for function
+	bam_name = os.path.basename(bamfile[:-4])
+	out_dir = "sv_caller_output/%s" % (bam_name)
+	vcf_out = "%s/%s_svcalls.vcf" % (out_dir, bam_name)
+	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
 
-# BEDTOOLS masking of SV calls goes here
-
-def masking(vcf_out, refpil, masked_vcf_out):
-	cmd5 = "bedtools intersect -v -b %s -a %s -sorted -header > %s" % (refpil, vcf_out, masked_vcf_out)
-	proc_5 = subprocess.Popen(cmd5, shell=True)
-	std_out, std_error = proc_5.communicate()
-
-# Use R script provided by GRIDSS authors to annotate SVs as DEl, INS, etc
-
-def annotate(masked_vcf_out, bam_name, bamboozledir):
-	cmd6 = "Rscript --vanilla %s/scripts/bamboozle_sv_caller_qc_sum.R %s %s" % (bamboozledir, masked_vcf_out, bam_name)
-	proc_6 = subprocess.Popen(cmd6, shell=True)
-	std_out, std_error = proc_6.communicate()
+	cmd5 = ['bedtools', 'intersect', '-v','-b', \
+		refpil, \
+		'-a', vcf_out, \
+		'-sorted', '-header']
+	with open(masked_vcf_out, "w+") as f:
+		proc_5 = subprocess.Popen(cmd5, stdout=f, shell=False)
+	std_error = proc_5.communicate()
 
 # Checks for dependencies required for snpEff.
-def snpeff(snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann):
-	cmd7 = "snpEff eff %s %s -c %s/data/snpeff/snpEff.config -csvStats %s > %s" % (snpeffdb1, masked_ann_vcf_out, bamboozledir1, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-	proc_7 = subprocess.Popen(cmd7, shell=True)
-	std_out, std_error = proc_7.communicate()
+def snpeff(snpeffdb1, bamfile, bamboozledir1, threads):
+	#generating variables for function
+	bam_name = os.path.basename(bamfile[:-4])
+	out_dir = "sv_caller_output/%s" % (bam_name)
+	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
+	masked_vcf_out_lof_csv = "%s/%s_sorted_masked_lof.csv" % (out_dir, bam_name)
+	masked_vcf_out_lof_ann = "%s/%s_sorted_masked_lof.vcf" % (out_dir, bam_name)
 
-# Filters SnpEff (and GRIDSS) annotations and tidies headers
-def filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean):
-	#removes FORMAT, INFO fields
-	cmd8 = "bcftools annotate -x FORMAT,INFO %s -Oz -o %s.gz && tabix -p vcf  %s.gz"  % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt)
-	proc_8 = subprocess.Popen(cmd8, shell=True)
-	std_out, std_error = proc_8.communicate()
-	#bgzips, indexes filt file
-	cmd9 = "bgzip %s && tabix -p vcf %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann)
-	proc_9 = subprocess.Popen(cmd9, shell=True)
-	std_out, std_error = proc_9.communicate()
-	#adds only relevant header columns from filt file
-	cmd10 = "bcftools annotate -c INFO/EVENT,INFO/REF,INFO/RP,INFO/RPQ,INFO/SVLEN,INFO/SVTYPE,INFO/SIMPLE_TYPE,INFO/ANN,INFO/LOF,INFO/NMD -a %s.gz %s.gz -Oz -o %s.gz" % (masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
-	proc_10 =  subprocess.Popen(cmd10, shell=True)
-	std_out, std_error = proc_10.communicate()
+	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""),\
+		masked_ann_vcf_out, \
+		'-t', threads, \
+		'-c', bamboozledir1+'/data/snpeff/snpEff.config', \
+		'-csvStats', masked_vcf_out_lof_csv]
+	with open(masked_vcf_out_lof_ann, "w+") as f:
+		proc_7 = subprocess.Popen(cmd7, stdout=f, shell=False)
+	std_error = proc_7.communicate()
 
-def main(args, bam_name):
-	#gridss java
-	java_gridss="/usr/local/packages/gridss-2.8.3/gridss-2.8.3-gridss-jar-with-dependencies.jar"
-	#outputs for gridss
-	vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
-	assembly_bam_out = "sv_caller_output/%s_assembly.vcf" % (bam_name)
-	#outputs for bedtools
-	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
-	#output for R script
-	masked_ann_vcf_out = "sv_caller_output/%s_sv_annotated.vcf" % (bam_name)
-	#outputs for snpeff
-	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
-	masked_vcf_out_lof_ann = "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
-	#outputs for bcftools
-	masked_vcf_out_lof_ann_filt = "sv_caller_output/%s_sorted_masked_lof_filt.vcf" % (bam_name)
-	masked_vcf_out_lof_ann_filt_clean = "sv_caller_output/%s_sorted_masked_lof_filt_clean.vcf" % (bam_name)
+def main(args):
+	#picard java
+	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
+	#ref_dict
+	ref_dict = "sv_caller_output/"+args.ref.replace(".fasta",".dict")
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
-	
+
+	#create output directory if it doesn't exist
+	if not os.path.exists('sv_caller_output'):
+		os.mkdir('sv_caller_output')
+
 	#calling functions for sv_caller
-	ref_check(args.ref)
-	gridss(args.bamfile, args.ref, args.threads, java_gridss, assembly_bam_out, vcf_out)
-	#only apply masking() if it's been called
-	if args.masking:
-		masking(vcf_out, args.masking, masked_vcf_out)
-		annotate(masked_vcf_out, bam_name, args.bamboozledir)
-		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir,masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
+	ref_check(args.ref, ref_dict)
+	if isinstance(args.sortbam, list):
+		for bamfile in args.sortbam:
+			#create sample-specific directories
+			bam_name = os.path.basename(bamfile[:-4])
+			spl_dir = "sv_caller_output/%s" % (bam_name)
+			if not os.path.exists(spl_dir):
+				os.mkdir(spl_dir)
+			#run pipeline
+			run_gatk(bamfile, args.ref, java_picard, args.threads)
+			if args.masking:
+				masking(bamfile, args.masking)
+				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
+			else:
+				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 	else:
-		annotate(vcf_out, bam_name, args.bamboozledir)
-		snpeff(snpeff_db, masked_ann_vcf_out, args.bamboozledir, masked_vcf_out_lof_csv, masked_vcf_out_lof_ann)
-		filter(masked_vcf_out_lof_ann, masked_vcf_out_lof_ann_filt, masked_vcf_out_lof_ann_filt_clean)
+		#create sample-specific directory
+		bam_name = os.path.basename(args.sortbam[:-4])
+		spl_dir = "sv_caller_output/%s" % (bam_name)
+		if not os.path.exists(spl_dir):
+			os.mkdir(spl_dir)
+		#run pipeline
+		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
+		if args.masking:
+			masking(args.sortbam, args.masking)
+			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
+		else:
+			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
