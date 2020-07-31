@@ -61,11 +61,12 @@ def ref_check(reference, ref_dict):
 def run_gatk(bamfile, reference, java_picard):
 	#generate variables for the function
 	bam_name = os.path.basename(bamfile[:-4])
+	out_dir = "sv_caller_output/%s" % (bam_name)
 	bam_in = bamfile
-	bam_rg = "sv_caller_output/%s_rdgrp.bam" % (bam_name)
-	bam_dup = "sv_caller_output/%s_rdgrp_nodups.bam" % (bam_name)
-	bam_fm = "sv_caller_output/%s_rdgrp_nodups_fixmate.bam" % (bam_name)
-	vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
+	bam_rg = "%s/%s_rdgrp.bam" % (out_dir, bam_name)
+	bam_dup = "%s/%s_rdgrp_nodups.bam" % (out_dir, bam_name)
+	bam_fm = "%s/%s_rdgrp_nodups_fixmate.bam" % (out_dir, bam_name)
+	vcf_out = "%s/%s_svcalls.vcf" % (out_dir, bam_name)
 	#format input BAMs to make GATK happy
 	cmd4a = ['java','-jar',java_picard,'AddOrReplaceReadGroups',\
 		'I=', bam_in, 'O=', bam_rg,\
@@ -115,8 +116,9 @@ def run_gatk(bamfile, reference, java_picard):
 def masking(bamfile, refpil):
 	#generating variables for function
 	bam_name = os.path.basename(bamfile[:-4])
-	vcf_out = "sv_caller_output/%s_svcalls.vcf" % (bam_name)
-	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
+	out_dir = "sv_caller_output/%s" % (bam_name)
+	vcf_out = "%s/%s_svcalls.vcf" % (out_dir, bam_name)
+	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
 
 	cmd5 = ['bedtools', 'intersect', '-v','-b', \
 		refpil, \
@@ -130,9 +132,10 @@ def masking(bamfile, refpil):
 def snpeff(snpeffdb1, bamfile, bamboozledir1):
 	#generating variables for function
 	bam_name = os.path.basename(bamfile[:-4])
-	masked_vcf_out = "sv_caller_output/%s_sorted_masked.vcf" % (bam_name)
-	masked_vcf_out_lof_csv = "sv_caller_output/%s_sorted_masked_lof.csv" % (bam_name)
-	masked_vcf_out_lof_ann = "sv_caller_output/%s_sorted_masked_lof.vcf" % (bam_name)
+	out_dir = "sv_caller_output/%s" % (bam_name)
+	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
+	masked_vcf_out_lof_csv = "%s/%s_sorted_masked_lof.csv" % (out_dir, bam_name)
+	masked_vcf_out_lof_ann = "%s/%s_sorted_masked_lof.vcf" % (out_dir, bam_name)
 
 	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""),\
 		 masked_ann_vcf_out, \
@@ -149,6 +152,14 @@ def main(args):
 	ref_dict = "sv_caller_output/"+args.ref.replace(".fasta",".dict")
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
+
+	#create output directory if it doesn't exist
+	if not os.path.exists("sv_caller_output"):
+		os.mkdir("sv_caller_output")
+		bam_name = os.path.basename(args.sortbam[:-4])
+		spl_dir = "sv_caller_output/%s" % (bam_name)
+		if not os.path.exists(spl_dir):
+			os.mkdir(spl_dir)
 
 	#calling functions for sv_caller
 	ref_check(args.ref, ref_dict)
