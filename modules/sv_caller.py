@@ -150,23 +150,20 @@ def main(args):
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
 
-#	print(args.sortbam)
-	
 	#calling functions for sv_caller
 	ref_check(args.ref, ref_dict)
-	if len(args.sortbam) == 1:
-		run_gatk(args.sortbam, args.ref, java_picard)
-		if args.masking:
-			masking(args.sortbam, args.masking)
-			snpeff(snpeff_db, args.sortbam, args.bamboozledir)
-		else:
-			snpeff(snpeff_db, args.sortbam, args.bamboozledir)
-	else:
+	if isinstance(args.sortbam, list):
 		for bamfile in args.sortbam:
-			#print(bamfile)
 			run_gatk(bamfile, args.ref, java_picard)
 			if args.masking:
 				masking(args.sortbam, args.masking)
 				snpeff(snpeff_db, args.sortbam, args.bamboozledir)
 			else:
 				snpeff(snpeff_db, args.sortbam, args.bamboozledir)
+	else:
+		run_gatk(args.sortbam, args.ref, java_picard)
+		if args.masking:
+			masking(args.sortbam, args.masking)
+			snpeff(snpeff_db, args.sortbam, args.bamboozledir)
+		else:
+			snpeff(snpeff_db, args.sortbam, args.bamboozledir)
