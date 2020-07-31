@@ -58,7 +58,7 @@ def ref_check(reference, ref_dict):
 		print("GATK refernce index didn't exist but they sure do now")
 
 #GATK
-def run_gatk(bamfile, reference, java_picard):
+def run_gatk(bamfile, reference, java_picard, threads):
 	#generate variables for the function
 	bam_name = os.path.basename(bamfile[:-4])
 	out_dir = "sv_caller_output/%s" % (bam_name)
@@ -105,6 +105,7 @@ def run_gatk(bamfile, reference, java_picard):
 		'-G', 'AS_StandardAnnotation',\
 		'-G', 'StandardHCAnnotation',\
 		'-R', reference,\
+		'--native-pair-hmm-threads', threads, \
 		'-I', bam_fm,\
 		'-O', vcf_out]
 	proc_4f = subprocess.Popen(cmd4f,
@@ -129,7 +130,7 @@ def masking(bamfile, refpil):
 	std_error = proc_5.communicate()
 
 # Checks for dependencies required for snpEff.
-def snpeff(snpeffdb1, bamfile, bamboozledir1):
+def snpeff(snpeffdb1, bamfile, bamboozledir1, threads):
 	#generating variables for function
 	bam_name = os.path.basename(bamfile[:-4])
 	out_dir = "sv_caller_output/%s" % (bam_name)
@@ -138,7 +139,8 @@ def snpeff(snpeffdb1, bamfile, bamboozledir1):
 	masked_vcf_out_lof_ann = "%s/%s_sorted_masked_lof.vcf" % (out_dir, bam_name)
 
 	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""),\
-		 masked_ann_vcf_out, \
+		masked_ann_vcf_out, \
+		'-t', threads, \
 		'-c', bamboozledir1+'/data/snpeff/snpEff.config', \
 		'-csvStats', masked_vcf_out_lof_csv]
 	with open(masked_vcf_out_lof_ann, "w+") as f:
@@ -165,16 +167,16 @@ def main(args):
 	ref_check(args.ref, ref_dict)
 	if isinstance(args.sortbam, list):
 		for bamfile in args.sortbam:
-			run_gatk(bamfile, args.ref, java_picard)
+			run_gatk(bamfile, args.ref, java_picard, args.threads)
 			if args.masking:
 				masking(args.sortbam, args.masking)
-				snpeff(snpeff_db, args.sortbam, args.bamboozledir)
+				snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 			else:
-				snpeff(snpeff_db, args.sortbam, args.bamboozledir)
+				snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 	else:
-		run_gatk(args.sortbam, args.ref, java_picard)
+		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
 		if args.masking:
 			masking(args.sortbam, args.masking)
-			snpeff(snpeff_db, args.sortbam, args.bamboozledir)
+			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 		else:
-			snpeff(snpeff_db, args.sortbam, args.bamboozledir)
+			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
