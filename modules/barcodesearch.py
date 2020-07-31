@@ -42,8 +42,8 @@ def FileName(long_name):
 def get_contig_lengths(firstbam):
 	contig_lengths = {}
 
-	cmd = ["samtools idxstats %s" % (firstbam)]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	cmd = ["samtools", "idxstats", firstbam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 
 	with process.stdout as result:
 		rows = (line.decode() for line in result)
@@ -63,10 +63,15 @@ def bcf(infile, contig_list, quality, threads, reference):
 		print("VCF file already exists for",FileName(infile),"- reading file...")
 		process2 = gzip.open(FileName(infile) + ".vcf.gz", 'rt')
 	else:
-		cmd2 = ["bcftools mpileup --threads %s --fasta-ref %s %s | bcftools call --threads %s -mv | \
-			bcftools filter --threads %s -i '%s'" % \
-			(threads, reference, infile, threads, threads, quality)]
-		process2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
+		cmdA = ["bcftools", "mpileup", "--threads", threads, "--fasta-ref", reference, infile]
+		procA = subprocess.Popen(cmdA, stdout=subprocess.PIPE, shell=False)
+
+		cmdB = ["bcftools", "call", "--threads", threads, "-mv"]
+		procB = subprocess.Popen(cmdB, stdin=procA.stdout, stdout=subprocess.PIPE, shell=False)
+
+		cmdC = ["bcftools", "filter", "--threads", threads, "-i", quality]
+		process2 = subprocess.Popen(cmdC, stdin=procB.stdout, stdout=subprocess.PIPE, shell=False)
+
 	return(process2)
 
 
@@ -148,9 +153,14 @@ def check_unique_windows(windows, contig, reference, infiles):
 			vcf_zipped = FileName(bam) + ".vcf.gz"
 
 			# In the interest of identifying reliable barcodes, only homozygous sites are considered
-			cmd3 = ["samtools faidx %s %s:%s-%s | bcftools consensus -i 'GT=\"hom\"' --sample %s %s" % \
-				(reference, contig, windows[contig][window][0], windows[contig][window][3], bam, vcf_zipped)]
-			process3 = subprocess.Popen(cmd3, stdout=subprocess.PIPE, shell=True)
+
+			con_range = contig + ":" + str(windows[contig][window][0]) + "-" + str(windows[contig][window][3])
+			cmdD = ["samtools", "faidx", reference, con_range]
+			procD =  subprocess.Popen(cmdD, stdout=subprocess.PIPE, shell=False)
+
+			cmdE = ["bcftools", "consensus", "-i", "GT=\"hom\"", "--sample", bam, vcf_zipped]
+			process3 = subprocess.Popen(cmdE, stdin=procD.stdout, stdout=subprocess.PIPE, shell=False)
+
 			with process3.stdout as result3:
 				rows3 = (line.decode() for line in result3)
 				for row3 in rows3:

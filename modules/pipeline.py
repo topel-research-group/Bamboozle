@@ -69,28 +69,30 @@ def timing(function):
 # output file is a gzipped vcf file, 
 # makes new directory 'Bcftools' if it doesn't exists.
 @timing
-def bcftools(args,threads,sorted_bam_out):
+#def bcftools(args,threads,sorted_bam_out):
+def bcftools(args):
 	log_file=open('pipeline.log','a')
 	ref_path = add + str(args.ref)
+	input_path = add + str(args.sortbam)
 	if not os.path.exists('Bcftools'):
 		os.makedirs('Bcftools')
 
-	cmd7 = ("bcftools mpileup --threads %s -Ou -f %s %s \
-		| bcftools call --threads %s -Ou -mv \
-		| bcftools filter -s LowQual -e 'QUAL<20' -Oz -o %s") \
-	% (threads, ref_path, sorted_bam_out, threads, bcftools_out)
-#	% (threads, add+args.ref, sorted_bam_out, threads, bcftools_out)
-	process7 = subprocess.Popen(cmd7, \
-		stdout=subprocess.PIPE, \
-		stderr = log_file, \
-		shell=True, \
-		cwd='Bcftools')
-	while process7.wait() is None:
+	cmdA = ["bcftools", "mpileup", "--threads", args.threads, "-Ou", "-f", ref_path, input_path]
+	procA = subprocess.Popen(cmdA, stdout=subprocess.PIPE, stderr=log_file, cwd='Bcftools', shell=False)
+
+	cmdB = ["bcftools", "call", "--threads", args.threads, "-Ou", "-mv"]
+	procB = subprocess.Popen(cmdB, stdin=procA.stdout, stdout=subprocess.PIPE, stderr=log_file, cwd='Bcftools', shell=False)
+
+	cmdC = ["bcftools", "filter", "-s", "LowQual", "-e", "QUAL<20", "-Oz", "-o", bcftools_out]
+	procC = subprocess.Popen(cmdC, stdin=procB.stdout, stdout=subprocess.PIPE, stderr=log_file, cwd='Bcftools', shell=False)
+
+	while procC.wait() is None:
 		pass
-	process7.stdout.close()
+	procC.stdout.close()
 	log_file.close()
 				
 # Checks for dependencies required for snpEff. 
+# DevNote - This needs to be adjusted so that the database details aren't hardcoded. Config file?
 def snpEff_test(args):
 	# Checks if there is a Skeletonema database, 
 	# if it doesn't exists the program will exit 
@@ -125,6 +127,8 @@ def snpEff_test(args):
 # Annotating variant calling output using snpEff, output is a vcf, 
 # the vcf file is bgzipped to work as an input file to the Fst analysis,
 # the original vcf file is kept by using the -c flag. 
+# DevNote - this needs adjusting so that the snpEff database isn't hardcoded; perhaps in a config file?
+
 @timing
 def annotation(args):					
 	log_file=open('pipeline.log','a')
@@ -143,12 +147,22 @@ def annotation(args):
 			if args.snpeff:
 				opt = '-'+' -'.join(args.snpeff)
 				my_args = my_interval + " " + opt \
-					+ " Skeletonema_marinoi_v1.1.1.1 \
-					 -stats snpEff_summary.html"
+					+ " Skeletonema_marinoi_v1.1.2 \
+					-stats snpEff_summary.html"
 			else:
 				my_args = my_interval + \
-					" Skeletonema_marinoi_v1.1.1.1 \
+					" Skeletonema_marinoi_v1.1.2 \
 					-stats snpEff_summary.html"
+
+#			# Why is this version snpEff-ing in the main directory, not that stated by cwd?
+#			with open('Bcftools/' + my_output, 'a') as outfile:
+#				cmd8 = ["snpEff", my_args, bcftools_out]
+#				process8 = subprocess.Popen(cmd8, stdout=outfile, stderr=log_file, cwd='Bcftools', shell=False)
+
+#			# Why is this version outputting a blank file?
+#			outfile = open('Bcftools/' + my_output, 'a')
+#			cmd8 = ["snpEff", my_args, bcftools_out]
+#			process8 = subprocess.Popen(cmd8, stdout=outfile, stderr=log_file, cwd='Bcftools', shell=False)
 
 			cmd8 = ("snpEff	%s %s > %s") \
 				% (my_args, bcftools_out, my_output)
@@ -160,6 +174,11 @@ def annotation(args):
 			while process8.wait() is None:
 				pass
 			process8.stdout.close()
+
+#			# Why is this version zipping in the main directory, not that stated by cwd?
+#			with open('Bcftools/' + my_output + ".gz", 'a') as my_output_gz:
+#				cmd9 = ["bgzip", "-c", my_output]
+#				process9  = subprocess.Popen(cmd9, stdout=my_output_gz, stderr=log_file, cwd='Bcftools', shell=False)
 
 			cmd9 = ('bgzip -c %s > %s') \
 				% (my_output, my_output + '.gz')
@@ -175,17 +194,18 @@ def annotation(args):
 			# Add headers to gff parsed vcf file for fst statistics.
 			if args.gff and args.feature:
 				my_output_hdr = name + '_' + args.feature + '_hdr_snpeff_annotated.vcf'
-				cmd_a = ("bcftools view -h %s > hdr.txt") \
-					% (my_output)
+				cmd_a = ["bcftools", "view", "-h", my_output, "-o", "hdr.txt"]
 				process_a = subprocess.Popen(cmd_a, \
 					stdout=subprocess.PIPE, \
 					stderr = log_file, \
-					shell=True, \
+					shell=False, \
 					cwd='Bcftools')
 				while process_a.wait() is None:
 					pass
 				process_a.stdout.close()
 
+				# DevNote - this is a complex command; is it still possible to convert to a shell=False form?
+				# May be unnecessary to convert as there are no user-defined variables
 				cmd_b = ('''sed -i '/##INFO=<ID=MQ/a##INFO=<ID=out_ID,Number=1,Type=String,Description="none">\
 					\\n##INFO=<ID=out_Parent,Number=1,Type=String,Description="none">\
 					\\n##INFO=<ID=out_type,Number=1,Type=String,Description="none">\
@@ -199,17 +219,20 @@ def annotation(args):
 				while process_b.wait() is None:
 					pass
 				process_b.stdout.close()
-				
-				cmd_c = ("bcftools reheader -h hdr.txt %s > %s") \
-					% (my_output, my_output_hdr)
+
+				cmd_c = ["bcftools", "reheader", "-h", "hdr.txt", my_output, "-o", my_output_hdr]
 				process_c = subprocess.Popen(cmd_c, \
 					stdout=subprocess.PIPE, \
 					stderr = log_file, \
-					shell=True, \
+					shell=False, \
 					cwd='Bcftools')
 				while process_c.wait() is None:
 					pass
 				process_c.stdout.close()
+
+#				with open(my_output_hdr + ".gz", 'a') as my_output_hdr_gz:
+#					cmd_d = ["bgzip", "-c", my_output_hdr]
+#					process_d  = subprocess.Popen(cmd_d, stdout=my_output_hdr_gz, stderr=log_file, cwd='Bcftools', shell=False)
 
 				cmd_d = ('bgzip -c %s > %s') \
 					% (my_output_hdr, my_output_hdr + '.gz')
@@ -221,6 +244,7 @@ def annotation(args):
 				while process_d.wait() is None:
 					pass
 				process_d.stdout.close()
+
 				os.remove('out.gff')
 				os.remove('Bcftools/hdr.txt')
 				for vcffile in os.listdir('Bcftools'):

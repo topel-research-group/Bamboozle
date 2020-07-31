@@ -28,6 +28,7 @@
 #######################################################################
 
 import sys
+import os
 import subprocess
 
 #######################################################################
@@ -62,33 +63,36 @@ def get_gc(input):
 # PRINT RESULTS
 #######################################################################
 
-def zero_print(reference, contig, zero_dict):
-	with open(reference) as fasta:
+def zero_print(reference, contig, zero_dict, outfile):
+	with open(reference) as fasta, open(outfile, 'a') as output:
 		for name, seq in read_fasta(fasta):
 			if name[1:] == contig:
 				print("GC% for contig:",round(get_gc(seq), 3))
-				print("Contig\tPositions\tGC%\tSequence")
+				output.write("Contig\tPositions\tGC%\tSequence\n")
 				for key in zero_dict:
 					if key + 1 == (zero_dict[key]):
-						print(contig,zero_dict[key],"-",seq[key:zero_dict[key]],sep="\t")
+						write_me = contig + "\t" + str(zero_dict[key]) + "\t-\t" + seq[key:zero_dict[key]] + "\n"
 					else:
 						zero_range = str(key + 1) + "-" + str(zero_dict[key])
-						print(contig,zero_range,round(get_gc(seq[key:zero_dict[key]]), 3),seq[key:zero_dict[key]],sep="\t")
+						write_me = contig + "\t" + zero_range + "\t" + str(round(get_gc(seq[key:zero_dict[key]]), 3)) + "\t" + seq[key:zero_dict[key]] + "\n"
+					output.write(write_me)
+	output.close()
 	sys.exit()
 
 #######################################################################
 # MAIN
 #######################################################################
 
-## DevNote - Add try/except statement for bedtools
-## DevNote - How to ensure that bam is sorted?
-
 def main(args):
 	if args.verbose == True:
 		print("Finding zero coverage areas in contig",args.contig)
 
-	cmd = ["bedtools genomecov -bga -ibam %s" % args.sortbam]
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+	if not args.outprefix:
+		args.outprefix = os.path.basename(args.sortbam[:-4])
+	output_file = args.outprefix + ".zero_regions.txt"
+
+	cmd = ["bedtools", "genomecov", "-bga", "-ibam", args.sortbam]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 	zeroes = {}
 	correct_contig = 0
 
@@ -101,8 +105,8 @@ def main(args):
 				if coverage == 0:
 					zeroes[int(row[1])] = int(row[2])
 			elif str(row[0]) != args.contig and correct_contig == 1:
-				zero_print(args.ref, args.contig, zeroes)
-	zero_print(args.ref, args.contig, zeroes)
+				zero_print(args.ref, args.contig, zeroes, output_file)
+	zero_print(args.ref, args.contig, zeroes, output_file)
 
 #######################################################################
 
