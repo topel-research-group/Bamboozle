@@ -76,9 +76,10 @@ def run_gatk(bamfile, reference, java_picard, threads):
 	proc_4a = subprocess.Popen(cmd4a, shell=False)
 	std_out, std_error = proc_4a.communicate()
 	#mark duplicate reads in input BAMs
+	out_metrics = "%s/%s/marked_dup_metrics.txt" % (out_dir, bam_name)
 	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
 		'I='+bam_rg,'O=', bam_dup,\
-		'M=sv_caller_output/marked_dup_metrics.txt']
+		'M=', out_metrics]
 	proc_4b = subprocess.Popen(cmd4b, \
 		shell=False)
 	std_out, std_error = proc_4b.communicate()
@@ -96,7 +97,7 @@ def run_gatk(bamfile, reference, java_picard, threads):
 	std_out, std_error = proc_4d.communicate()
 	#validate output bam
 	cmd4e = ['ValidateSamFile', '-I', bam_fm, '-MODE', 'SUMMARY']
-	proc_4d = subprocess.Popen(cmd4d,
+	proc_4d = subprocess.Popen(cmd4d, \
 		shell=False)
 	std_out, std_error = proc_4d.communicate()
 	#run haplotype caller
@@ -105,10 +106,10 @@ def run_gatk(bamfile, reference, java_picard, threads):
 		'-G', 'AS_StandardAnnotation',\
 		'-G', 'StandardHCAnnotation',\
 		'-R', reference,\
-		'--native-pair-hmm-threads', threads, \
+		'--native-pair-hmm-threads', threads,\
 		'-I', bam_fm,\
 		'-O', vcf_out]
-	proc_4f = subprocess.Popen(cmd4f,
+	proc_4f = subprocess.Popen(cmd4f, \
 		shell=False)
 	std_out, std_error = proc_4f.communicate()
 
