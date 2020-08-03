@@ -41,7 +41,7 @@ from statistics import median
 # GENERATE A BED FILE OF RESULTS
 #######################################################################
 
-def make_bed(contig_lib,this_contig):
+def make_bed(contig_lib,this_contig,openfile):
 	median_cov = median(contig_lib.values())
 	lower = median_cov * 0.5
 	upper = median_cov * 1.5
@@ -61,19 +61,23 @@ def make_bed(contig_lib,this_contig):
 		if contig_lib[key] < lower and FirstLow != 0:
 			LastLow = key
 		if contig_lib[key] < upper and LastHigh != 0:
-			print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
+			result1 = this_contig + "\t" + str(FirstHigh - 1) + "\t" + str(LastHigh) + "\t" + "HighCoverage" + "\n"
+			openfile.write(result1)
 			FirstHigh = 0
 			LastHigh = 0
 		if contig_lib[key] > lower and LastLow != 0:
-			print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
+			result2 = this_contig + "\t" + str(FirstLow - 1) + "\t" + str(LastLow) + "\t" + "LowCoverage" + "\n"
+			openfile.write(result2)
 			FirstLow=0
 			LastLow=0
 	# Print last high event, if contig ends on a high
 	if LastHigh != 0:
-		print(this_contig,FirstHigh - 1,LastHigh,"HighCoverage",sep="\t")
+		final_high = this_contig + "\t" + str(FirstHigh - 1) + "\t" + str(LastHigh) + "\t" + "HighCoverage" + "\n"
+		openfile.write(final_high)
 	# Print last low event, if contig ends on a low
 	if LastLow != 0:
-		print(this_contig,FirstLow - 1,LastLow,"LowCoverage",sep="\t")
+		final_low = this_contig + "\t" + str(FirstLow - 1) + "\t" + str(LastLow) + "\t" + "LowCoverage" + "\n"
+		openfile.write(final_low)
 
 #######################################################################
 # MAIN
@@ -82,56 +86,70 @@ def make_bed(contig_lib,this_contig):
 ## DevNote - Shows funky behaviour at stretches hovering around the threshold...
 
 def main(args):
-	if args.contig:
-		cmd = ["samtools", "depth", "-aa", args.sortbam, "-r", args.contig]
-		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 
-		cov_stats = {}
-		current_contig = args.contig
-		with process.stdout as result:
-			rows = (line.decode().split('\t') for line in result)
-			for row in rows:
-				position = int(row[1])
-				coverage = int(row[2])
-				cov_stats[position] = coverage
-		if args.complex:
-			print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
-			make_bed(cov_stats,current_contig)
-		elif args.simple:
-			print(current_contig,median(cov_stats.values()),sep="\t")
+	if args.simple:
+		outfile = args.outprefix + ".txt"
+	elif args.complex:
+		outfile = args.outprefix + ".bed"
 
-	else:
-		cmd = ["samtools", "depth", "-aa", args.sortbam]
-		process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
+	with open(outfile, "a") as output_file:
 
-		cov_stats = {}
-		current_contig = "None"
-		if args.complex:
-			print("track name=WeirdCoverage","description='Areas +/- 50% of median coverage'",sep="\t")
+		if args.contig:
+			cmd = ["samtools", "depth", "-aa", args.sortbam, "-r", args.contig]
+			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 
-		with process.stdout as result:
-			rows = (line.decode().split('\t') for line in result)
-			for row in rows:
-				ctg = str(row[0])
-				position = int(row[1])
-				coverage = int(row[2])
-				if current_contig == "None":
-					current_contig = ctg
-				if ctg == current_contig:
-					cov_stats[position] = coverage
-				elif ctg != current_contig:
-					if args.complex:
-						make_bed(cov_stats,current_contig)
-					elif args.simple:
-						print(current_contig,median(cov_stats.values()),sep="\t")
-					cov_stats = {}
-					current_contig = ctg
+			cov_stats = {}
+			current_contig = args.contig
+			with process.stdout as result:
+				rows = (line.decode().split('\t') for line in result)
+				for row in rows:
+					position = int(row[1])
+					coverage = int(row[2])
 					cov_stats[position] = coverage
 			if args.complex:
-				# Print stats for the final contig
-				make_bed(cov_stats,current_contig)
+				bed_header = "track name=Weird Coverage" + "\t" + "description='Areas +/- 50% of median coverage'" + "\n"
+				output_file.write(bed_header)
+				make_bed(cov_stats,current_contig,output_file)
 			elif args.simple:
-				print(current_contig,median(cov_stats.values()),sep="\t")
+				txt_record = current_contig + "\t" + str(median(cov_stats.values())) + "\n"
+				output_file.write(txt_record)
+
+		else:
+			cmd = ["samtools", "depth", "-aa", args.sortbam]
+			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
+
+			cov_stats = {}
+			current_contig = "None"
+			if args.complex:
+				bed_header = "track name=WeirdCoverage" + "\t" + "description='Areas +/- 50% of median coverage'" + "\n"
+				output_file.write(bed_header)
+
+			with process.stdout as result:
+				rows = (line.decode().split('\t') for line in result)
+				for row in rows:
+					ctg = str(row[0])
+					position = int(row[1])
+					coverage = int(row[2])
+					if current_contig == "None":
+						current_contig = ctg
+					if ctg == current_contig:
+						cov_stats[position] = coverage
+					elif ctg != current_contig:
+						if args.complex:
+							make_bed(cov_stats,current_contig,output_file)
+						elif args.simple:
+							txt_record = current_contig + "\t" + str(median(cov_stats.values())) + "\n"
+							output_file.write(txt_record)
+						cov_stats = {}
+						current_contig = ctg
+						cov_stats[position] = coverage
+				if args.complex:
+					# Print stats for the final contig
+					make_bed(cov_stats,current_contig,output_file)
+				elif args.simple:
+					last_record = current_contig + "\t" + str(median(cov_stats.values())) + "\n"
+					output_file.write(last_record)
+	output_file.close()
 
 #######################################################################
 
