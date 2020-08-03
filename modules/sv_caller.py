@@ -38,11 +38,12 @@ import datetime
 #checks for the presence of indices for the FASTA reference
 #if non existing, uses bwa to create new indices
 def ref_check(reference, ref_dict):
+	from pathlib import Path
 	#list of bwa index files
 	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
 	#creating a list of bwa indices if they exist
 	suf_list = []
-	if ref_dict.exists():
+	if Path(ref_dict).exists():
 		print("Reference dictionary is already in the directory")
 	else:
 		#this doesn't overwrite the reference if called
@@ -74,7 +75,7 @@ def run_gatk(bamfile, reference, java_picard, threads):
 		shell=False)
 	std_out, std_error = proc_4a.communicate()
 	#mark duplicate reads in input BAMs
-	out_metrics = "%s/%s/marked_dup_metrics.txt" % (out_dir, bam_name)
+	out_metrics = "%s/marked_dup_metrics.txt" % (out_dir)
 	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
 		'I='+bam_rg,'O=', bam_dup,\
 		'M=', out_metrics]
@@ -103,10 +104,9 @@ def run_gatk(bamfile, reference, java_picard, threads):
 #		'--java-options "-Xmx4g"', \
 		'HaplotypeCaller',\
 		'-G', 'StandardAnnotation',\
-		'-G', 'AS_StandardAnnotation',\
 		'-G', 'StandardHCAnnotation',\
 		'-R', reference,\
-		'--native-pair-hmm-threads', threads,\
+#		'--native-pair-hmm-threads', threads,\
 		'-I', bam_fm,\
 		'-O', vcf_out]
 	proc_4f = subprocess.Popen(cmd4f, \
@@ -139,11 +139,13 @@ def snpeff(snpeffdb1, bamfile, bamboozledir1, threads):
 	masked_vcf_out_lof_csv = "%s/%s_sorted_masked_lof.csv" % (out_dir, bam_name)
 	masked_vcf_out_lof_ann = "%s/%s_sorted_masked_lof.vcf" % (out_dir, bam_name)
 
-	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""),\
-		masked_vcf_out, \
-		'-t', threads, \
+	cmd7 = ['snpEff', \
+#		'eff', \
+		snpeffdb1.replace("'", ""), \
+		masked_vcf_out, '-t', threads, \
 		'-c', bamboozledir1+'/data/snpeff/snpEff.config', \
-		'-csvStats', masked_vcf_out_lof_csv]
+		'-lof', '-noStats']
+#		'-csvStats', masked_vcf_out_lof_csv]
 	with open(masked_vcf_out_lof_ann, "w+") as f:
 		proc_7 = subprocess.Popen(cmd7, stdout=f, shell=False)
 	std_error = proc_7.communicate()
