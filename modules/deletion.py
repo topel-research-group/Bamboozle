@@ -33,10 +33,11 @@ import os.path
 # PRINT DELETION
 #######################################################################
 
-def print_deletion(m, n, version, mutation_list):
+def print_deletion(m, n, version, mutation_list, writeout):
 	m.append(n)
 	if version == "deletion2" or (version == "deletion3" and n % 3 != 0):
-		print(m[0],m[1],m[2],sep="\t")
+		del_event = str(m[0]) + "\t" + str(m[1]) + "\t" + str(m[2]) + "\n"
+		writeout.write(del_event)
 	elif version in {"deletionx", "homohetero"}:
 		mutation_list.append(m)
 
@@ -44,7 +45,7 @@ def print_deletion(m, n, version, mutation_list):
 # FIND DELETIONS OCCURRING WITHIN EXONS
 #######################################################################
 
-def exon_mutations(exons, mutation_list, verbosity):
+def exon_mutations(exons, mutation_list, verbosity, writeout):
 
 	frameshifts = 0
 	exon_list = []
@@ -54,8 +55,8 @@ def exon_mutations(exons, mutation_list, verbosity):
 			if not line.startswith("track name"):
 				exon_list.append(line)
 
-	if not verbosity:
-		print("Contig","Start","bp","Exon",sep="\t")
+	verbose_header = "Contig" + "\t" + "Start" + "\t" + "bp" + "\t" + "Exon" + "\n"
+	writeout.write(verbose_header)
 
 	for mut in mutation_list:
 		for ex in exon_list:
@@ -63,13 +64,12 @@ def exon_mutations(exons, mutation_list, verbosity):
 			if (mut[0] == ex[0]) and (int(ex[1]) <= int(mut[1]) <= int(ex[2])):
 				if int(mut[2]) % 3 != 0:
 					frameshifts += 1
-				if verbosity:
-					print(mut[2],"bp mutation at",mut[0],mut[1],"hits exon",ex[3])
-				else:
-					print(mut[0],mut[1],mut[2],ex[3],sep="\t")
+				record_out = str(mut[0]) + "\t" + str(mut[1]) + "\t" + str(mut[2]) + "\t" + ex[3] + "\n"
+				writeout.write(record_out)
 				break
 
-	print("Total number of frameshifts in exons:",frameshifts)
+	if verbosity:
+		print("Total number of frameshifts in exons:",frameshifts)
 
 #######################################################################
 # CALCULATE PERCENTAGE COVERAGE DIFFERENCE BETWEEN FIRST BASE IN A
@@ -78,7 +78,7 @@ def exon_mutations(exons, mutation_list, verbosity):
 
 ## DevNote - Any way to remove the need for a temporary file?
 
-def HomoDel_or_Hetero(infile, mutation_list, contig):
+def HomoDel_or_Hetero(infile, mutation_list, contig, writeout):
 
 	# Print mutation_list to a temporary file
 
@@ -88,13 +88,13 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 		sys.exit("[Error] Temporary file temporary_bed_file already exists.")
 
 	for item in mutation_list:
-		with open(temp_bed, "a") as output_file:
-			output_file.write(item[0] + "\t" + str(int(item[1]) - 2) + "\t" + str(item[1]) + "\n")
-	output_file.close()
+		with open(temp_bed, "a") as temp_output_file:
+			temp_output_file.write(item[0] + "\t" + str(int(item[1]) - 2) + "\t" + str(item[1]) + "\n")
+	temp_output_file.close()
 
 	# Compare the coverage
 
-	if contig:
+	if contig != "assembly":
 		cmd = ["samtools", "depth", "-aa", "-b", temp_bed, "-r", contig, infile]
 	else:
 		cmd = ["samtools", "depth", "-aa", "-b", temp_bed, infile]
@@ -108,7 +108,8 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 		for row in rows:
 			coverage.append(row)
 
-	print("Contig","Position","% cov. difference", sep="\t")
+	out_header = "Contig" + "\t" + "Position" + "\t" + "% cov. difference" + "\n"
+	writeout.write(out_header)
 
 	while len(coverage) >= 2:
 		before = coverage[0]
@@ -117,9 +118,11 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 			next = coverage[2]
 		if int(after[1]) - int(before[1]) == 1:
 			if (int(before[2]) == 0 and int(after[2]) == 0) or (int(before[2]) == 0):
-				print(after[0],after[1],"N/A",sep="\t")
+				out_record = after[0] + "\t" + after[1] + "\t" + "N/A" + "\n"
+				writeout.write(out_record)
 			else:
-				print(after[0],after[1],round(((100.0/int(before[2]))*int(after[2])), 2),sep="\t")
+				out_record = after[0] + "\t" + after[1] + "\t" + str(round(((100.0/int(before[2]))*int(after[2])), 2)) + "\n"
+				writeout.write(out_record)
 
 			del coverage[0]
 			if int(next[1]) - int(after[1]) != 1:
@@ -138,6 +141,9 @@ def HomoDel_or_Hetero(infile, mutation_list, contig):
 
 def main(args):
 
+	if not args.outprefix:
+		args.outprefix = os.path.basename(args.sortbam[:-4])
+
 	# Determine which variant of the deletions script is being run
 	if args.command == "deletion1":
 		version = "deletion1"
@@ -149,6 +155,8 @@ def main(args):
 		version = "deletionx"
 	elif args.command == "homohetero":
 		version = "homohetero"
+
+	output_file = args.outprefix + "." + version + ".txt"
 
 	mutation_list = []
 
@@ -177,51 +185,55 @@ def main(args):
 	deletion = []
 	del_size = 1
 
-	with process.stdout as result:
-		rows = (line.decode().split('\t') for line in result)
-		ctg = ""
-		previous_ctg = ""
-		for row in rows:
-			position = int(row[1])
-			coverage = int(row[2])
-			if ctg != str(row[0]):
-				previous_ctg = ctg
-				ctg = str(row[0])
-				window = {}
-				reported = []
+	with open(output_file, 'a') as outfile:
+		with process.stdout as result:
+			rows = (line.decode().split('\t') for line in result)
+			ctg = ""
+			previous_ctg = ""
+			for row in rows:
+				position = int(row[1])
+				coverage = int(row[2])
+				if ctg != str(row[0]):
+					previous_ctg = ctg
+					ctg = str(row[0])
+					window = {}
+					reported = []
 
-			if len(window) == 12:
-				del window[position - 12]
-				window[position] = coverage
-				base1 = window[position - 11]
-				if ((base1*0.8) <= window[position] <= (base1*1.25)) and (base1 > 0) and (window[position] >= args.threshold):
-					for x, y in window.items():
-						if y < (base1*0.6) and x not in reported:
-							reported.append(x)
-							if args.command == "deletion1":
-								print(ctg,x,sep="\t")
-							else:
-								if (int(x) - int(old_position)) != 1:
-									if len(deletion) != 0:
-										print_deletion(deletion, del_size, version, mutation_list)
-										deletion = []
-									deletion.extend([ctg,x])
-									del_size = 1
+				if len(window) == 12:
+					del window[position - 12]
+					window[position] = coverage
+					base1 = window[position - 11]
+					if ((base1*0.8) <= window[position] <= (base1*1.25)) and (base1 > 0) and (window[position] >= args.threshold):
+						for x, y in window.items():
+							if y < (base1*0.6) and x not in reported:
+								reported.append(x)
+								if args.command == "deletion1":
+									del_pos = ctg + "\t" + str(x) + "\n"
+									outfile.write(del_pos)
 								else:
-									del_size +=1
-							old_position = x
-			else:
-				window[position] = coverage
+									if (int(x) - int(old_position)) != 1:
+										if len(deletion) != 0:
+											print_deletion(deletion, del_size, version, mutation_list, outfile)
+											deletion = []
+										deletion.extend([ctg,x])
+										del_size = 1
+									else:
+										del_size +=1
+								old_position = x
+				else:
+					window[position] = coverage
 
-		# Ensure that the final event is reported
-		if args.command != "deletion1":
-			print_deletion(deletion, del_size, version, mutation_list)
+			# Ensure that the final event is reported
+			if args.command != "deletion1":
+				print_deletion(deletion, del_size, version, mutation_list, outfile)
 
-	if args.command == "deletionx":
-		exon_mutations(args.exons, mutation_list, args.verbose)
+		if args.command == "deletionx":
+			exon_mutations(args.exons, mutation_list, args.verbose, outfile)
 
-	if args.command == "homohetero":
-		HomoDel_or_Hetero(args.sortbam, mutation_list, args.contig)
+		if args.command == "homohetero":
+			HomoDel_or_Hetero(args.sortbam, mutation_list, args.contig, outfile)
+
+	outfile.close()
 
 #######################################################################
 
