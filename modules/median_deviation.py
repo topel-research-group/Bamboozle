@@ -87,6 +87,9 @@ def make_bed(contig_lib,this_contig,openfile):
 
 def main(args):
 
+	if not args.outprefix:
+		args.outprefix = os.path.basename(args.sortbam[:-4])
+
 	if args.simple:
 		outfile = args.outprefix + ".txt"
 	elif args.complex:

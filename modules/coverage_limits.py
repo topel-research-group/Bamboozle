@@ -32,6 +32,11 @@ import subprocess
 #######################################################################
 
 def main(args):
+
+	if not args.outprefix:
+		args.outprefix = os.path.basename(args.sortbam[:-4])
+	output_file = args.outprefix + ".cov_limits.txt"
+
 	command = ["samtools", "depth", "-aa", args.sortbam, "-r", args.contig]
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=False)
 
@@ -71,8 +76,15 @@ def main(args):
 				current = 0
 				recording = False
 
-	print("Longest stretch between " + str(lower) + "x and " + str(upper) + \
-	"x coverage on " + args.contig + "\t" + str(longest) + "\t" + str(start) + "-" + str(stop))
+	results = "Longest stretch between " + str(lower) + "x and " + str(upper) + "x coverage on " + args.contig + ": " + str(longest) + "bp" + "\n" + \
+			args.contig + ":" + str(start) + "-" + str(stop) + "\n"
+
+	if args.verbose:
+		print(results)
+
+	with open(output_file, 'a') as result_file:
+		result_file.write(results)
+	result_file.close()
 
 #######################################################################
 
