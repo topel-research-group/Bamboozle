@@ -107,11 +107,13 @@ def mplot(input_vcf, state, metadata):
 		for row in md:
 			#use second column to generate subfiles?
 		#do XXX
+	#check if vcfs and metadata correspond?
 	#merge vcfs
 	#split metadata by populations?
 	#vcftools fst w/merged vcf, multiple txt files
-	#manhattan plot
+	#produce pairwise matrix of fst genetic distances between groups
 
+	#pca
 #python dashboard
 #interactive plots?
 #maybe like a heatmap?
