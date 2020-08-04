@@ -387,9 +387,9 @@ def main():
 			sys.exit("[Error] Please ensure that an output file prefix [-o] is given.")
 		elif args.dev:
 			import cProfile
-			cProfile.runctx('bcs.barcode(args)', globals(), locals())
+			cProfile.runctx('bcs.main(args)', globals(), locals())
 		else:
-			bcs.barcode(args)
+			bcs.main(args)
 
 	elif args.command == "pipeline":
 		if bool(args.feature) != bool(args.gff):

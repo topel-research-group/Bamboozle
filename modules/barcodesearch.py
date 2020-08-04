@@ -221,7 +221,7 @@ def check_unique_windows(windows, contig, reference, infiles):
 
 # Main function
 
-def barcode(args):
+def main(args):
 
 	# Set number of threads
 	pool = Pool(processes = int(args.threads))
@@ -383,3 +383,8 @@ def barcode(args):
 				output_txt.write(line_out)
 		output_bed.close()
 		output_txt.close()
+
+#######################################################################
+
+if __name__ == "__main__":
+	main()
