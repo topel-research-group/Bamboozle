@@ -312,7 +312,7 @@ def main():
 
 	if args.command == "lof":
 		import modules.sv_caller as sv
-		sv.main(args, bam_name)
+		sv.main(args)
 
 	elif args.command == "coverage":
 		import modules.coverage_stats as cs
