@@ -112,11 +112,11 @@ def mplot(input_vcf, state, metadata):
 	#split metadata by populations?
 	#vcftools fst w/merged vcf, multiple txt files
 	#produce pairwise matrix of fst genetic distances between groups
-
+	#https://plotly.com/python/v3/ipython-notebooks/principal-component-analysis/
 	#pca
-#python dashboard
-#interactive plots?
-#maybe like a heatmap?
+	#and cumulative % explained by eigenvalues
+	#https://plotly.com/python/interactive-html-export/
+	#output html
 
 def main():
 	#start things out

@@ -50,9 +50,9 @@ def ref_check(reference, ref_dict):
 		cmd3 = ['java','-jar',java_picard,'CreateSequenceDictionary',\
 			'R='+reference,\
 			'O='+ref_dict]
-		proc_3 = subprocess.Popen(cmd3, \
-			shell=False)
-		std_out, std_error = proc_3.communicate()
+#		proc_3 = subprocess.Popen(cmd3, \
+#			shell=False)
+#		std_out, std_error = proc_3.communicate()
 		print("GATK reference index didn't exist but it sure does now")
 
 #GATK
@@ -71,44 +71,57 @@ def run_gatk(bamfile, reference, java_picard, threads):
 		'SORT_ORDER=coordinate','RGID=foo','RGLB=bar',\
 		'RGPL=illumina','RGSM='+bam_name,\
 		'RGPU=bc1','CREATE_INDEX=True']
-	proc_4a = subprocess.Popen(cmd4a, \
-		shell=False)
-	std_out, std_error = proc_4a.communicate()
+#	proc_4a = subprocess.Popen(cmd4a, \
+#		shell=False)
+#	std_out, std_error = proc_4a.communicate()
 	#mark duplicate reads in input BAMs
 	out_metrics = "%s/marked_dup_metrics.txt" % (out_dir)
 	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
 		'I='+bam_rg,'O=', bam_dup,\
 		'M=', out_metrics]
-	proc_4b = subprocess.Popen(cmd4b, \
-		shell=False)
-	std_out, std_error = proc_4b.communicate()
+#	proc_4b = subprocess.Popen(cmd4b, \
+#		shell=False)
+#	std_out, std_error = proc_4b.communicate()
 	#"ensures that all mate-pair information is in sync between each read and its mate pair"
 	cmd4c = ['java','-jar',java_picard,'FixMateInformation',\
 		'I=', bam_dup,'O=', bam_fm,\
 		'ADD_MATE_CIGAR=true']
-	proc_4c = subprocess.Popen(cmd4c, \
-		shell=False)
-	std_out, std_error = proc_4c.communicate()
+#	proc_4c = subprocess.Popen(cmd4c, \
+#		shell=False)
+#	std_out, std_error = proc_4c.communicate()
 	#index output bam
 	cmd4d = ['samtools', 'index', bam_fm]
-	proc_4d = subprocess.Popen(cmd4d, \
-		shell=False)
-	std_out, std_error = proc_4d.communicate()
+#	proc_4d = subprocess.Popen(cmd4d, \
+#		shell=False)
+#	std_out, std_error = proc_4d.communicate()
 	#validate output bam
 	cmd4e = ['ValidateSamFile', '-I', bam_fm, '-MODE', 'SUMMARY']
-	proc_4d = subprocess.Popen(cmd4d, \
-		shell=False)
-	std_out, std_error = proc_4d.communicate()
+#	proc_4d = subprocess.Popen(cmd4d, \
+#		shell=False)
+#	std_out, std_error = proc_4d.communicate()
 	#run haplotype caller
+	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
+#	cmd4f = ['gatk', \
+#		'--java-options', java_opts,
+#		'--spark-master', 'local['+threads+']',
+#		'HaplotypeCaller',\
+#		'-G', 'StandardAnnotation',\
+#		'-G', 'StandardHCAnnotation',\
+#		'-R', reference,\
+#		'-I', bam_fm,\
+#		'-O', vcf_out]
 	cmd4f = ['gatk', \
-#		'--java-options "-Xmx4g"', \
+		'--java-options', java_opts,
+#		'--java-options', '-XX:ParallelGCThreads='+threads,
+		#'--spark-master', 'local['+threads+']',
 		'HaplotypeCaller',\
 		'-G', 'StandardAnnotation',\
 		'-G', 'StandardHCAnnotation',\
 		'-R', reference,\
-#		'--native-pair-hmm-threads', threads,\
 		'-I', bam_fm,\
 		'-O', vcf_out]
+
+	print(cmd4f)
 	proc_4f = subprocess.Popen(cmd4f, \
 		shell=False)
 	std_out, std_error = proc_4f.communicate()
@@ -168,11 +181,11 @@ def main(args):
 				os.mkdir(spl_dir)
 			#run pipeline
 			run_gatk(bamfile, args.ref, java_picard, args.threads)
-			if args.masking:
-				masking(bamfile, args.masking)
-				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
-			else:
-				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
+#			if args.masking:
+#				masking(bamfile, args.masking)
+#				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
+#			else:
+#				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 	else:
 		#create sample-specific directory
 		bam_name = os.path.basename(args.sortbam[:-4])
@@ -181,8 +194,8 @@ def main(args):
 			os.mkdir(spl_dir)
 		#run pipeline
 		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
-		if args.masking:
-			masking(args.sortbam, args.masking)
-			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
-		else:
-			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
+#		if args.masking:
+#			masking(args.sortbam, args.masking)
+#			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
+#		else:
+#			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
