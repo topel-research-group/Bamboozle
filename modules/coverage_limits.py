@@ -26,6 +26,7 @@
 #######################################################################
 
 import subprocess
+import os
 
 #######################################################################
 # MAIN
@@ -33,13 +34,16 @@ import subprocess
 
 def main(args):
 
+	# If no output prefix is given, have it match the input BAM file
 	if not args.outprefix:
 		args.outprefix = os.path.basename(args.sortbam[:-4])
 	output_file = args.outprefix + ".cov_limits.txt"
 
+	# Generate per-base depth information for the given contig
 	command = ["samtools", "depth", "-aa", args.sortbam, "-r", args.contig]
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=False)
 
+	# Check in case the user has specified the coverage limits in reverse order
 	if args.limits[0] < args.limits[1]:
 		lower = args.limits[0]
 		upper = args.limits[1]
@@ -50,6 +54,9 @@ def main(args):
 	longest = 0
 	start = "N/A"
 	stop = "N/A"
+
+	if args.verbose:
+		print("Checking for longest stretch between " + str(lower) + "x and " + str(upper) + "x coverage on " + args.contig + "\n")
 
 	current = 0
 	current_start = "N/A"
@@ -62,6 +69,8 @@ def main(args):
 		for row in rows:
 			position = int(row[1])
 			coverage = int(row[2])
+
+			# Record bases which fall within the desired limits
 			if lower <= coverage <= upper:
 				if not recording:
 					current_start = position
@@ -69,6 +78,8 @@ def main(args):
 				current += 1
 			else:
 				current_stop = position - 1
+				# If the latest recorded stretch is longer than
+				# the previous longest, save the latest instead
 				if current > longest:
 					longest = current
 					start = current_start
