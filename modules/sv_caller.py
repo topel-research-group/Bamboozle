@@ -101,27 +101,15 @@ def run_gatk(bamfile, reference, java_picard, threads):
 #	std_out, std_error = proc_4d.communicate()
 	#run haplotype caller
 	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
-#	cmd4f = ['gatk', \
-#		'--java-options', java_opts,
-#		'--spark-master', 'local['+threads+']',
-#		'HaplotypeCaller',\
-#		'-G', 'StandardAnnotation',\
-#		'-G', 'StandardHCAnnotation',\
-#		'-R', reference,\
-#		'-I', bam_fm,\
-#		'-O', vcf_out]
+
 	cmd4f = ['gatk', \
 		'--java-options', java_opts,
-#		'--java-options', '-XX:ParallelGCThreads='+threads,
-		#'--spark-master', 'local['+threads+']',
 		'HaplotypeCaller',\
 		'-G', 'StandardAnnotation',\
 		'-G', 'StandardHCAnnotation',\
 		'-R', reference,\
 		'-I', bam_fm,\
 		'-O', vcf_out]
-
-	print(cmd4f)
 	proc_4f = subprocess.Popen(cmd4f, \
 		shell=False)
 	std_out, std_error = proc_4f.communicate()
