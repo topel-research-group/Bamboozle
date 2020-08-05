@@ -101,7 +101,6 @@ def run_gatk(bamfile, reference, java_picard, threads):
 	std_out, std_error = proc_4d.communicate()
 	#run haplotype caller
 	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
-
 	cmd4f = ['gatk', \
 		'--java-options', java_opts,
 		'HaplotypeCaller',\
@@ -140,8 +139,10 @@ def snpeff(snpeffdb1, bamfile, bamboozledir1, threads):
 	masked_vcf_out_lof_csv = "%s/%s_sorted_masked_lof.csv" % (out_dir, bam_name)
 	masked_vcf_out_lof_ann = "%s/%s_sorted_masked_lof.vcf" % (out_dir, bam_name)
 
-	cmd7 = ['SnpEff', snpeffdb1.replace("'", ""), masked_vcf_out, '-t', threads, '-c', bamboozledir1+'/data/snpeff/snpEff.config', '-lof', '-noStats']
-	#	'-csvStats', masked_vcf_out_lof_csv]
+	cmd7 = ['snpEff', snpeffdb1.replace("'", ""), masked_vcf_out, \
+		'-c', bamboozledir1+'/data/snpeff/snpEff.config', '-lof',
+		'-csvStats', masked_vcf_out_lof_csv]
+	print(cmd7)
 	with open(masked_vcf_out_lof_ann, "w+") as f:
 		proc_7 = subprocess.Popen(cmd7, stdout=f, shell=False)
 	std_error = proc_7.communicate()
