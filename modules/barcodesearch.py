@@ -141,10 +141,12 @@ def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 		# If any variants fall within primer sites, skip the window
 		for variant in variant_list[contig]:
 			validity = "True"
-			if int(variant) > window_stop:
-				break
+			if int(variant) < window_start:
+				continue
 			elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
 				validity = "False"
+				break
+			elif int(variant) > window_stop:
 				break
 
 		# If no variants in primer sites, save the coordinates
