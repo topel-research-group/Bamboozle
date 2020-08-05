@@ -19,8 +19,9 @@
 #	You should have received a copy of the GNU General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-# Imports
+#######################################################################
+# IMPORTS
+#######################################################################
 
 import subprocess
 import os
@@ -30,14 +31,42 @@ import numpy as np
 from Levenshtein import distance
 from multiprocessing import Pool
 
+from functools import wraps
+from time import time
+import datetime
 
-# Get reasonable sample names
+#######################################################################
+# TIME DECORATOR (TAKEN FROM VILMA'S PIPELINE
+#######################################################################
+
+def timing(function):
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+                now = datetime.datetime.now()
+                start = time()
+                result = function(*args, **kwargs)
+                end = time()
+                fh = open("time.log", "a")
+                lines_of_text = now.strftime("%Y-%m-%d %H:%M") \
+                                + ' Function: ' \
+                                + function.__name__ \
+                                + ' Elapsed time: {}'.format(end-start) \
+                                + ' seconds \n'
+                fh.writelines(lines_of_text)
+                fh.close()
+                return result
+        return wrapper
+
+#######################################################################
+# GET REASONABLE SAMPLE NAMES
+#######################################################################
 
 def FileName(long_name):
 	return os.path.splitext(os.path.basename(long_name))[0]
 
-
-# Record all contig lengths by checking first BAM file
+#######################################################################
+# RECORD ALL CONTIG LENGTHS BY CHECKING FIRST BAM FILE
+#######################################################################
 
 def get_contig_lengths(firstbam):
 	contig_lengths = {}
@@ -52,8 +81,9 @@ def get_contig_lengths(firstbam):
 				contig_lengths[row.split("\t")[0]] = int(row.split("\t")[1])
 	return(contig_lengths)
 
-
-# Parse BAM files using BCFtools
+#######################################################################
+# PARSE BAM FILES USING BCFTOOLS
+#######################################################################
 
 def bcf(infile, contig_list, quality, threads, reference):
 	print("\n" + FileName(infile))
@@ -74,8 +104,9 @@ def bcf(infile, contig_list, quality, threads, reference):
 
 	return(process2)
 
-
-# Generate a list of loci where variants occur
+#######################################################################
+# GENERATE A LIST OF LOCI WHERE VARIANTS OCCUR
+#######################################################################
 
 def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 	contig_name = vcf_row.split("\t")[0]
@@ -92,8 +123,10 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 		SNP_dict[contig_name].append(variant_position)
 	return(contig)
 
-
-# Identify variable windows and conserved primer sites
+#######################################################################
+# IDENTIFY VARIABLE WINDOWS AND CONSERVED PRIMER SITES
+# DevNote - this needs speeding up!
+#######################################################################
 
 def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 	windows = {}
@@ -119,8 +152,9 @@ def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 			windows[window_start] = window_coords
 	return(windows)
 
-
-# Merge overlapping windows
+#######################################################################
+# MERGE OVERLAPPING WINDOWS
+#######################################################################
 
 def merge_windows(contig, window_dict):
 	merged = {}	
@@ -140,8 +174,10 @@ def merge_windows(contig, window_dict):
 		merged[saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
 	return(merged)
 
-
-# Ensure uniqueness of variable regions between strains
+#######################################################################
+# ENSURE UNIQUENESS OF VARIABLE REGIONS BETWEEN STRAINS
+# DevNote - this needs speeding up!
+#######################################################################
 
 def check_unique_windows(windows, contig, reference, infiles):
 	final = {}
@@ -218,10 +254,25 @@ def check_unique_windows(windows, contig, reference, infiles):
 	return(final)
 
 #######################################################################
+# PRINT DURATION OF THE STEP
+#######################################################################
 
-# Main function
+def print_time(step_name, start_time):
+	running_time = step_name + ": " + str(time() - start_time) + " seconds.\n"
+	with open("time.log", 'a') as outlog:
+		outlog.write(running_time)
+	outlog.close()
 
+#######################################################################
+# MAIN
+#######################################################################
+
+@timing
 def main(args):
+
+	# Timing - get start time
+	if args.dev:
+		start_time = time()
 
 	# Set number of threads
 	pool = Pool(processes = int(args.threads))
@@ -237,6 +288,11 @@ def main(args):
 
 	# Record all contig lengths
 	contig_lengths = get_contig_lengths(args.sortbam[0])
+
+	# Timing - time taken to get contig lengths
+	if args.dev:
+		print_time("Get contig lengths", start_time)
+		start_time = time()
 
 	# Set initial global lists/dictionaries
 	all_SNPs = {}
@@ -303,7 +359,13 @@ def main(args):
 	for contig in all_indels:
 		all_indels[contig] = sorted(list(set(all_indels[contig])), key=int)
 
+	# Timing - time taken to get lists of variants
+	if args.dev:
+		print_time("Get lists of variants", start_time)
+		start_time = time()
+
 	# Step through each contig, assigning start and stop locations for window and primers
+	# DevNote - this needs speeding up!
 	print("\nChecking windows...")
 
 	to_master = pool.starmap(find_windows, \
@@ -312,6 +374,10 @@ def main(args):
 	for entry in range(0,len(contig_lengths)):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
+        # Timing - time taken to find valid windows
+	if args.dev:
+		print_time("Find valid windows", start_time)
+		start_time = time()
 
 	# Merge overlapping windows
 	print("\nMerging overlapping windows...")
@@ -321,10 +387,17 @@ def main(args):
 			print(contig)
 			merged_dict[contig] = merge_windows(contig, master_dict)
 
+	# Timing - time taken to merge windows
+	if args.dev:
+		print_time("Merge windows", start_time)
+		start_time = time()
+
 # Dev Note: Find a way to skip loci where the following type of error occurs:
 # `Warning: ignoring overlapping variant starting at 000215F:2953`
 
-	# Compare consensus sequences for all BAMs, to ensure they are truly unique, not merely differing from the reference in all the same positions
+	# Compare consensus sequences for all BAMs, to ensure they are truly unique,
+	# not merely differing from the reference in all the same positions
+	# DevNote - this needs speeding up!
 	print("\nChecking consensuses...")
 
 	to_final = pool.starmap(check_unique_windows, \
@@ -332,6 +405,11 @@ def main(args):
 
 	for entry in range(0,len(contig_lengths)):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
+
+	# Timing - time taken to get unique windows
+	if args.dev:
+		print_time("Get unique windows", start_time)
+		start_time = time()
 
 	# Report results in TXT and BED format
 	print("\nGenerating output files...")
@@ -383,6 +461,10 @@ def main(args):
 				output_txt.write(line_out)
 		output_bed.close()
 		output_txt.close()
+
+	# Timing - time taken to write output
+	if args.dev:
+		print_time("Write output", start_time)
 
 #######################################################################
 
