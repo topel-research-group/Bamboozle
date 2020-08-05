@@ -59,7 +59,7 @@ def ref_check(reference, ref_dict):
 def run_gatk(bamfile, reference, java_picard, threads):
 	#generate variables for the function
 	bam_name = os.path.basename(bamfile[:-4])
-	out_dir = "sv_caller_output/%s" % (bam_name)
+	out_dir = "%s" % (bam_name)
 	bam_in = bamfile
 	bam_rg = "%s/%s_rdgrp.bam" % (out_dir, bam_name)
 	bam_dup = "%s/%s_rdgrp_nodups.bam" % (out_dir, bam_name)
@@ -118,7 +118,7 @@ def run_gatk(bamfile, reference, java_picard, threads):
 def masking(bamfile, refpil):
 	#generating variables for function
 	bam_name = os.path.basename(bamfile[:-4])
-	out_dir = "sv_caller_output/%s" % (bam_name)
+	out_dir = "%s" % (bam_name)
 	vcf_out = "%s/%s_svcalls.vcf" % (out_dir, bam_name)
 	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
 
@@ -134,7 +134,7 @@ def masking(bamfile, refpil):
 def snpeff(snpeffdb1, bamfile, bamboozledir1, threads):
 	#generating variables for function
 	bam_name = os.path.basename(bamfile[:-4])
-	out_dir = "sv_caller_output/%s" % (bam_name)
+	out_dir = "%s" % (bam_name)
 	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
 	masked_vcf_out_lof_csv = "%s/%s_sorted_masked_lof.csv" % (out_dir, bam_name)
 	masked_vcf_out_lof_ann = "%s/%s_sorted_masked_lof.vcf" % (out_dir, bam_name)
@@ -142,7 +142,6 @@ def snpeff(snpeffdb1, bamfile, bamboozledir1, threads):
 	cmd7 = ['snpEff', snpeffdb1.replace("'", ""), masked_vcf_out, \
 		'-c', bamboozledir1+'/data/snpeff/snpEff.config', '-lof',
 		'-csvStats', masked_vcf_out_lof_csv]
-	print(cmd7)
 	with open(masked_vcf_out_lof_ann, "w+") as f:
 		proc_7 = subprocess.Popen(cmd7, stdout=f, shell=False)
 	std_error = proc_7.communicate()
@@ -155,19 +154,14 @@ def main(args):
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
 
-	#create output directory if it doesn't exist
-	if not os.path.exists('sv_caller_output'):
-		os.mkdir('sv_caller_output')
-
 	#calling functions for sv_caller
 	ref_check(args.ref, ref_dict)
 	if isinstance(args.sortbam, list):
 		for bamfile in args.sortbam:
 			#create sample-specific directories
 			bam_name = os.path.basename(bamfile[:-4])
-			spl_dir = "sv_caller_output/%s" % (bam_name)
-			if not os.path.exists(spl_dir):
-				os.mkdir(spl_dir)
+			if not os.path.exists(bam_name):
+				os.mkdir(bam_name)
 			#run pipeline
 			run_gatk(bamfile, args.ref, java_picard, args.threads)
 			if args.masking:
@@ -178,9 +172,8 @@ def main(args):
 	else:
 		#create sample-specific directory
 		bam_name = os.path.basename(args.sortbam[:-4])
-		spl_dir = "sv_caller_output/%s" % (bam_name)
-		if not os.path.exists(spl_dir):
-			os.mkdir(spl_dir)
+		if not os.path.exists(bam_name):
+			os.mkdir(bam_name)
 		#run pipeline
 		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
 		if args.masking:
