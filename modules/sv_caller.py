@@ -78,14 +78,16 @@ def run_gatk(bamfile, reference, java_picard, threads):
 	out_metrics = "%s/marked_dup_metrics.txt" % (out_dir)
 	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
 		'I='+bam_rg,'O=', bam_dup,\
-		'M=', out_metrics]
+		'M=', out_metrics,\
+		'TMP_DIR='+out_dir]
 	proc_4b = subprocess.Popen(cmd4b, \
 		shell=False)
 	std_out, std_error = proc_4b.communicate()
 	#"ensures that all mate-pair information is in sync between each read and its mate pair"
 	cmd4c = ['java','-jar',java_picard,'FixMateInformation',\
 		'I=', bam_dup,'O=', bam_fm,\
-		'ADD_MATE_CIGAR=true']
+		'ADD_MATE_CIGAR=true',\
+		'TMP_DIR='+out_dir]
 	proc_4c = subprocess.Popen(cmd4c, \
 		shell=False)
 	std_out, std_error = proc_4c.communicate()
