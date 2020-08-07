@@ -136,7 +136,6 @@ def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 		window_stop = int(window_start + window_len)
 		primer1_stop = int(window_start + primer_len)
 		primer2_start = int(window_stop - primer_len)
-		window_coords = [window_start,primer1_stop,primer2_start,window_stop]
 
 		# If any variants fall within primer sites, skip the window
 		for variant in variant_list[contig]:
@@ -151,7 +150,7 @@ def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 
 		# If no variants in primer sites, save the coordinates
 		if validity == "True":
-			windows[window_start] = window_coords
+			windows[window_start] = [window_start,primer1_stop,primer2_start,window_stop]
 	return(windows)
 
 #######################################################################
