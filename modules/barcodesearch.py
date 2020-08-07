@@ -27,7 +27,7 @@ import subprocess
 import os
 import sys
 import io
-import numpy as np
+from itertools import combinations
 from Levenshtein import distance
 from multiprocessing import Pool
 
@@ -125,7 +125,7 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 
 #######################################################################
 # IDENTIFY VARIABLE WINDOWS AND CONSERVED PRIMER SITES
-# DevNote - this needs speeding up!
+# DevNote - Any way to further speed up if/elif section?
 #######################################################################
 
 def find_windows(contig, contig_list, window_len, primer_len, variant_list):
@@ -185,6 +185,7 @@ def check_unique_windows(windows, contig, reference, infiles):
 	final = {}
 
 	for window in windows[contig]:
+
 		compare_seqs = {}
 		for bam in infiles:
 			compare_seqs[FileName(bam)] = ""
@@ -205,23 +206,24 @@ def check_unique_windows(windows, contig, reference, infiles):
 					compare_seqs[FileName(bam)] += (row3.upper().strip("\n"))
 
 		# Ensure all variable regions are unique between samples
-		if not (len(compare_seqs) != len(set(compare_seqs.values()))):
+		if (len(compare_seqs) == len(set(compare_seqs.values()))):
+
 			final[window] = windows[contig][window]
 
 			# Calculate the number of differences between each pair of sequences
+			# DevNote - this step is taking the longest in this function
+
+			diff_counts = []
 			list1 = list(compare_seqs.values())
-			list2 = list(compare_seqs.values())
-			matrix = np.zeros((len(list1), len(list2)), dtype=np.int)
-			for i in range(0,len(list1)):
-				for j in range(0,len(list2)):
-					matrix[i,j] = distance(list1[i],list2[j])
+			for i, j in list(combinations(range(0,len(list1)), 2)):
+				diff_counts.append(distance(list1[i],list1[j]))
 
 			# Add minimum and maximum differences to each window
-			final[window].append(np.min(matrix[np.nonzero(matrix)]))
-			final[window].append(np.max(matrix[np.nonzero(matrix)]))
+			final[window].append(min(diff_counts))
+			final[window].append(max(diff_counts))
 
 			# Get the required sequences for conserved and variable regions
-			# Dev Note: tidy this up so we're not running essentially the same thing three times!
+			# DevNote - tidy this up so we're not running essentially the same thing three times!
 
 			conserved_1 = ""
 			cmd4 = ["samtools faidx %s %s:%s-%s" % (reference, contig, windows[contig][window][0], (windows[contig][window][1] - 1))]
