@@ -110,7 +110,7 @@ def bcf(infile, contig_list, quality, threads, reference):
 
 def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 	contig_name = vcf_row.split("\t")[0]
-	variant_position = vcf_row.split("\t")[1]
+	variant_position = int(vcf_row.split("\t")[1])
 
 	if not contig == contig_name:
 		contig = contig_name
@@ -136,21 +136,13 @@ def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 		window_stop = int(window_start + window_len)
 		primer1_stop = int(window_start + primer_len)
 		primer2_start = int(window_stop - primer_len)
+		conserved = list(range(window_start,primer1_stop+1)) + list(range(primer2_start,window_stop+1))
 
-		# If any variants fall within primer sites, skip the window
-		for variant in variant_list[contig]:
-			validity = "True"
-			if int(variant) < window_start:
-				continue
-			elif ((window_start <= int(variant) <= primer1_stop) or (primer2_start <= int(variant) <= window_stop)):
-				validity = "False"
-				break
-			elif int(variant) > window_stop:
-				break
+	# If no variants in primer sites, save the coordinates
 
-		# If no variants in primer sites, save the coordinates
-		if validity == "True":
+		if not list(set(conserved) & set(variant_list[contig])):
 			windows[window_start] = [window_start,primer1_stop,primer2_start,window_stop]
+
 	return(windows)
 
 #######################################################################
