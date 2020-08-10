@@ -108,6 +108,7 @@ def run_gatk(bamfile, reference, java_picard, threads):
 		'HaplotypeCaller',\
 		'-G', 'StandardAnnotation',\
 		'-G', 'StandardHCAnnotation',\
+		'-ERC', 'GVCF', \
 		'-R', reference,\
 		'-I', bam_fm,\
 		'-O', vcf_out]
