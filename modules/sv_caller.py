@@ -111,9 +111,13 @@ def run_gatk(bamfile, reference, java_picard, threads):
 		'-R', reference,\
 		'-I', bam_fm,\
 		'-O', vcf_out]
-	proc_4f = subprocess.Popen(cmd4f, \
-		shell=False)
-	std_out, std_error = proc_4f.communicate()
+
+	if os.path.isfile(vcf_out):
+		print('SV calls already present, skipping')
+	else:
+		proc_4f = subprocess.Popen(cmd4f, \
+			shell=False)
+		std_out, std_error = proc_4f.communicate()
 
 #masks the output for each called vcf with previous calls using reads generated to correct the assembly
 
