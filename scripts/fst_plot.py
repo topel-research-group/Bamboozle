@@ -31,11 +31,17 @@ parser = argparse.ArgumentParser(usage="fst_plot.py <command> [options]")
 
 parser.add_argument("-v", "--vcf_list", \
 		help="Text file of newline-separated list of HaplotypeCaller-run VCF files")
-parser.add_argument("-p", "--populations", action="append" \
+parser.add_argument("-p", "--populations", \
 		help="Text file listing newline-separated text files of individuals for each population. \
 		Individual names in each listed text file must correspond to sample name in the corresponding VCF.")
-parser.add_argument("-f", "--ref", \
+parser.add_argument("-r", "--ref", \
 		help="Reference")
+parser.add_argument("-o", "--out_name", \
+		help="Name for output files")
+parser.add_argument("-t", "--threads", \
+		help="Number of threads")
+
+args = parser.parse_args()
 
 def prep_input(vcf_list):
 	with open(vcf_list) as infile:
@@ -45,47 +51,53 @@ def prep_input(vcf_list):
 			proc1 = subprocess.Popen(cmd1, \
 				shell=False, stdout=subprocess.PIPE)
 			cmd2 = ['tabix', '-p', 'vcf']
-				proc2 = subprocess.Popen(cmd2, \
+			proc2 = subprocess.Popen(cmd2, \
 				shell=False, stdin=proc1.stdout)
 	
 			proc1.stdout.close()
 			std_out, std_error = proc2.communicate()
 
 def comb_geno(vcf_list, out_name, reference, pops, threads):
-	cmd2_2 = []
+	cmd3_2 = []
 	with open(vcf_list) as infile:
 		for vcf in infile:
-			cmd2_2.append('--variant '+vcf.replace('\n','')+'.gz')
+			cmd3_2.append('--variant '+vcf.replace('\n','')+'.gz')
 
-	cmd2_1 = ['gatk', 'CombineGVCFs', \
-		'-R', reference,
+	cmd3_1 = ['gatk', 'CombineGVCFs', \
+		'-R', reference, \
 		'-O', out_name+'.vcf.gz']
-	cmd2 = cmd2_1 + cmd2_2
-	proc2 = subprocess.Popen(cmd2, \
+	cmd3 = cmd3_1 + cmd3_2
+	proc3 = subprocess.Popen(cmd3, \
 		shell=False)
 
+	#filtering? user-defined?? etc
+
 	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
-	cmd3 = ['gatk', \
+	cmd4 = ['gatk', \
 		'--java-options', java_opts, \
 		'GenotypeGVCFs', \
 		'-R', reference, \
 		'--variant', out_name+'.vcf.gz', \
 		'-O', out_name+'_geno.vcf.gz']
-	proc3 = subprocess.Popen(cmd3, \
+	proc4 = subprocess.Popen(cmd4, \
 		shell=False)
 
-	cmd4_2 = []
+	cmd5_2 = []
 	with open(pops) as infile2:
 		for pop in infile2:
-			cmd4_2.append('--weir-fst-pop '+pop.replace('\n',''))
+			cmd5_2.append('--weir-fst-pop '+pop.replace('\n',''))
 
-	cmd4_1 = ['vcftools' \
+	cmd5_1 = ['vcftools' \
 		'--gzvcf', out_name+'_geno.vcf.gz', \
 		'--out', out_name+'.vcf', \
 		'--012']
-	cmd4 = cmd4_1 + cmd4_2
+	cmd5 = cmd5_1 + cmd5_2
 
-	proc4 = subprocess.Popen(cmd4, \
+	proc5 = subprocess.Popen(cmd5, \
                 shell=False)
 
 def pca():
+
+def main(args):
+	prep_input(args.vcf_list)
+	comb_geno(args.vcf_list, args.out_name, args.reference, args.populations, args.threads)
