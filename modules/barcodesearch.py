@@ -214,37 +214,27 @@ def check_unique_windows(windows, contig, reference, infiles):
 			final[window].append(max(diff_counts))
 
 			# Get the required sequences for conserved and variable regions
-			# DevNote - tidy this up so we're not running essentially the same thing three times!
 
-			conserved_1 = ""
-			cmd4 = ["samtools faidx %s %s:%s-%s" % (reference, contig, windows[contig][window][0], (windows[contig][window][1] - 1))]
+			window_start = windows[contig][window][0]
+			primer1_stop = windows[contig][window][1]
+			primer2_start = windows[contig][window][2] + 1
+			window_stop = windows[contig][window][3]
+
+			window_range = contig + ":" + str(window_start) + "-" + str(window_stop)
+
+			full_window = ""
+
+			cmd4 = ["samtools faidx %s %s" % (reference, window_range)]
 			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
-			with process4.stdout as result4:
-				rows4 = (line.decode() for line in result4)
-				for row4 in rows4:
-					if not row4.startswith(">"):
-						conserved_1 += row4.strip("\n")
-			final[window].append(conserved_1)
-
-			variable = ""
-			cmd5 = ["samtools faidx %s %s:%s-%s" % (reference, contig, windows[contig][window][1], windows[contig][window][2])]
-			process5 = subprocess.Popen(cmd5, stdout=subprocess.PIPE, shell=True)
-			with process5.stdout as result5:
-				rows5 = (line.decode() for line in result5)
-				for row5 in rows5:
-					if not row5.startswith(">"):
-						variable += row5.strip("\n")
-			final[window].append(variable)
-
-			conserved_2 = ""
-			cmd6= ["samtools faidx %s %s:%s-%s" % (reference, contig, (windows[contig][window][2] + 1), windows[contig][window][3])]
-			process6 = subprocess.Popen(cmd6, stdout=subprocess.PIPE, shell=True)
-			with process6.stdout as result6:
-				rows6 = (line.decode() for line in result6)
-				for row6 in rows6:
-					if not row6.startswith(">"):
-						conserved_2 += row6.strip("\n")
-			final[window].append(conserved_2)
+#			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=False)
+			with process4.stdout as result1:
+				rows1 = (line.decode() for line in result1)
+				for row1 in rows1:
+					if not row1.startswith(">"):
+						full_window += row1.strip("\n")
+			final[window].append(full_window[(window_start - window_start):(primer1_stop - window_start)])
+			final[window].append(full_window[(primer1_stop - window_start):(primer2_start - window_start)])
+			final[window].append(full_window[(primer2_start - window_start):((window_stop - window_start)+1)])
 
 	return(final)
 
