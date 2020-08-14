@@ -194,7 +194,8 @@ def check_unique_windows(windows, contig, reference, infiles):
 			with process3.stdout as result3:
 				rows3 = (line.decode() for line in result3)
 				for row3 in rows3:
-					compare_seqs[FileName(bam)] += (row3.upper().strip("\n"))
+					if not row3.startswith(">"):
+						compare_seqs[FileName(bam)] += (row3.upper().strip("\n"))
 
 		# Ensure all variable regions are unique between samples
 		if (len(compare_seqs) == len(set(compare_seqs.values()))):
