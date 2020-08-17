@@ -30,32 +30,7 @@ import io
 from itertools import combinations
 from Levenshtein import distance
 from multiprocessing import Pool
-
-from functools import wraps
 from time import time
-import datetime
-
-#######################################################################
-# TIME DECORATOR (TAKEN FROM VILMA'S PIPELINE
-#######################################################################
-
-def timing(function):
-        @wraps(function)
-        def wrapper(*args, **kwargs):
-                now = datetime.datetime.now()
-                start = time()
-                result = function(*args, **kwargs)
-                end = time()
-                fh = open("time.log", "a")
-                lines_of_text = now.strftime("%Y-%m-%d %H:%M") \
-                                + ' Function: ' \
-                                + function.__name__ \
-                                + ' Elapsed time: {}'.format(end-start) \
-                                + ' seconds \n'
-                fh.writelines(lines_of_text)
-                fh.close()
-                return result
-        return wrapper
 
 #######################################################################
 # GET REASONABLE SAMPLE NAMES
@@ -244,7 +219,7 @@ def check_unique_windows(windows, contig, reference, infiles):
 #######################################################################
 
 def print_time(step_name, start_time):
-	running_time = step_name + ": " + str(time() - start_time) + " seconds.\n"
+	running_time = step_name + ": " + str(round(time() - start_time, 1)) + " seconds.\n"
 	with open("time.log", 'a') as outlog:
 		outlog.write(running_time)
 	outlog.close()
@@ -253,12 +228,11 @@ def print_time(step_name, start_time):
 # MAIN
 #######################################################################
 
-@timing
 def main(args):
 
 	# Timing - get start time
-	if args.dev:
-		start_time = time()
+	full_time = time()
+	start_time = time()
 
 	# Set number of threads
 	pool = Pool(processes = int(args.threads))
@@ -276,9 +250,8 @@ def main(args):
 	contig_lengths = get_contig_lengths(args.sortbam[0])
 
 	# Timing - time taken to get contig lengths
-	if args.dev:
-		print_time("Get contig lengths", start_time)
-		start_time = time()
+	print_time("Get contig lengths", start_time)
+	start_time = time()
 
 	# Set initial global lists/dictionaries
 	all_SNPs = {}
@@ -346,9 +319,8 @@ def main(args):
 		all_indels[contig] = sorted(list(set(all_indels[contig])), key=int)
 
 	# Timing - time taken to get lists of variants
-	if args.dev:
-		print_time("Get lists of variants", start_time)
-		start_time = time()
+	print_time("Get lists of variants", start_time)
+	start_time = time()
 
 	# Step through each contig, assigning start and stop locations for window and primers
 	# DevNote - this needs speeding up!
@@ -361,9 +333,8 @@ def main(args):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
         # Timing - time taken to find valid windows
-	if args.dev:
-		print_time("Find valid windows", start_time)
-		start_time = time()
+	print_time("Find valid windows", start_time)
+	start_time = time()
 
 	# Merge overlapping windows
 	print("\nMerging overlapping windows...")
@@ -374,9 +345,8 @@ def main(args):
 			merged_dict[contig] = merge_windows(contig, master_dict)
 
 	# Timing - time taken to merge windows
-	if args.dev:
-		print_time("Merge windows", start_time)
-		start_time = time()
+	print_time("Merge windows", start_time)
+	start_time = time()
 
 # Dev Note: Find a way to skip loci where the following type of error occurs:
 # `Warning: ignoring overlapping variant starting at 000215F:2953`
@@ -393,9 +363,8 @@ def main(args):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
 
 	# Timing - time taken to get unique windows
-	if args.dev:
-		print_time("Get unique windows", start_time)
-		start_time = time()
+	print_time("Get unique windows", start_time)
+	start_time = time()
 
 	# Report results in TXT and BED format
 	print("\nGenerating output files...")
@@ -449,8 +418,14 @@ def main(args):
 		output_txt.close()
 
 	# Timing - time taken to write output
-	if args.dev:
-		print_time("Write output", start_time)
+	print_time("Write output", start_time)
+
+	# Timing - total pipeline time
+	total_time = "Total time: " + str(round(time() - full_time, 1)) + " seconds.\n"
+	with open("time.log", 'a') as outlog:
+		outlog.write("\n")
+		outlog.write(total_time)
+	outlog.close()
 
 #######################################################################
 

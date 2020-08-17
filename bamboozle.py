@@ -321,6 +321,7 @@ def main():
 		if args.dev:
 			import cProfile
 			cProfile.runctx('cs.main(args)', globals(), locals())
+#			cProfile.runctx('cs.main(args)', globals(), locals(), 'coverage.prof')
 		else:
 			cs.main(args)
 
@@ -330,6 +331,7 @@ def main():
 			if args.dev:
 				import cProfile
 				cProfile.runctx('con.main(args)', globals(), locals())
+#				cProfile.runctx('con.main(args)', globals(), locals(), 'consensus.prof')
 			else:
 				con.main(args)
 		else:
@@ -342,6 +344,7 @@ def main():
 			if args.dev:
 				import cProfile
 				cProfile.runctx('zr.main(args)', globals(), locals())
+#				cProfile.runctx('zr.main(args)', globals(), locals(), 'zero.prof')
 			else:
 				zr.main(args)
 		else:
@@ -354,6 +357,7 @@ def main():
 		elif args.dev:
 			import cProfile
 			cProfile.runctx('dl.main(args)', globals(), locals())
+#			cProfile.runctx('dl.main(args)', globals(), locals(), 'deletion.prof')
 		else:
 			dl.main(args)
 
@@ -363,6 +367,7 @@ def main():
 			if args.dev:
 				import cProfile
 				cProfile.runctx('md.main(args)', globals(), locals())
+#				cProfile.runctx('md.main(args)', globals(), locals(), 'median.prof')
 			else:
 				md.main(args)
 		else:
@@ -374,6 +379,7 @@ def main():
 			if args.dev:
 				import cProfile
 				cProfile.runctx('cl.main(args)', globals(), locals())
+#				cProfile.runctx('cl.main(args)', globals(), locals(), 'long_coverage.prof')
 			else:
 				cl.main(args)
 		else:
@@ -388,6 +394,7 @@ def main():
 		elif args.dev:
 			import cProfile
 			cProfile.runctx('bcs.main(args)', globals(), locals())
+#			cProfile.runctx('bcs.main(args)', globals(), locals(), 'barcode.prof')
 		else:
 			bcs.main(args)
 
