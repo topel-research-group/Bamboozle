@@ -79,7 +79,9 @@ def comb_geno(vcf_list, out_name, reference, pops, threads):
 	proc3 = subprocess.Popen(cmd3, \
 		shell=False)
 	std_out, std_error = proc3.communicate()
-#	FILTERING?
+
+#	FILTERING? this as base 
+#	https://github.com/bethsheets/SNPcalling_tutorial#step-4-filter-snps-with-vcflib
 
 	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
 	cmd4 = ['gatk', \
@@ -92,19 +94,30 @@ def comb_geno(vcf_list, out_name, reference, pops, threads):
 		shell=False)
 
 	std_out, std_error = proc4.communicate()
-#	cmd5_2 = []
-#	with open(pops) as infile2:
-#		for pop in infile2:
-#			cmd5_2.append('--weir-fst-pop '+pop.replace('\n',''))
-#
-#	cmd5_1 = ['vcftools' \
-#		'--gzvcf', out_name+'_geno.vcf.gz', \
-#		'--out', out_name+'.vcf', \
-#		'--012']
-#	cmd5 = cmd5_1 + cmd5_2
-#
-#	proc5 = subprocess.Popen(cmd5, \
-#		shell=False)
+
+	cmd5_2 = []
+	pop_list = open(pops, 'r')
+	pop_list_a = []
+	
+	for line in csv.reader(pop_list):
+		pop_list_a.append('--weir-fst-pop '+str(line)[2:-2])
+	cmd5_2_f = [vars for gzvcf in pop_list_a for vars in gzvcf.split()]
+
+	cmd5_1 = ['vcftools', \
+		'--gzvcf', out_name+'_geno.vcf.gz']
+
+	cmd5_3 = ['--out', out_name]
+
+	cmd5 = cmd5_1 + cmd5_2_f + cmd5_3
+	proc5 = subprocess.Popen(cmd5, \
+		shell=False)
+
+	cmd6 = ['vcftools', \
+		'--gzvcf', out_name+'_geno.vcf.gz', \
+		'--out', out_name, \
+		'--012']
+	proc6 = subprocess.Popen(cmd6, \
+		shell=False)
 
 #def pca():
 
