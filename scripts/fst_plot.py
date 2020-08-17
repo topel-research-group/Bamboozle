@@ -70,30 +70,28 @@ def comb_geno(vcf_list, out_name, reference, pops, threads):
 		cmd3_2.append('--variant '+gzvcf)
 
 	cmd3_2_f = [vars for gzvcf in cmd3_2 for vars in gzvcf.split()]
-	print(cmd3_2_f)
 
 	cmd3_1 = ['gatk', 'CombineGVCFs', \
 		'-R', reference]
 	cmd3_3 = ['-O', out_name+'.vcf.gz']
 	cmd3 = cmd3_1 + cmd3_2_f + cmd3_3
 
-	print(cmd3)
-
 	proc3 = subprocess.Popen(cmd3, \
 		shell=False)
 	std_out, std_error = proc3.communicate()
 #	FILTERING?
 
-#	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
-#	cmd4 = ['gatk', \
-#		'--java-options', java_opts, \
-#		'GenotypeGVCFs', \
-#		'-R', reference, \
-#		'--variant', out_name+'.vcf.gz', \
-#		'-O', out_name+'_geno.vcf.gz']
-#	proc4 = subprocess.Popen(cmd4, \
-#		shell=False)
-#
+	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
+	cmd4 = ['gatk', \
+		'--java-options', java_opts, \
+		'GenotypeGVCFs', \
+		'-R', reference, \
+		'--variant', out_name+'.vcf.gz', \
+		'-O', out_name+'_geno.vcf.gz']
+	proc4 = subprocess.Popen(cmd4, \
+		shell=False)
+
+	std_out, std_error = proc4.communicate()
 #	cmd5_2 = []
 #	with open(pops) as infile2:
 #		for pop in infile2:
