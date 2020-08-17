@@ -72,11 +72,10 @@ def comb_geno(vcf_list, out_name, reference, pops, threads):
 		'-R', reference, \
 		'-O', out_name+'.vcf.gz']
 	cmd3 = cmd3_1 + cmd3_2
-	print(cmd3_2)
-	print(cmd3)
-#	proc3 = subprocess.Popen(cmd3, \
-#		shell=False)
-	#filtering? user-defined?? etc
+	proc3 = subprocess.Popen(cmd3, \
+		shell=False)
+
+#	FILTERING?
 
 #	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
 #	cmd4 = ['gatk', \
@@ -105,6 +104,6 @@ def comb_geno(vcf_list, out_name, reference, pops, threads):
 #def pca():
 
 if __name__ == "__main__":
-	prep_input(args.vcf_list)
+#	prep_input(args.vcf_list)
 	comb_geno(args.vcf_list, args.out_name, args.reference, \
 		args.populations, args.threads)
