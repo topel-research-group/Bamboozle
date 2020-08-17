@@ -200,9 +200,8 @@ def check_unique_windows(windows, contig, reference, infiles):
 
 			full_window = ""
 
-			cmd4 = ["samtools faidx %s %s" % (reference, window_range)]
-			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=True)
-#			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=False)
+			cmd4 = ["samtools", "faidx", reference, window_range]
+			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=False)
 			with process4.stdout as result1:
 				rows1 = (line.decode() for line in result1)
 				for row1 in rows1:
