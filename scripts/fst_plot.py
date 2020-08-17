@@ -62,19 +62,26 @@ def prep_input(vcf_list):
 	return in_list_gz
 
 def comb_geno(vcf_list, out_name, reference, pops, threads):
+
 	in_list_gz = prep_input(vcf_list)
 
 	cmd3_2 = []
 	for gzvcf in in_list_gz:
 		cmd3_2.append('--variant '+gzvcf)
-		print(gzvcf)
+
+	cmd3_2_f = [vars for gzvcf in cmd3_2 for vars in gzvcf.split()]
+	print(cmd3_2_f)
+
 	cmd3_1 = ['gatk', 'CombineGVCFs', \
-		'-R', reference, \
-		'-O', out_name+'.vcf.gz']
-	cmd3 = cmd3_1 + cmd3_2
+		'-R', reference]
+	cmd3_3 = ['-O', out_name+'.vcf.gz']
+	cmd3 = cmd3_1 + cmd3_2_f + cmd3_3
+
+	print(cmd3)
+
 	proc3 = subprocess.Popen(cmd3, \
 		shell=False)
-
+	std_out, std_error = proc3.communicate()
 #	FILTERING?
 
 #	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
