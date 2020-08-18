@@ -31,7 +31,7 @@ import pandas as pd
 parser = argparse.ArgumentParser(usage="fst_plot.py <command> [options]")
 
 parser.add_argument("-v", "--vcf_list", \
-		help="Text file of newline-separated list of HaplotypeCaller-run VCF files")
+		help="Text file of newline-separated list of HaplotypeCaller-run filtered VCF files")
 parser.add_argument("-p", "--populations", \
 		help="Text file listing newline-separated text files of individuals for each population. \
 		Individual names in each listed text file must correspond to sample name in the corresponding VCF.")
@@ -115,8 +115,6 @@ def comb_geno(vcf_list, out_name, reference, pops, threads):
 		'--012']
 	proc6 = subprocess.Popen(cmd6, \
 		shell=False)
-
-#def pca():
 
 if __name__ == "__main__":
 	comb_geno(args.vcf_list, args.out_name, args.reference, \
