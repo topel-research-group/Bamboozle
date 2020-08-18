@@ -80,9 +80,6 @@ def comb_geno(vcf_list, out_name, reference, pops, threads):
 		shell=False)
 	std_out, std_error = proc3.communicate()
 
-#	FILTERING? this as base 
-#	https://github.com/bethsheets/SNPcalling_tutorial#step-4-filter-snps-with-vcflib
-
 	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
 	cmd4 = ['gatk', \
 		'--java-options', java_opts, \
@@ -122,6 +119,5 @@ def comb_geno(vcf_list, out_name, reference, pops, threads):
 #def pca():
 
 if __name__ == "__main__":
-#	prep_input(args.vcf_list)
 	comb_geno(args.vcf_list, args.out_name, args.reference, \
 		args.populations, args.threads)
