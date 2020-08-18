@@ -116,7 +116,6 @@ def run_gatk(bamfile, reference, java_picard, threads):
 	proc_4f = subprocess.Popen(cmd4f, \
 		shell=False)
 	std_out, std_error = proc_4f.communicate()
-	#
 
 #masks the output for each called vcf with previous calls using reads generated to correct the assembly
 
@@ -137,18 +136,19 @@ def masking(bamfile, refpil):
 
 #output genotypes from masked vcfs after compressing, indexing them
 
-def geno(bam_name, out_dir, ref, threads):
+def geno(bamfile, ref, threads):
 	bam_name = os.path.basename(bamfile[:-4])
+	out_dir = "%s" % (bam_name)
 	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
 	masked_vcf_geno = "%s/%s_sorted_masked_geno.vcf.gz" % (out_dir, bam_name)
 
-	cmd6a = ['bgzip',  masked_vcf_out]
+	cmd6a = ['bgzip', masked_vcf_out]
 	proc6a = subprocess.Popen(cmd6a, shell=False)
-	std_out, std_error = proc_6a.communicate()
+	std_out, std_error = proc6a.communicate()
 	
 	cmd6b = ['tabix', '-p', 'vcf', masked_vcf_out+'.gz']
 	proc6b = subprocess.Popen(cmd6b, shell=False)
-	std_out, std_error = proc_6b.communicate()
+	std_out, std_error = proc6b.communicate()
 
 	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
 	cmd6d = ['gatk', \
@@ -159,7 +159,6 @@ def geno(bam_name, out_dir, ref, threads):
 		'-O', masked_vcf_geno]
 	proc6d = subprocess.Popen(cmd6d, \
 		shell=False)
-
 	std_out, std_error = proc6d.communicate()
 
 # Checks for dependencies required for snpEff.
@@ -198,10 +197,11 @@ def main(args):
 			run_gatk(bamfile, args.ref, java_picard, args.threads)
 			if args.masking:
 				masking(bamfile, args.masking)
-#				geno(bamfile
-				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
+				geno(bamfile, args.ref, args.threads)
+#				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 			else:
-				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
+#				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
+				geno(bamfile, args.ref, args.threads)
 	else:
 		#create sample-specific directory
 		bam_name = os.path.basename(args.sortbam[:-4])
@@ -211,6 +211,8 @@ def main(args):
 		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
 		if args.masking:
 			masking(args.sortbam, args.masking)
-			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
+			geno(bamfile, args.ref, args.threads)
+#			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 		else:
-			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
+#			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
+			geno(bamfile, args.ref, args.threads)
