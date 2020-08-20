@@ -87,6 +87,11 @@ For all optional arguments, see the [Bamboozle wiki](https://github.com/topel-re
     than the actual start positions; the coordinates in the txt file output are correct
   * In addition to the bed and txt file output, this function also generates bgzipped vcf files
     and their respective index files
+  * It is recommended to run the following commands after `barcode` has been run, to refine results
+    and remove any areas of zero coverage (these commands can be refined for more stringent coverage filters):
+    * For each input BAM file: `bedtools genomecov -bga -ibam INFILE.bam > OUTFILE.bed`
+    * `cat *.bed | grep -P "\t0$" | sort | uniq > ZeroCov.bed`
+    * `bedtools intersect -v -a barcode_results.bed -b ZeroCov.bed > BarcodesWithCoverage.bed`
 
 ## Features to add/things to address
 
