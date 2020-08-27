@@ -211,8 +211,8 @@ def main(args):
 		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
 		if args.masking:
 			masking(args.sortbam, args.masking)
-			geno(bamfile, args.ref, args.threads)
+			geno(args.sortbam, args.ref, args.threads)
 #			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 		else:
 #			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
-			geno(bamfile, args.ref, args.threads)
+			geno(args.sortbam, args.ref, args.threads)
