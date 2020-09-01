@@ -198,10 +198,10 @@ def main(args):
 			if args.masking:
 				masking(bamfile, args.masking)
 				geno(bamfile, args.ref, args.threads)
-#				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
+				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 			else:
-#				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 				geno(bamfile, args.ref, args.threads)
+				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 	else:
 		#create sample-specific directory
 		bam_name = os.path.basename(args.sortbam[:-4])
@@ -212,7 +212,7 @@ def main(args):
 		if args.masking:
 			masking(args.sortbam, args.masking)
 			geno(args.sortbam, args.ref, args.threads)
-#			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
+			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 		else:
-#			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 			geno(args.sortbam, args.ref, args.threads)
+			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
