@@ -38,30 +38,28 @@ import datetime
 #checks for the presence of indices for the FASTA reference
 #if non existing, uses bwa to create new indices
 def ref_check(reference, ref_dict):
+	from pathlib import Path
 	#list of bwa index files
-	ref_dict_suf = ".dict"
-
+	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
 	#creating a list of bwa indices if they exist
 	suf_list = []
-	for file in os.listdir(os.path.dirname(reference)):
-		if file.endswith(ref_dict_suf):
-			print(file + " is already in the directory")
-			suf_list.append(file)
-	#if list of bwa indices in folder is <1, create indices
-	if len(ref_dict_suf) < 1:
+	if Path(ref_dict).exists():
+		print("Reference dictionary is already in the directory")
+	else:
 		#this doesn't overwrite the reference if called
 		cmd3 = ['java','-jar',java_picard,'CreateSequenceDictionary',\
-			'REFERENCE='+reference,'OUTPUT='+ref_dict]
-		proc_3 = subprocess.Popen(cmd3,
+			'R='+reference,\
+			'O='+ref_dict]
+		proc_3 = subprocess.Popen(cmd3, \
 			shell=False)
 		std_out, std_error = proc_3.communicate()
-		print("GATK refernce index didn't exist but they sure do now")
+		print("GATK reference index didn't exist but it sure does now")
 
 #GATK
 def run_gatk(bamfile, reference, java_picard, threads):
 	#generate variables for the function
 	bam_name = os.path.basename(bamfile[:-4])
-	out_dir = "sv_caller_output/%s" % (bam_name)
+	out_dir = "%s" % (bam_name)
 	bam_in = bamfile
 	bam_rg = "%s/%s_rdgrp.bam" % (out_dir, bam_name)
 	bam_dup = "%s/%s_rdgrp_nodups.bam" % (out_dir, bam_name)
@@ -73,42 +71,49 @@ def run_gatk(bamfile, reference, java_picard, threads):
 		'SORT_ORDER=coordinate','RGID=foo','RGLB=bar',\
 		'RGPL=illumina','RGSM='+bam_name,\
 		'RGPU=bc1','CREATE_INDEX=True']
-	proc_4a = subprocess.Popen(cmd4a, shell=False)
+	proc_4a = subprocess.Popen(cmd4a, \
+		shell=False)
 	std_out, std_error = proc_4a.communicate()
 	#mark duplicate reads in input BAMs
+	out_metrics = "%s/marked_dup_metrics.txt" % (out_dir)
 	cmd4b = ['java','-jar',java_picard,'MarkDuplicates',\
 		'I='+bam_rg,'O=', bam_dup,\
-		'M=sv_caller_output/marked_dup_metrics.txt']
+		'M=', out_metrics,\
+		'TMP_DIR='+out_dir]
 	proc_4b = subprocess.Popen(cmd4b, \
 		shell=False)
 	std_out, std_error = proc_4b.communicate()
 	#"ensures that all mate-pair information is in sync between each read and its mate pair"
 	cmd4c = ['java','-jar',java_picard,'FixMateInformation',\
 		'I=', bam_dup,'O=', bam_fm,\
-		'ADD_MATE_CIGAR=true']
+		'ADD_MATE_CIGAR=true',\
+		'TMP_DIR='+out_dir]
 	proc_4c = subprocess.Popen(cmd4c, \
 		shell=False)
 	std_out, std_error = proc_4c.communicate()
 	#index output bam
 	cmd4d = ['samtools', 'index', bam_fm]
-	proc_4d = subprocess.Popen(cmd4d,
+	proc_4d = subprocess.Popen(cmd4d, \
 		shell=False)
 	std_out, std_error = proc_4d.communicate()
 	#validate output bam
 	cmd4e = ['ValidateSamFile', '-I', bam_fm, '-MODE', 'SUMMARY']
-	proc_4d = subprocess.Popen(cmd4d,
+	proc_4d = subprocess.Popen(cmd4d, \
 		shell=False)
 	std_out, std_error = proc_4d.communicate()
 	#run haplotype caller
-	cmd4f = ['gatk', '--java-options', '"-Xmx4g"', 'HaplotypeCaller',\
+	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
+	cmd4f = ['gatk', \
+		'--java-options', java_opts,
+		'HaplotypeCaller',\
 		'-G', 'StandardAnnotation',\
-		'-G', 'AS_StandardAnnotation',\
 		'-G', 'StandardHCAnnotation',\
+		'-ERC', 'GVCF', \
 		'-R', reference,\
-		'--native-pair-hmm-threads', threads, \
 		'-I', bam_fm,\
 		'-O', vcf_out]
-	proc_4f = subprocess.Popen(cmd4f,
+
+	proc_4f = subprocess.Popen(cmd4f, \
 		shell=False)
 	std_out, std_error = proc_4f.communicate()
 
@@ -117,7 +122,7 @@ def run_gatk(bamfile, reference, java_picard, threads):
 def masking(bamfile, refpil):
 	#generating variables for function
 	bam_name = os.path.basename(bamfile[:-4])
-	out_dir = "sv_caller_output/%s" % (bam_name)
+	out_dir = "%s" % (bam_name)
 	vcf_out = "%s/%s_svcalls.vcf" % (out_dir, bam_name)
 	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
 
@@ -129,19 +134,44 @@ def masking(bamfile, refpil):
 		proc_5 = subprocess.Popen(cmd5, stdout=f, shell=False)
 	std_error = proc_5.communicate()
 
+#output genotypes from masked vcfs after compressing, indexing them
+
+def geno(bamfile, ref, threads):
+	bam_name = os.path.basename(bamfile[:-4])
+	out_dir = "%s" % (bam_name)
+	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
+	masked_vcf_geno = "%s/%s_sorted_masked_geno.vcf.gz" % (out_dir, bam_name)
+
+	cmd6a = ['bgzip', masked_vcf_out]
+	proc6a = subprocess.Popen(cmd6a, shell=False)
+	std_out, std_error = proc6a.communicate()
+	
+	cmd6b = ['tabix', '-p', 'vcf', masked_vcf_out+'.gz']
+	proc6b = subprocess.Popen(cmd6b, shell=False)
+	std_out, std_error = proc6b.communicate()
+
+	java_opts = "-Xmx4G -XX:ParallelGCThreads=%s" % (threads)
+	cmd6d = ['gatk', \
+		'--java-options', java_opts, \
+		'GenotypeGVCFs', \
+		'-R', ref, \
+		'--variant', masked_vcf_out+'.gz', \
+		'-O', masked_vcf_geno]
+	proc6d = subprocess.Popen(cmd6d, \
+		shell=False)
+	std_out, std_error = proc6d.communicate()
+
 # Checks for dependencies required for snpEff.
 def snpeff(snpeffdb1, bamfile, bamboozledir1, threads):
 	#generating variables for function
 	bam_name = os.path.basename(bamfile[:-4])
-	out_dir = "sv_caller_output/%s" % (bam_name)
+	out_dir = "%s" % (bam_name)
 	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
 	masked_vcf_out_lof_csv = "%s/%s_sorted_masked_lof.csv" % (out_dir, bam_name)
 	masked_vcf_out_lof_ann = "%s/%s_sorted_masked_lof.vcf" % (out_dir, bam_name)
 
-	cmd7 = ['snpEff', 'eff', snpeffdb1.replace("'", ""),\
-		masked_ann_vcf_out, \
-		'-t', threads, \
-		'-c', bamboozledir1+'/data/snpeff/snpEff.config', \
+	cmd7 = ['snpEff', snpeffdb1.replace("'", ""), masked_vcf_out, \
+		'-c', bamboozledir1+'/data/snpeff/snpEff.config', '-lof',
 		'-csvStats', masked_vcf_out_lof_csv]
 	with open(masked_vcf_out_lof_ann, "w+") as f:
 		proc_7 = subprocess.Popen(cmd7, stdout=f, shell=False)
@@ -151,13 +181,9 @@ def main(args):
 	#picard java
 	java_picard="/usr/local/packages/picard-tools-2.18.26/picard.jar"
 	#ref_dict
-	ref_dict = "sv_caller_output/"+args.ref.replace(".fasta",".dict")
+	ref_dict = args.ref.replace(".fasta",".dict")
 	#clean database variable
 	snpeff_db = str(args.snpeffdb).strip('[]')
-
-	#create output directory if it doesn't exist
-	if not os.path.exists('sv_caller_output'):
-		os.mkdir('sv_caller_output')
 
 	#calling functions for sv_caller
 	ref_check(args.ref, ref_dict)
@@ -165,26 +191,28 @@ def main(args):
 		for bamfile in args.sortbam:
 			#create sample-specific directories
 			bam_name = os.path.basename(bamfile[:-4])
-			spl_dir = "sv_caller_output/%s" % (bam_name)
-			if not os.path.exists(spl_dir):
-				os.mkdir(spl_dir)
+			if not os.path.exists(bam_name):
+				os.mkdir(bam_name)
 			#run pipeline
 			run_gatk(bamfile, args.ref, java_picard, args.threads)
 			if args.masking:
 				masking(bamfile, args.masking)
+				geno(bamfile, args.ref, args.threads)
 				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 			else:
+				geno(bamfile, args.ref, args.threads)
 				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 	else:
 		#create sample-specific directory
 		bam_name = os.path.basename(args.sortbam[:-4])
-		spl_dir = "sv_caller_output/%s" % (bam_name)
-		if not os.path.exists(spl_dir):
-			os.mkdir(spl_dir)
+		if not os.path.exists(bam_name):
+			os.mkdir(bam_name)
 		#run pipeline
 		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
 		if args.masking:
 			masking(args.sortbam, args.masking)
+			geno(args.sortbam, args.ref, args.threads)
 			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 		else:
+			geno(args.sortbam, args.ref, args.threads)
 			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
