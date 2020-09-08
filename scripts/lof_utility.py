@@ -38,6 +38,7 @@
 import argparse
 import os
 import pandas as pd
+import subprocess
 from pysam import VariantFile
 
 #read arguments
@@ -57,12 +58,36 @@ parser.add_argument("-o", "--out_prefix", \
 args = parser.parse_args()
 
 def gen_matrix(input_vcf, gff, out_prefix):
+#cmd1 gets all gene names in gff, skips first two lines and fasta lines in the end
+#removes all # in the middle, cuts the ID field in the 9th column
+#removes string ID=, sorts and finds unique gene names
+	cmd1 = ['tail', '-n', '+2', gff, '|',\
+		'sed', ''/'##FASTA'/Q'', '|',\
+		'grep', '-v', ''#'', '|',\
+		'cut', '-f9', '-d', '$'\t'', '|',\
+		'cut', '-f1', '-d', '$';'', '|',\
+		'sed', ''s/\'ID='//g'', '|',\
+		'sort', '|', 'uniq']
+	proc1 = subprocess.Popen(cmd1, shell=True, \
+		stdout=subprocess.PIPE)
+	genes = proc1.stdout.read()
+
+	#this is ok with gzipped files	
 	vcf_in = VariantFile(",".join(input_vcf))
 	data = pd.DataFrame(0, \
 		columns = list(vcf_in.header.samples), \
-#		index = list( LOOP THROUGH GFF GENES)
+		index = list(genes))
+	data.to_csv('empty_table.csv', sep='\t')
 
-	for line in vcf_in:
-		if 'ANN' in line.info:
-			tscpt = line.info['ANN'].split('|')[2]
-			data.loc[, line.]
+#	cmd1 = ['']
+#
+#	for line in vcf_in:
+#		if 'ANN' in line.info:
+#			tscpt = line.info['ANN'].split('|')[2]
+#			data.loc[, line.]
+
+def main():
+	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
+
+if __name__ == "__main__":
+    main()
