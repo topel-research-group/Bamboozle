@@ -46,14 +46,14 @@ parser = argparse.ArgumentParser(description='Provide an occurrence matrix of LO
 
 #args in
 parser.add_argument("-v", "--input_vcf", \
-        nargs= '*', type=str, required=True \
-        help="Input full path to VCF file or files.")
+	nargs= '*', type=str, required=True, \
+	help="Input full path to VCF file or files.")
 parser.add_argument("-g", "--gff", \
-       nargs= 1, type=str, \
+	nargs= 1, type=str, \
 	help="Reference GFF.")
 parser.add_argument("-o", "--out_prefix", \
-        nargs = 1, type=str, \
-        help="For multiple samples, add an output prefix")
+	nargs = 1, type=str, \
+	help="For multiple samples, add an output prefix")
 
 args = parser.parse_args()
 
@@ -61,26 +61,31 @@ def gen_matrix(input_vcf, gff, out_prefix):
 #cmd1 gets all gene names in gff, skips first two lines and fasta lines in the end
 #removes all # in the middle, cuts the ID field in the 9th column
 #removes string ID=, sorts and finds unique gene names
-	cmd1 = ['tail', '-n', '+2', gff, '|',\
-		'sed', ''/'##FASTA'/Q'', '|',\
+	genes  = []
+
+	cmd1 = ['tail', '-n', '+2', gff[0], '|',\
+		'sed', "'/'##FASTA'/Q'", '|',\
 		'grep', '-v', ''#'', '|',\
-		'cut', '-f9', '-d', '$'\t'', '|',\
-		'cut', '-f1', '-d', '$';'', '|',\
-		'sed', ''s/\'ID='//g'', '|',\
+		'cut', '-f9', '-d', "$'\t'", '|',\
+		'cut', '-f1', '-d', "$';'", '|',\
+		'sed', "'s/\'ID='//g'", '|',\
 		'sort', '|', 'uniq']
 	proc1 = subprocess.Popen(cmd1, shell=True, \
 		stdout=subprocess.PIPE)
-	genes = proc1.stdout.read()
+	for line in iter(proc1.stdout.readline, ''):
+		genes.append(line.rstrip('\n'))
+	print(genes[0:3])
+	
+	#genes = proc1.stdout.read()
 
 	#this is ok with gzipped files	
 	vcf_in = VariantFile(",".join(input_vcf))
-	data = pd.DataFrame(0, \
-		columns = list(vcf_in.header.samples), \
-		index = list(genes))
-	data.to_csv('empty_table.csv', sep='\t')
+	print(vcf_in.header.samples)
+#	data = pd.DataFrame(0, \
+#		columns = list(vcf_in.header.samples), \
+#		index = list(genes))
+#	data.to_csv('empty_table.csv', sep='\t')
 
-#	cmd1 = ['']
-#
 #	for line in vcf_in:
 #		if 'ANN' in line.info:
 #			tscpt = line.info['ANN'].split('|')[2]
