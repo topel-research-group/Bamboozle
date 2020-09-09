@@ -78,6 +78,7 @@ def gen_matrix(input_vcf, gff, out_prefix):
 
 	for line in vcf_in:
 		if 'ANN' in line.info:
+			#gene
 			data.loc[gene, line.header.samples] =+ len(line.info['ANN'])
 
 	data.to_csv('empty_table.csv', sep='\t')
