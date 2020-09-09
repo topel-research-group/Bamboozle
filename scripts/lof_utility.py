@@ -58,38 +58,29 @@ parser.add_argument("-o", "--out_prefix", \
 args = parser.parse_args()
 
 def gen_matrix(input_vcf, gff, out_prefix):
-#cmd1 gets all gene names in gff, skips first two lines and fasta lines in the end
-#removes all # in the middle, cuts the ID field in the 9th column
-#removes string ID=, sorts and finds unique gene names
-	genes  = []
+	genes = []
 
-	cmd1 = ['tail', '-n', '+2', gff[0], '|',\
-		'sed', "'/'##FASTA'/Q'", '|',\
-		'grep', '-v', ''#'', '|',\
-		'cut', '-f9', '-d', "$'\t'", '|',\
-		'cut', '-f1', '-d', "$';'", '|',\
-		'sed', "'s/\'ID='//g'", '|',\
-		'sort', '|', 'uniq']
-	proc1 = subprocess.Popen(cmd1, shell=True, \
-		stdout=subprocess.PIPE)
-	for line in iter(proc1.stdout.readline, ''):
-		genes.append(line.rstrip('\n'))
-	print(genes[0:3])
-	
-	#genes = proc1.stdout.read()
+	with open(gff[0], "r") as gff_file:
+		for line in gff_file:
+			if line.startswith(("#", "A", "C", "T", "G", ">")):
+				continue
+			ann = line.split("\t")[8]
+			id = ann.split(";")[0]
+			genes.append(id.replace('ID=',''))
+
+	genes_std_uniq = sorted(set(genes))
 
 	#this is ok with gzipped files	
 	vcf_in = VariantFile(",".join(input_vcf))
-	print(vcf_in.header.samples)
-#	data = pd.DataFrame(0, \
-#		columns = list(vcf_in.header.samples), \
-#		index = list(genes))
-#	data.to_csv('empty_table.csv', sep='\t')
+	data = pd.DataFrame(0, \
+		columns = vcf_in.header.samples, \
+		index = list(genes_std_uniq))
 
-#	for line in vcf_in:
-#		if 'ANN' in line.info:
-#			tscpt = line.info['ANN'].split('|')[2]
-#			data.loc[, line.]
+	for line in vcf_in:
+		if 'ANN' in line.info:
+			data.loc[gene, line.header.samples] =+ len(line.info['ANN'])
+
+	data.to_csv('empty_table.csv', sep='\t')
 
 def main():
 	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
