@@ -76,14 +76,17 @@ def gen_matrix(input_vcf, gff, out_prefix):
 		columns = vcf_in.header.samples, \
 		index = list(genes_std_uniq))
 
+	gene = None
 	for line in vcf_in:
 		if 'ANN' in line.info:
-			gene_lof = [gene for gene in genes if line.info['ANN'] in gene]
-			print(gene_lof)
-#			gene = line.info['ANN'].
-#			data.loc[gene, line.header.samples] =+ len(line.info['ANN'])
+			for gene in genes:
+				for i in line.info['ANN']:
+					if gene in i:
+						gene_lof = gene
+#				if (any(gene in i for i in line.info['ANN'])): 
+			data.loc[gene, line.header.samples] =+ len(line.info['ANN'])
 #if any bit of field ANN matches genes list, make corresponding match into gene
-#	data.to_csv('empty_table.csv', sep='\t')
+	data.to_csv('empty_table.csv', sep='\t')
 
 def main():
 	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
