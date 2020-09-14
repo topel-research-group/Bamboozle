@@ -20,21 +20,6 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-
-#1. INPUT: multi-sample filtered VCF
-#2. Extract information from multi-VCF:
-#	probably pandas
-#	using pysam's VariantFile
-#		for each sample in the VCF
-#			for each gene in each sample
-#				populate the sample/gene index with SO Annotation
-#
-# what to do for >1 events per gene? separate by , in the same cell?
-# would be ready for UpsetR like viz for example
-
-
-
 import argparse
 import os
 import pandas as pd
@@ -76,14 +61,14 @@ def gen_matrix(input_vcf, gff, out_prefix):
 		columns = vcf_in.header.samples, \
 		index = list(genes_std_uniq))
 
-	gene = None
 	for line in vcf_in:
 		if 'ANN' in line.info:
 			for gene in genes:
-				for i in line.info['ANN']:
-					if gene in i:
-						gene_lof = gene
-#				if (any(gene in i for i in line.info['ANN'])): 
+#				for i in line.info['ANN']:
+#					if gene in i:
+#						gene_lof = gene
+				if (any(gene in i for i in line.info['ANN'])): 
+					return gene
 			data.loc[gene, line.header.samples] =+ len(line.info['ANN'])
 #if any bit of field ANN matches genes list, make corresponding match into gene
 	data.to_csv('empty_table.csv', sep='\t')
