@@ -69,12 +69,15 @@ def gen_matrix(input_vcf, gff, out_prefix):
 				for i in gene.split("-"):
 					if i.startswith("Sm"):
 						gene_lof = i
-			if '&' in gene:
+#						print("-",gene_lof)
+			elif '&' in gene:
 				for i in gene.split("&"):
 					if i.startswith("Sm"):
 						gene_lof = i
+#						print("&",gene_lof)
 			else:
 				gene_lof = gene
+#				print("else ",gene_lof)
 #			if gene in i for i in line.info['ANN'] in genes:
 #			for gene in genes:
 #				print(gene)
@@ -82,8 +85,7 @@ def gen_matrix(input_vcf, gff, out_prefix):
 #				if gene in line.info['ANN']:
 #				print(gene)
 #				gene = gene_lof
-#			print(gene)
-			data.loc[gene_lof, line.header.samples] == len(line.info['ANN'])
+			data.loc[gene_lof, list(line.header.samples)[0]] =+ len(line.info['ANN'])
 	data.to_csv('empty_table.csv', sep='\t')
 
 def main():
