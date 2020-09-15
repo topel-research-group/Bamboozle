@@ -61,14 +61,29 @@ def gen_matrix(input_vcf, gff, out_prefix):
 		columns = vcf_in.header.samples, \
 		index = list(genes_std_uniq))
 
-	gene = None
+	gene_lof = None
 	for line in vcf_in:
 		if 'ANN' in line.info:
-			for gene in genes:
-				if (any(gene in i for i in line.info['ANN'])): 
-					gene = gene
-			print(gene)
-			data.loc[gene, line.header.samples] == len(line.info['ANN'])
+			gene = line.info['ANN'][0].split("|")[3]
+			if '-' in gene:
+				for i in gene.split("-"):
+					if i.startswith("Sm"):
+						gene_lof = i
+			if '&' in gene:
+				for i in gene.split("&"):
+					if i.startswith("Sm"):
+						gene_lof = i
+			else:
+				gene_lof = gene
+#			if gene in i for i in line.info['ANN'] in genes:
+#			for gene in genes:
+#				print(gene)
+#				if (any(gene in i for i in line.info['ANN'])):
+#				if gene in line.info['ANN']:
+#				print(gene)
+#				gene = gene_lof
+#			print(gene)
+			data.loc[gene_lof, line.header.samples] == len(line.info['ANN'])
 	data.to_csv('empty_table.csv', sep='\t')
 
 def main():
