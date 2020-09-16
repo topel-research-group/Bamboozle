@@ -76,7 +76,7 @@ def gen_matrix(input_vcf, gff, out_prefix):
 			else:
 				gene_lof = gene
 			data.loc[gene_lof, list(line.header.samples)[0]] =+ len(line.info['ANN'])
-	data.to_csv(out_prefix+'.csv', sep='\t')
+	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 
 def main():
 	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
