@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser(description='Provide an occurrence matrix of LO
 #args in
 parser.add_argument("-v", "--input_vcf", \
 	nargs= '*', type=str, required=True, \
-	help="Input full path to VCF file or files.")
+	help="Input full path to multi-VCF file. ")
 parser.add_argument("-g", "--gff", \
 	nargs= 1, type=str, \
 	help="Reference GFF.")
@@ -77,7 +77,14 @@ def gen_matrix(input_vcf, gff, out_prefix):
 				gene_lof = gene
 			data.loc[gene_lof, list(line.header.samples)[0]] =+ len(line.info['ANN'])
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
+	return data
 
+def compare(data, out_prefix, pops):
+	#should pops be like pop1: x, y, z? what format?
+	#eliminate genes not found for example
+	#take the df, find averages, stdvs for each pop
+	#difference, significance in LOF mutations between pops?
+	
 def main():
 	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
 
