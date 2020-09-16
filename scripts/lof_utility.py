@@ -64,18 +64,21 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	gene_lof = None
 	for line in vcf_in:
 		if 'ANN' in line.info:
-			gene = line.info['ANN'][0].split("|")[3]
-			if '-' in gene:
-				for i in gene.split("-"):
-					if i.startswith("Sm"):
-						gene_lof = i
-			elif '&' in gene:
-				for i in gene.split("&"):
-					if i.startswith("Sm"):
-						gene_lof = i
-			else:
-				gene_lof = gene
-			data.loc[gene_lof, list(line.header.samples)[0]] =+ len(line.info['ANN'])
+			spl_no = 0
+			for sample in list(line.header.samples):
+				gene = line.info['ANN'][spl_no].split("|")[3]
+				if '-' in gene:
+					for i in gene.split("-"):
+						if i.startswith("Sm"):
+							gene_lof = i
+				elif '&' in gene:
+					for i in gene.split("&"):
+						if i.startswith("Sm"):
+							gene_lof = i
+				else:
+					gene_lof = gene
+				data.loc[gene_lof, sample] =+ len(line.info['ANN'])
+				spl_no =+ 1
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data
 
