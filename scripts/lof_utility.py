@@ -42,6 +42,21 @@ parser.add_argument("-o", "--out_prefix", \
 
 args = parser.parse_args()
 
+def parse_gene(gene):
+	if '-' in gene:
+		for i in gene.split("-"):
+			if i.startswith("Sm"):
+				gene_lof = i
+				return gene_lof
+	elif '&' in gene:
+		for i in gene.split("&"):
+			if i.startswith("Sm"):
+				gene_lof = i
+				return gene_lof
+	else:
+		gene_lof = gene
+		return gene_lof
+
 def gen_matrix(input_vcf, gff, out_prefix):
 	genes = []
 
@@ -66,6 +81,7 @@ def gen_matrix(input_vcf, gff, out_prefix):
 		if 'ANN' in line.info:
 			for sample in list(line.header.samples):
 				if (line.samples[sample]['GT']).count(None):
+					gene = line.info['ANN'][0].split("|")[3]
 					data.loc[gene_lof, sample] == 0
 				else:
 					gene = line.info['ANN'][0].split("|")[3]
