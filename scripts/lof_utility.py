@@ -83,17 +83,20 @@ def gen_matrix(input_vcf, gff, out_prefix):
 				if (line.samples[sample]['GT']).count(None):
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
-
-#					print(gene)
-#					print(gene_lof)
-#					print(sample)
 					data.loc[gene_lof, sample] == 0
 				else:
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
-#					print("ELSE --> ", gene_lof)
 					data.loc[gene_lof, sample] =+ len(line.info['ANN'])
-	data.to_csv(out_prefix[0]+'.csv', sep='\t')
+
+
+	#can't add to cell value (=+) in pd df...
+	#something that could solve this would be to generate a per-gene list of LOF counts per sample
+	#then adding that to each row by gene
+
+#	pd.set_option('display.max_columns', None)
+#	print(data.head())
+#	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data
 
 #def compare(data, out_prefix, pops):
