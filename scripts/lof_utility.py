@@ -76,6 +76,8 @@ def gen_matrix(input_vcf, gff, out_prefix):
 		columns = vcf_in.header.samples, \
 		index = list(genes_std_uniq))
 
+#if stat for ERROR_CHROMOSOME_NOT_FOUND
+
 	gene_lof = None
 	for line in vcf_in:
 		if 'ANN' in line.info:
@@ -83,18 +85,35 @@ def gen_matrix(input_vcf, gff, out_prefix):
 				if (line.samples[sample]['GT']).count(None):
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
+					
+					print("NO GT")
+#					print(gene)
+#					print(gene_lof)
+#					print(sample)
+#					print(int(data.at[gene_lof, sample]))
+#					print(len(line.info['ANN']))
+#					print(line)
+					print(" ")
 
-					data.at[gene_lof, sample] =+ 0
+#					data.at[gene_lof, sample] =+ 0
 				else:
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
 					
+					print("YES GT")
+#					print(gene)
+#					print(gene_lof)
+#					print(sample)
+#					print(int(data.at[gene_lof, sample]))
+#					print(len(line.info['ANN']))
+					print(line)
+					print(" ")
 					new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
-					data.at[gene_lof, sample] = new_val
+#					data.at[gene_lof, sample] = new_val
 
-	pd.set_option('display.max_columns', None)
-	print(data.head())
-	data.to_csv(out_prefix[0]+'.csv', sep='\t')
+#	pd.set_option('display.max_columns', None)
+#	print(data.head())
+#	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data
 
 #def compare(data, out_prefix, pops):
