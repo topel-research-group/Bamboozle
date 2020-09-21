@@ -42,6 +42,7 @@ parser.add_argument("-o", "--out_prefix", \
 
 args = parser.parse_args()
 
+#makes sure that SnpEff annotations don't get in the way of IDing a gene
 def parse_gene(gene):
 	if '-' in gene:
 		for i in gene.split("-"):
@@ -59,7 +60,7 @@ def parse_gene(gene):
 
 def gen_matrix(input_vcf, gff, out_prefix):
 	genes = []
-
+	#find all the genes in a GFF file, creates a list, orders and finds unique genes
 	with open(gff[0], "r") as gff_file:
 		for line in gff_file:
 			if line.startswith(("#", "A", "C", "T", "G", ">")):
@@ -70,14 +71,19 @@ def gen_matrix(input_vcf, gff, out_prefix):
 
 	genes_std_uniq = sorted(set(genes))
 
-	#this is ok with gzipped files	
+	#read in vcf (gzipped files are ok, pysam likes them), create pandas df
+	#based on genes in gff, samples in VCF
 	vcf_in = VariantFile(",".join(input_vcf))
 	data = pd.DataFrame(0, \
 		columns = vcf_in.header.samples, \
 		index = list(genes_std_uniq))
 
-#if stat for ERROR_CHROMOSOME_NOT_FOUND
-
+	#for each line in the vcf, check that it's not in a plastid or mit contig
+	#check that it's been annotated by SnpEff, check if for that sample there's a genotype
+	#meaning sample in the VCF has been annotated, take gene annotation, strip it down
+	#with parse_gene(), add, length of line.info['ANN'] tuple, since it annotates number of 
+	#modifications for that gene at that position, add to new val, write it to pandas df created
+	#return df so compare() can use it
 	gene_lof = None
 	for line in vcf_in:
 		if line.chrom not in ["Sm_plastid", "Sm_mitochondrion"]:
@@ -94,13 +100,10 @@ def gen_matrix(input_vcf, gff, out_prefix):
 
 						new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
 						data.at[gene_lof, sample] = new_val
-
-#	pd.set_option('display.max_columns', None)
-#	print(data.head())
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data
 
-#def compare(data, out_prefix, pops):
+def compare(data, out_prefix, pops):
 	#should pops be like pop1: x, y, z? what format?
 	#eliminate genes not found for example
 	#take the df, find averages, stdvs for each pop
