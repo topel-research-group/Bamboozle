@@ -105,12 +105,15 @@ def gen_matrix(input_vcf, gff, out_prefix):
 
 def compare(data, out_prefix, pops):
 	#should pops be like pop1: x, y, z? what format?
-	#eliminate genes not found for example
+	# with open() pops, create dictionary maybe for all the pops?
+	#or one list per pop?
+
 	#take the df, find averages, stdvs for each pop
 	#difference, significance in LOF mutations between pops?
 	
 def main():
 	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
+	compare(data, args.out_prefix, args.populations)
 
 if __name__ == "__main__":
     main()
