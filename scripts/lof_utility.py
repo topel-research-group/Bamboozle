@@ -39,6 +39,9 @@ parser.add_argument("-g", "--gff", \
 parser.add_argument("-o", "--out_prefix", \
 	nargs = 1, type=str, \
 	help="For multiple samples, add an output prefix")
+parser.add_argument("-p", "--population", action="append" \
+	help="Text file of newline-separated individuals in a population.\
+	This argument can be used multiple times to define different populations")
 
 args = parser.parse_args()
 
@@ -105,15 +108,21 @@ def gen_matrix(input_vcf, gff, out_prefix):
 
 def compare(data, out_prefix, pops):
 	#should pops be like pop1: x, y, z? what format?
-	# with open() pops, create dictionary maybe for all the pops?
-	#or one list per pop?
-
-	#take the df, find averages, stdvs for each pop
-	#difference, significance in LOF mutations between pops?
+	#one list per pop?
+	#take the df, find averages, stdvs for each gene across samples in each pop
+	#test differences, significance in LOF mutations between pops?
+	for pop in pops:
+		with open(pop) as infile:
+			pop_s = splitext(pop)[0]
+			pop_s+"_list" = []
+			for ind in infile:
+				pop+"_list".append(ind)
+	
+				
 	
 def main():
 	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-	compare(data, args.out_prefix, args.populations)
+	compare(data, args.out_prefix, args.population)
 
 if __name__ == "__main__":
     main()
