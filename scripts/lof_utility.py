@@ -111,14 +111,16 @@ def compare(data, out_prefix, pops):
 	#one list per pop?
 	#take the df, find averages, stdvs for each gene across samples in each pop
 	#test differences, significance in LOF mutations between pops?
+	
+	#create lists of inds per pop
 	for pop in pops:
 		with open(pop) as infile:
 			pop_s = splitext(pop)[0]
 			pop_s+"_list" = []
 			for ind in infile:
 				pop+"_list".append(ind)
-	
-				
+	#find a way to call all inds in a pop so stats can be calculated
+		for ind in pop+"_list":				
 	
 def main():
 	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
