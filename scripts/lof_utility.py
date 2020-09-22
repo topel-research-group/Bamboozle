@@ -39,9 +39,8 @@ parser.add_argument("-g", "--gff", \
 parser.add_argument("-o", "--out_prefix", \
 	nargs = 1, type=str, \
 	help="For multiple samples, add an output prefix")
-parser.add_argument("-p", "--population", action="append" \
-	help="Text file of newline-separated individuals in a population.\
-	This argument can be used multiple times to define different populations")
+parser.add_argument("-p", "--population", action="append", \
+	help="Text file of newline-separated individuals in a population. This argument can be used multiple times to define different populations")
 
 args = parser.parse_args()
 
@@ -106,25 +105,26 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data
 
-def compare(data, out_prefix, pops):
+def compare(out_prefix, pops):
 	#should pops be like pop1: x, y, z? what format?
 	#one list per pop?
 	#take the df, find averages, stdvs for each gene across samples in each pop
 	#test differences, significance in LOF mutations between pops?
-	
+	print(pops)
 	#create lists of inds per pop
 	for pop in pops:
 		with open(pop) as infile:
-			pop_s = splitext(pop)[0]
-			pop_s+"_list" = []
+			pop_s = pop.split(".")[0]
+			pop_s = []
 			for ind in infile:
-				pop+"_list".append(ind)
+				pop_s.append(ind.replace("\n",""))
 	#find a way to call all inds in a pop so stats can be calculated
-		for ind in pop+"_list":				
-	
+#		for ind in pop+"_list":				
+				
+
 def main():
-	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-	compare(data, args.out_prefix, args.population)
+#	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
+	compare(args.out_prefix, args.population)
 
 if __name__ == "__main__":
     main()
