@@ -25,6 +25,7 @@ import os
 import pandas as pd
 import subprocess
 from pysam import VariantFile
+from scipy.stats import f_oneway
 
 #read arguments
 parser = argparse.ArgumentParser(description='Provide an occurrence matrix of LOF-affected genes given a multi-sample VCF')
@@ -106,11 +107,8 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	return data
 
 def compare(out_prefix, pops, data):
-	#should pops be like pop1: x, y, z? what format?
-	#one list per pop?
-	#take the df, find averages, stdvs for each gene across samples in each pop
-	#test differences, significance in LOF mutations between pops?
-#	print(data.head().index)
+
+	sig = pd.DataFrame(index=data.index)
 
 	for pop in pops:
 		with open(pop) as infile:
@@ -119,21 +117,18 @@ def compare(out_prefix, pops, data):
 			for ind in infile:
 				pop_s.append(ind.replace("\n",""))
 	#find a way to call all inds in a pop so stats can be calculated
-#		for ind in pop_s:
-#			print(ind)
-#			print(data.head)
-#			print(pop_s)
-#			print(pop.split(".")[0])
-			
 			mean_col = pop.split(".")[0]+"_mean"
 			std_col = pop.split(".")[0]+"_std"
-#			data[mean_col] = data.groupby(pop_s).mean(axis=1)
-#			print(pop_s)
-			data[mean_col] = data[pop_s].mean(axis=1)
-			print(data[mean_col])
-			data[std_col] = data[pop_s].std(axis=1)
-			print(data[std_col])
-#			data[mean_col] = data[pop_s].mean(axis=1)
+			stat_col = pop.split(".")[0]+"_stat"
+			p_col = pop.split(".")[0]+"_sig"
+
+			sig[mean_col] = data[pop_s].mean(axis=1)
+			sig[std_col] = data[pop_s].std(axis=1)
+	#Paired Student's t-test for each gene and between individuals in a pop
+			for ind in pop_s:
+				stat, p = ttest_rel(data[pop_s], data2, axis=1)
+				sig[stat_col] = stat
+				sig[p_col] = p
 
 #	pandas.set_option('display.max_columns', None)
 #	print(data.head())
