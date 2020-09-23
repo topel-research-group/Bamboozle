@@ -25,7 +25,7 @@ import os
 import pandas as pd
 import subprocess
 from pysam import VariantFile
-from scipy.stats import f_oneway
+import scipy.stats as stats
 
 #read arguments
 parser = argparse.ArgumentParser(description='Provide an occurrence matrix of LOF-affected genes given a multi-sample VCF')
@@ -114,8 +114,10 @@ def compare(out_prefix, pops, data):
 		with open(pop) as infile:
 			pop_s = pop.split(".")[0]
 			pop_s = []
+			pop_s_t = []
 			for ind in infile:
 				pop_s.append(ind.replace("\n",""))
+				pop_s_t.append("data['"+ind.replace("\n","")+"']")
 	#find a way to call all inds in a pop so stats can be calculated
 			mean_col = pop.split(".")[0]+"_mean"
 			std_col = pop.split(".")[0]+"_std"
@@ -124,14 +126,20 @@ def compare(out_prefix, pops, data):
 
 			sig[mean_col] = data[pop_s].mean(axis=1)
 			sig[std_col] = data[pop_s].std(axis=1)
-	#Paired Student's t-test for each gene and between individuals in a pop
-			for ind in pop_s:
-				stat, p = ttest_rel(data[pop_s], data2, axis=1)
-				sig[stat_col] = stat
-				sig[p_col] = p
 
-#	pandas.set_option('display.max_columns', None)
-#	print(data.head())
+#			print(pop_s_t)
+#			print(', '.join(pop_s_t))
+			#
+#			for index, row in data.iterrows():
+#				print(data.loc[row, ', '.join(pop_s_t)])
+#				stat, p = stats.f_oneway(line, ', '.join(pop_s_t))
+#				stat, p = stats.f_oneway(
+#				print(stat, p)
+#				sig[stat_col] = stat
+#				sig[p_col] = p
+
+	pandas.set_option('display.max_columns', None)
+	print(sig.head())
 
 def main():
 	data = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
