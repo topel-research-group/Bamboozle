@@ -102,16 +102,16 @@ def gen_matrix(input_vcf, gff, out_prefix):
 
 						new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
 						data.at[gene_lof, sample] = new_val
-	data.to_csv(out_prefix[0]+'.csv', sep='\t')
+#	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data
 
-def compare(out_prefix, pops):
+def compare(out_prefix, pops, data):
 	#should pops be like pop1: x, y, z? what format?
 	#one list per pop?
 	#take the df, find averages, stdvs for each gene across samples in each pop
 	#test differences, significance in LOF mutations between pops?
-	print(pops)
-	#create lists of inds per pop
+#	print(data.head().index)
+
 	for pop in pops:
 		with open(pop) as infile:
 			pop_s = pop.split(".")[0]
@@ -119,12 +119,28 @@ def compare(out_prefix, pops):
 			for ind in infile:
 				pop_s.append(ind.replace("\n",""))
 	#find a way to call all inds in a pop so stats can be calculated
-#		for ind in pop+"_list":				
-				
+#		for ind in pop_s:
+#			print(ind)
+#			print(data.head)
+#			print(pop_s)
+#			print(pop.split(".")[0])
+			
+			mean_col = pop.split(".")[0]+"_mean"
+			std_col = pop.split(".")[0]+"_std"
+#			data[mean_col] = data.groupby(pop_s).mean(axis=1)
+#			print(pop_s)
+			data[mean_col] = data[pop_s].mean(axis=1)
+			print(data[mean_col])
+			data[std_col] = data[pop_s].std(axis=1)
+			print(data[std_col])
+#			data[mean_col] = data[pop_s].mean(axis=1)
+
+#	pandas.set_option('display.max_columns', None)
+#	print(data.head())
 
 def main():
-#	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-	compare(args.out_prefix, args.population)
+	data = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
+	compare(args.out_prefix, args.population, data)
 
 if __name__ == "__main__":
     main()
