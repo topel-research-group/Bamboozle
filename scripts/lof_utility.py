@@ -117,7 +117,6 @@ def compare(out_prefix, pops, data):
 			pop_s_t = []
 			for ind in infile:
 				pop_s.append(ind.replace("\n",""))
-#				pop_s_t.append("data['"+ind.replace("\n","")+"']")
 	#find a way to call all inds in a pop so stats can be calculated
 			mean_col = pop.split(".")[0]+"_mean"
 			std_col = pop.split(".")[0]+"_std"
@@ -126,6 +125,10 @@ def compare(out_prefix, pops, data):
 
 			sig[mean_col] = data[pop_s].mean(axis=1)
 			sig[std_col] = data[pop_s].std(axis=1)
+			
+			pop_id = pop.split(".")[0]
+			print(type(sig))
+#			print(sig.loc[mean_col, pop_id])
 
 #???			#generate call for apply
 #			pop_vals = []
@@ -138,14 +141,16 @@ def compare(out_prefix, pops, data):
 			#f_oneway() takes lists so why not print a list of lists
 			#what would that look like?
 
-			sig[[stat_col, p_col]] = data.apply(lambda row : stats.f_oneway(data.loc[pop_s].values.tolist()))
+#			data.loc[pop_s].values.tolist()
+	#		sig[[stat_col, p_col]] = data.apply(lambda row : stats.f_oneway(data.loc[pop_s].values.tolist()))
 
 #https://stackoverflow.com/questions/48433076/f-oneway-when-data-in-the-form-of-list
+#	print(sig)
+	#testing differences in LOF mutations across genes in different populations
+	#meaning a list of ind-level integers counting LOFs found for a given population
+	#generate a list of lists for LOF counts for each population per gene
+	#gene name matches index for sig	
 			
-#			print(sig.head())
-#			print(pop_s_t)
-#			print(', '.join(pop_s_t))
-			#
 #			for index, row in data.iterrows():
 #				print(data.loc[row, ', '.join(pop_s_t)])
 #				stat, p = stats.f_oneway(line, ', '.join(pop_s_t))
