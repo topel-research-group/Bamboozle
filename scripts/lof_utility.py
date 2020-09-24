@@ -128,21 +128,19 @@ def compare(out_prefix, pops, data):
 			sig[std_col] = data[pop_s].std(axis=1)
 
 #???			#generate call for apply
-			call = []
-			for spl in pop_s:
-				call.append("row['"+spl+"']")
-			print(pop_s)
-			print(call)
+#			pop_vals = []
+			
+#			data.apply(lambda row :  = 			
+#			data.apply(lambda row : pop_vals.append(pop_vals))
 
 			#trying to get this to be called for every row for
 			#only the columns corresponding to the pop
 			#f_oneway() takes lists so why not print a list of lists
 			#what would that look like?
 
-			sig[[stat_col, p_col]] = data.apply(lambda row : \
-				stats.f_oneway(call))
+			sig[[stat_col, p_col]] = data.apply(lambda row : stats.f_oneway(data.loc[pop_s].values.tolist()))
 
-	#https://stackoverflow.com/questions/48433076/f-oneway-when-data-in-the-form-of-list
+#https://stackoverflow.com/questions/48433076/f-oneway-when-data-in-the-form-of-list
 			
 #			print(sig.head())
 #			print(pop_s_t)
@@ -156,8 +154,8 @@ def compare(out_prefix, pops, data):
 #				sig[stat_col] = stat
 #				sig[p_col] = p
 
-	pandas.set_option('display.max_columns', None)
-	print(sig.head())
+#	pandas.set_option('display.max_columns', None)
+#	print(sig.head())
 
 def main():
 	data = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
