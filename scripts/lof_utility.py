@@ -103,7 +103,7 @@ def gen_matrix(input_vcf, gff, out_prefix):
 
 						new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
 						data.at[gene_lof, sample] = new_val
-#	data.to_csv(out_prefix[0]+'.csv', sep='\t')
+	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data
 
 def compare(out_prefix, pops, data):
@@ -114,7 +114,6 @@ def compare(out_prefix, pops, data):
 		with open(pop) as infile:
 			pop_s = pop.split(".")[0]
 			pop_s = []
-			pop_s_t = []
 			for ind in infile:
 				pop_s.append(ind.replace("\n",""))
 	#find a way to call all inds in a pop so stats can be calculated
@@ -128,6 +127,13 @@ def compare(out_prefix, pops, data):
 			
 			pop_id = pop.split(".")[0]
 			print(type(sig))
+
+			#ideally,
+			#for gene in genes:
+#				list_of_pop_lists = []
+#				for pop in pops:
+#					list_of_pop_lists.append(data.at[gene, pop_s])
+#				sig.at[gene, (stat_col,p_col)] = stats.f_oneway(list_of_pop_lists)
 #			print(sig.loc[mean_col, pop_id])
 
 #???			#generate call for apply
@@ -164,7 +170,7 @@ def compare(out_prefix, pops, data):
 
 def main():
 	data = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-	compare(args.out_prefix, args.population, data)
+#	compare(args.out_prefix, args.population, data)
 
 if __name__ == "__main__":
     main()
