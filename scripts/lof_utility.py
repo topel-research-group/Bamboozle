@@ -104,11 +104,12 @@ def gen_matrix(input_vcf, gff, out_prefix):
 						new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
 						data.at[gene_lof, sample] = new_val
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
-	return data
+	return data, genes
 
-def compare(out_prefix, pops, data):
+def compare(out_prefix, pops, data, genes):
 
 	sig = pd.DataFrame(index=data.index)
+	list_of_pops = []
 
 	for pop in pops:
 		with open(pop) as infile:
@@ -116,17 +117,29 @@ def compare(out_prefix, pops, data):
 			pop_s = []
 			for ind in infile:
 				pop_s.append(ind.replace("\n",""))
-	#find a way to call all inds in a pop so stats can be calculated
-			mean_col = pop.split(".")[0]+"_mean"
-			std_col = pop.split(".")[0]+"_std"
-			stat_col = pop.split(".")[0]+"_stat"
-			p_col = pop.split(".")[0]+"_sig"
+	
+			list_of_pops.append(pop_s)
 
-			sig[mean_col] = data[pop_s].mean(axis=1)
-			sig[std_col] = data[pop_s].std(axis=1)
+	for group in list_of_pops:
+		print(group)
+		for gene in genes:
+			print(gene)
+			df = data[group].T
+			print(df)
+			print(df.head)
+			anova = stats.f_oneway(*df.values)
+
+	#find a way to call all inds in a pop so stats can be calculated
+#			mean_col = pop.split(".")[0]+"_mean"
+#			std_col = pop.split(".")[0]+"_std"
+#			stat_col = pop.split(".")[0]+"_stat"
+#			p_col = pop.split(".")[0]+"_sig"
+
+#			sig[mean_col] = data[pop_s].mean(axis=1)
+#			sig[std_col] = data[pop_s].std(axis=1)
 			
-			pop_id = pop.split(".")[0]
-			print(type(sig))
+#			pop_id = pop.split(".")[0]
+#			print(type(sig))
 
 			#ideally,
 			#for gene in genes:
@@ -169,8 +182,8 @@ def compare(out_prefix, pops, data):
 #	print(sig.head())
 
 def main():
-	data = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-#	compare(args.out_prefix, args.population, data)
+	data, genes = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
+	compare(args.out_prefix, args.population, data, genes)
 
 if __name__ == "__main__":
     main()
