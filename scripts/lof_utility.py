@@ -126,7 +126,8 @@ def compare(out_prefix, pops, data):
 			sig[std_col] = data[pop_s].std(axis=1)
 			
 			pop_id = pop.split(".")[0]
-			print(type(sig))
+#			print(type(sig))
+			
 
 def main():
 	data = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
