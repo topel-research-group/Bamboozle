@@ -123,10 +123,10 @@ def compare(out_prefix, pops, data, genes):
 	for group in list_of_pops:
 		print(group)
 		for gene in genes:
-			print(gene)
+#			print(gene)
 			df = data[group].T
-			print(df)
-			print(df.head)
+#			print(df)
+#			print(df.head)
 			anova = stats.f_oneway(*df.values)
 
 	#find a way to call all inds in a pop so stats can be calculated
