@@ -43,9 +43,6 @@ parser.add_argument("-o", "--out_prefix", \
 parser.add_argument("-p", "--population", action="append", \
 	help="Text file of newline-separated individuals in a population. This argument can be used multiple times to define different populations")
 
-	#maybe a two column tsv file with samples on 1 and pop on 2 could be better (fofn)
-	#include pop name in sample name?
-
 args = parser.parse_args()
 
 #makes sure that SnpEff annotations don't get in the way of IDing a gene
@@ -190,11 +187,12 @@ def compare(out_prefix, pops, data, genes):
 #	print(sig.head())
 
 def main():
-	data, genes = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-	data, list_of_pops = compare(args.out_prefix, args.population, data, genes)
-	result = pd.DataFrame(compare(args.out_prefix, args.population, data, list_of_pops))
-	print(result.head)
-		
+	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
+#	data, genes = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
+#	data, list_of_pops = compare(args.out_prefix, args.population, data, genes)
+#	result = pd.DataFrame(compare(args.out_prefix, args.population, data, list_of_pops))
+#	print(result.head)
+			
 
 if __name__ == "__main__":
     main()
