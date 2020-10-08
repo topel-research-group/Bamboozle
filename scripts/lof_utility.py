@@ -43,6 +43,9 @@ parser.add_argument("-o", "--out_prefix", \
 parser.add_argument("-p", "--population", action="append", \
 	help="Text file of newline-separated individuals in a population. This argument can be used multiple times to define different populations")
 
+	#maybe a two column tsv file with samples on 1 and pop on 2 could be better (fofn)
+	#include pop name in sample name?
+
 args = parser.parse_args()
 
 #makes sure that SnpEff annotations don't get in the way of IDing a gene
@@ -66,6 +69,14 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	#find all the genes in a GFF file, creates a list, orders and finds unique genes
 	with open(gff[0], "r") as gff_file:
 		for line in gff_file:
+#!!!!
+	#		if line.startswith("##FASTA"):
+	#			break
+	#		elif not line.startswith("#"):
+	#			ann = line.split("\t")[8]
+	#             	        id = ann.split(";")[0]
+	#                      	genes.append(id.replace('ID=',''))
+
 			if line.startswith(("#", "A", "C", "T", "G", ">")):
 				continue
 			ann = line.split("\t")[8]
@@ -93,6 +104,7 @@ def gen_matrix(input_vcf, gff, out_prefix):
 			if 'ANN' in line.info:
 				for sample in list(line.header.samples):
 					if (line.samples[sample]['GT']).count(None):
+		#				continue
 						gene = line.info['ANN'][0].split("|")[3]
 						gene_lof = parse_gene(gene)
 	
@@ -121,13 +133,9 @@ def compare(out_prefix, pops, data, genes):
 			list_of_pops.append(pop_s)
 
 	for group in list_of_pops:
-		print(group)
 		for gene in genes:
-#			print(gene)
-			df = data[group].T
-#			print(df)
-#			print(df.head)
-			anova = stats.f_oneway(*df.values)
+			print(data[group].T[gene])
+
 
 	#find a way to call all inds in a pop so stats can be calculated
 #			mean_col = pop.split(".")[0]+"_mean"
@@ -183,7 +191,10 @@ def compare(out_prefix, pops, data, genes):
 
 def main():
 	data, genes = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-	compare(args.out_prefix, args.population, data, genes)
+	data, list_of_pops = compare(args.out_prefix, args.population, data, genes)
+	result = pd.DataFrame(compare(args.out_prefix, args.population, data, list_of_pops))
+	print(result.head)
+		
 
 if __name__ == "__main__":
     main()
