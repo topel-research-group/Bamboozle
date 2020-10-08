@@ -9,12 +9,14 @@ import os
 import subprocess
 
 #read arguments
-parser = argparse.ArgumentParser(description='Provide a VCF, take two filtered, gzipped and indexed ones, one for homologous and another for heterozygous mutations!")
+parser = argparse.ArgumentParser(description='Provide a VCF, take two filtered, gzipped and indexed ones, one for homologous and another for heterozygous mutations.')
 
 #args in
 parser.add_argument("-v", "--input_vcf", \
         nargs= '*', type=str, required=True, \
 	help="Input VCF")
+
+args = parser.parse_args()
 
 def all_things(vcf):
 
@@ -24,12 +26,13 @@ def all_things(vcf):
 #	LOF mutations, another with heterozyguous LOF mutations. Both
 #	gzipped and indexed.
 
-	vcf_name = vcf[:-4]
+	vcf_name = vcf[0][:-4]
 	filt_hom_vcf = vcf_name+'_filt_hom.vcf'
 	filt_het_vcf = vcf_name+'_filt_het.vcf'
 
 	cmd1 = ['java', '-jar', '/usr/local/packages/snpEff/SnpSift.jar', 'filter', \
-		'"(( QUAL >= 100) && (DP >= 30) | (countHom() > 0 )))"', vcf]
+		"(( QUAL >= 100) && (DP >= 30) | (countHom() > 0 ))", '-f', vcf[0]]
+
 	with open(filt_hom_vcf, "w") as f:
 		proc1 = subprocess.Popen(cmd1, stdout=f, shell=False)
 		std_error = proc1.communicate()
@@ -43,10 +46,10 @@ def all_things(vcf):
 	std_out, std_error = proc1b.communicate()
 
 	cmd2 = ['java', '-jar', '/usr/local/packages/snpEff/SnpSift.jar', 'filter', \
-		'"(( QUAL >= 100) && (DP >= 30) | (countHet() > 0 )))"', vcf]
-        with open(filt_het_vcf, "w") as f:
-                proc2 = subprocess.Popen(cmd2, stdout=f, shell=False)
-                std_error = proc2.communicate()
+		"(( QUAL >= 100) && (DP >= 30) | (countHet() > 0 ))", '-f', vcf[0]]
+	with open(filt_het_vcf, "w") as f:
+		proc2 = subprocess.Popen(cmd2, stdout=f, shell=False)
+		std_error = proc2.communicate()
 
 	cmd2a = ['bgzip', '-f', filt_het_vcf]
 	proc2a = subprocess.Popen(cmd2a, shell=False)
@@ -57,4 +60,8 @@ def all_things(vcf):
 	std_out, std_error = proc2b.communicate()
 
 def main():
-	all_things(args.vcf)
+	all_things(args.input_vcf)
+
+if __name__ == "__main__":
+    main()
+
