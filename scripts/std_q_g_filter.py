@@ -26,12 +26,19 @@ def all_things(vcf):
 #	LOF mutations, another with heterozyguous LOF mutations. Both
 #	gzipped and indexed.
 
-	vcf_name = vcf[0][:-4]
-	filt_hom_vcf = vcf_name+'_filt_hom.vcf'
-	filt_het_vcf = vcf_name+'_filt_het.vcf'
+	if vcf[0].endswith('.vcf'):
+		vcf_name = vcf[0][:-4]
+		filt_hom_vcf = vcf_name+'_filt_hom.vcf'
+		filt_het_vcf = vcf_name+'_filt_het.vcf'
+	elif vcf[0].endswith('.vcf.gz'):
+		vcf_name = vcf[0][:-7]
+		filt_hom_vcf = vcf_name+'_filt_hom.vcf'
+		filt_het_vcf = vcf_name+'_filt_het.vcf'
+
+#HOM
 
 	cmd1 = ['java', '-jar', '/usr/local/packages/snpEff/SnpSift.jar', 'filter', \
-		"(( QUAL >= 100) && (DP >= 30) | (countHom() > 0 ))", '-f', vcf[0]]
+		"(( QUAL >= 100) && (DP >= 30) | (countHom() >= 1 ))", '-f', vcf[0]]
 
 	with open(filt_hom_vcf, "w") as f:
 		proc1 = subprocess.Popen(cmd1, stdout=f, shell=False)
@@ -45,8 +52,10 @@ def all_things(vcf):
 	proc1b = subprocess.Popen(cmd1b, shell=False)
 	std_out, std_error = proc1b.communicate()
 
+#HET
+
 	cmd2 = ['java', '-jar', '/usr/local/packages/snpEff/SnpSift.jar', 'filter', \
-		"(( QUAL >= 100) && (DP >= 30) | (countHet() > 0 ))", '-f', vcf[0]]
+		"(( QUAL >= 100) && (DP >= 30) | (countHet() >= 1 ))", '-f', vcf[0]]
 	with open(filt_het_vcf, "w") as f:
 		proc2 = subprocess.Popen(cmd2, stdout=f, shell=False)
 		std_error = proc2.communicate()
