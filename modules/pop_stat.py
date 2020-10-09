@@ -50,7 +50,7 @@ def prep_data(df, pop1, pop2):
     # Summarise the number of identified LOF mutations in each gene per pupulation
     df["mutated_pop1"] = df.iloc[:,:pop1].sum(axis = 1)
     df["mutated_pop2"] = df.iloc[:,pop1:pop1 + pop2].sum(axis = 1)
-    df["mutated_in_both"] = df["mutated_pop1"] + df["mutated_pop2"]
+    df["mutated_in_either"] = df["mutated_pop1"] + df["mutated_pop2"]
 
     # Ration of genes (mutated genes / total number of samples) in each population
     df["ratio_mutated_pop1"] = df["mutated_pop1"] / pop1
@@ -78,8 +78,9 @@ def prep_data(df, pop1, pop2):
     statistics["mutated"] = mutated
     
     # No sample in either of the populations has a LOF mutation in these genes
-    never_mutated = df["mutated_in_both"] == 0
+    never_mutated = df["mutated_in_either"] == 0
     statistics["never_mutated"] = never_mutated
+    df['never_mutated'] = (df["mutated_in_either"] == 0 ).astype(int)
     
     # Extract the gene names in the different categories
     genes_never_mutated = list(df[never_mutated].index.values)
