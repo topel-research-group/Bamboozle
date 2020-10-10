@@ -186,7 +186,7 @@ def main(args):
 	snpeff_db = str(args.snpeffdb).strip('[]')
 
 	#calling functions for sv_caller
-#	ref_check(args.ref, ref_dict)
+	ref_check(args.ref, ref_dict)
 	if isinstance(args.sortbam, list):
 		for bamfile in args.sortbam:
 			#create sample-specific directories
@@ -194,13 +194,13 @@ def main(args):
 			if not os.path.exists(bam_name):
 				os.mkdir(bam_name)
 			#run pipeline
-#			run_gatk(bamfile, args.ref, java_picard, args.threads)
+			run_gatk(bamfile, args.ref, java_picard, args.threads)
 			if args.masking:
-#				masking(bamfile, args.masking)
-#				geno(bamfile, args.ref, args.threads)
+				masking(bamfile, args.masking)
+				geno(bamfile, args.ref, args.threads)
 				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 			else:
-#				geno(bamfile, args.ref, args.threads)
+				geno(bamfile, args.ref, args.threads)
 				snpeff(snpeff_db, bamfile, args.bamboozledir, args.threads)
 	else:
 		#create sample-specific directory
@@ -208,11 +208,11 @@ def main(args):
 		if not os.path.exists(bam_name):
 			os.mkdir(bam_name)
 		#run pipeline
-#		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
+		run_gatk(args.sortbam, args.ref, java_picard, args.threads)
 		if args.masking:
-#			masking(args.sortbam, args.masking)
-#			geno(args.sortbam, args.ref, args.threads)
+			masking(args.sortbam, args.masking)
+			geno(args.sortbam, args.ref, args.threads)
 			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
 		else:
-#			geno(args.sortbam, args.ref, args.threads)
+			geno(args.sortbam, args.ref, args.threads)
 			snpeff(snpeff_db, args.sortbam, args.bamboozledir, args.threads)
