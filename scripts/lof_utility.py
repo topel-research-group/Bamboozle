@@ -78,10 +78,14 @@ def gen_matrix(input_vcf, gff, out_prefix):
 				continue
 			ann = line.split("\t")[8]
 			id = ann.split(";")[0]
-			genes.append(id.replace('ID=',''))
+			if 'ID=' in id:
+				genes.append(id.replace('ID=',''))
+			elif 'Parent=' in id:
+				genes.append(id.replace('Parent=',''))
 
 	genes_std_uniq = sorted(set(genes))
-
+	print(genes_std_uniq)
+	
 	#read in vcf (gzipped files are ok, pysam likes them), create pandas df
 	#based on genes in gff, samples in VCF
 	vcf_in = VariantFile(",".join(input_vcf))
@@ -111,6 +115,10 @@ def gen_matrix(input_vcf, gff, out_prefix):
 						gene_lof = parse_gene(gene)
 
 						new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
+						print(data.at[gene_lof, sample])
+						print(int(data.at[gene_lof, sample]))
+						print(line)
+						print(line.info['ANN'])
 						data.at[gene_lof, sample] = new_val
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data, genes
