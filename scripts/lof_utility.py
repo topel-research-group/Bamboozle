@@ -79,12 +79,11 @@ def gen_matrix(input_vcf, gff, out_prefix):
 			ann = line.split("\t")[8]
 			id = ann.split(";")[0]
 			if 'ID=' in id:
-				genes.append(id.replace('ID=',''))
+				genes.append(id.replace('ID=','').rstrip("\n"))
 			elif 'Parent=' in id:
-				genes.append(id.replace('Parent=',''))
+				genes.append(id.replace('Parent=','').rstrip("\n"))
 
 	genes_std_uniq = sorted(set(genes))
-	print(genes_std_uniq)
 	
 	#read in vcf (gzipped files are ok, pysam likes them), create pandas df
 	#based on genes in gff, samples in VCF
@@ -92,6 +91,8 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	data = pd.DataFrame(0, \
 		columns = vcf_in.header.samples, \
 		index = list(genes_std_uniq))
+
+	print(data.head())
 
 	#for each line in the vcf, check that it's not in a plastid or mit contig
 	#check that it's been annotated by SnpEff, check if for that sample there's a genotype
@@ -101,25 +102,27 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	#return df so compare() can use it
 	gene_lof = None
 	for line in vcf_in:
-		if line.chrom not in ["Sm_plastid", "Sm_mitochondrion"]:
-			if 'ANN' in line.info:
-				for sample in list(line.header.samples):
-					if (line.samples[sample]['GT']).count(None):
-		#				continue
-						gene = line.info['ANN'][0].split("|")[3]
-						gene_lof = parse_gene(gene)
-	
-						data.at[gene_lof, sample] =+ 0
-					else:
-						gene = line.info['ANN'][0].split("|")[3]
-						gene_lof = parse_gene(gene)
+		if 'ANN' in line.info:
+			for sample in list(line.header.samples):
+				if (line.samples[sample]['GT']).count(None):
+	#				continue
+					gene = line.info['ANN'][0].split("|")[3]
+					gene_lof = parse_gene(gene)
 
-						new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
-						print(data.at[gene_lof, sample])
-						print(int(data.at[gene_lof, sample]))
-						print(line)
-						print(line.info['ANN'])
-						data.at[gene_lof, sample] = new_val
+					data.at[gene_lof, sample] =+ 0
+				else:
+					gene = line.info['ANN'][0].split("|")[3]
+					gene_lof = parse_gene(gene)
+					print("1\n", gene_lof)
+					print("1a\n", sample)
+					print("2\n", data.at[gene_lof, sample])
+					print("3\n", int(data.at[gene_lof, sample]))
+					print("4\n", line)
+					print("5\n", line.info['ANN'])
+						
+						
+					new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
+					data.at[gene_lof, sample] = new_val
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data, genes
 
