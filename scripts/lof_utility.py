@@ -66,33 +66,23 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	#find all the genes in a GFF file, creates a list, orders and finds unique genes
 	with open(gff[0], "r") as gff_file:
 		for line in gff_file:
-#!!!!
-	#		if line.startswith("##FASTA"):
-	#			break
-	#		elif not line.startswith("#"):
-	#			ann = line.split("\t")[8]
-	#             	        id = ann.split(";")[0]
-	#                      	genes.append(id.replace('ID=',''))
-
-			if line.startswith(("#", "A", "C", "T", "G", ">")):
-				continue
-			ann = line.split("\t")[8]
-			id = ann.split(";")[0]
-			if 'ID=' in id:
-				genes.append(id.replace('ID=','').rstrip("\n"))
-			elif 'Parent=' in id:
-				genes.append(id.replace('Parent=','').rstrip("\n"))
+			if line.startswith("##FASTA"):
+				break
+			elif not line.startswith("#"):
+				ann = line.split("\t")[8]
+				id = ann.split(";")
+				if len(id) > 2:
+					name = id[2]
+					genes.append(name.replace('gene_name=','').rstrip("\n"))
 
 	genes_std_uniq = sorted(set(genes))
-	
+
 	#read in vcf (gzipped files are ok, pysam likes them), create pandas df
 	#based on genes in gff, samples in VCF
 	vcf_in = VariantFile(",".join(input_vcf))
 	data = pd.DataFrame(0, \
 		columns = vcf_in.header.samples, \
 		index = list(genes_std_uniq))
-
-	print(data.head())
 
 	#for each line in the vcf, check that it's not in a plastid or mit contig
 	#check that it's been annotated by SnpEff, check if for that sample there's a genotype
@@ -105,7 +95,7 @@ def gen_matrix(input_vcf, gff, out_prefix):
 		if 'ANN' in line.info:
 			for sample in list(line.header.samples):
 				if (line.samples[sample]['GT']).count(None):
-	#				continue
+					continue
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
 
@@ -113,14 +103,22 @@ def gen_matrix(input_vcf, gff, out_prefix):
 				else:
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
+
 					print("1\n", gene_lof)
 					print("1a\n", sample)
-					print("2\n", data.at[gene_lof, sample])
-					print("3\n", int(data.at[gene_lof, sample]))
-					print("4\n", line)
-					print("5\n", line.info['ANN'])
-						
-						
+			#		print("2a\n", data.iloc[gene_lof, sample])
+			#		print("2\n", data.at[gene_lof, sample])
+			#		print("3\n", int(data.at[gene_lof, sample]))
+#					print("4\n", line)
+#					print("5\n", line.info['ANN'])
+#					print("6\n", len(line.info['ANN']))
+#					print("7\n", data[gene_lof, sample].values)
+#					print("2\n", data.iat[gene_lof, sample])
+#					print("bacabaca\n", data.at[data.index.str.contains(gene_lof),sample]))
+
+#					print("2\n", data.loc["'{0}'".format(gene_lof), "'{0}'".format(sample)])
+					print("2\n", data.loc[genes_std_uniq.index(gene_lof)])
+
 					new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
 					data.at[gene_lof, sample] = new_val
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
