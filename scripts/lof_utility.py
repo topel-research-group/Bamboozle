@@ -104,23 +104,25 @@ def gen_matrix(input_vcf, gff, out_prefix):
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
 
-					print("1\n", gene_lof)
-					print("1a\n", sample)
+#					print("1\n", gene_lof)
+#					print("1a\n", sample)
 			#		print("2a\n", data.iloc[gene_lof, sample])
-			#		print("2\n", data.at[gene_lof, sample])
-			#		print("3\n", int(data.at[gene_lof, sample]))
+#					print("2\n", data.at[gene_lof, sample])
+				#	print("3\n", data.at[gene_lof, sample])
 #					print("4\n", line)
 #					print("5\n", line.info['ANN'])
 #					print("6\n", len(line.info['ANN']))
-#					print("7\n", data[gene_lof, sample].values)
+				#	print("SUM\n", int(data.at[gene_lof, sample]) + len(line.info['ANN'])) 
+					
+#					print("7\n", data.loc[gene_lof, sample])
 #					print("2\n", data.iat[gene_lof, sample])
 #					print("bacabaca\n", data.at[data.index.str.contains(gene_lof),sample]))
 
 #					print("2\n", data.loc["'{0}'".format(gene_lof), "'{0}'".format(sample)])
-					print("2\n", data.loc[genes_std_uniq.index(gene_lof)])
+#					print("2\n", data.loc[genes_std_uniq.index(gene_lof)])
 
-					new_val = int(data.at[gene_lof, sample]) + len(line.info['ANN'])
-					data.at[gene_lof, sample] = new_val
+					new_val = int(data.loc[gene_lof, sample]) + len(line.info['ANN'])
+					data.loc[gene_lof, sample] = new_val
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data, genes
 
