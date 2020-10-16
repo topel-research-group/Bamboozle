@@ -27,6 +27,11 @@ import subprocess
 from pysam import VariantFile
 import scipy.stats as stats
 
+##INPUT:
+
+##OUTPUT:
+
+
 #read arguments
 parser = argparse.ArgumentParser(description='Provide an occurrence matrix of LOF-affected genes given a multi-sample VCF')
 
@@ -96,33 +101,24 @@ def gen_matrix(input_vcf, gff, out_prefix):
 			for sample in list(line.header.samples):
 				if (line.samples[sample]['GT']).count(None):
 					continue
-					gene = line.info['ANN'][0].split("|")[3]
-					gene_lof = parse_gene(gene)
+#					gene = line.info['ANN'][0].split("|")[3]
+#					gene_lof = parse_gene(gene)
 
-					data.at[gene_lof, sample] =+ 0
+#					data.at[gene_lof, sample] =+ 0
 				else:
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
 
-#					print("1\n", gene_lof)
-#					print("1a\n", sample)
-			#		print("2a\n", data.iloc[gene_lof, sample])
-#					print("2\n", data.at[gene_lof, sample])
-				#	print("3\n", data.at[gene_lof, sample])
-#					print("4\n", line)
-#					print("5\n", line.info['ANN'])
-#					print("6\n", len(line.info['ANN']))
-				#	print("SUM\n", int(data.at[gene_lof, sample]) + len(line.info['ANN'])) 
-					
-#					print("7\n", data.loc[gene_lof, sample])
-#					print("2\n", data.iat[gene_lof, sample])
-#					print("bacabaca\n", data.at[data.index.str.contains(gene_lof),sample]))
+		#			print(gene_lof)
+		#			print(sample)
 
-#					print("2\n", data.loc["'{0}'".format(gene_lof), "'{0}'".format(sample)])
-#					print("2\n", data.loc[genes_std_uniq.index(gene_lof)])
-
-					new_val = int(data.loc[gene_lof, sample]) + len(line.info['ANN'])
+# 	https://stackoverflow.com/questions/44849868/python-df-loc-not-working-for-variables
+		#			print("original val", data.loc[gene_lof, sample])
+					new_val = int(data.loc[gene_lof, sample]) + 1
+		#			new_val = int(data.loc[gene_lof, sample]) + len(line.info['ANN'])
+		#			print("new_val\n", new_val)
 					data.loc[gene_lof, sample] = new_val
+		#			print("new_val in df\n",  data.loc[gene_lof, sample])
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data, genes
 
