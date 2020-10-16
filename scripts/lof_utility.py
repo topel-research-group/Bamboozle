@@ -101,24 +101,12 @@ def gen_matrix(input_vcf, gff, out_prefix):
 			for sample in list(line.header.samples):
 				if (line.samples[sample]['GT']).count(None):
 					continue
-#					gene = line.info['ANN'][0].split("|")[3]
-#					gene_lof = parse_gene(gene)
-
-#					data.at[gene_lof, sample] =+ 0
 				else:
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
 
-		#			print(gene_lof)
-		#			print(sample)
-
-# 	https://stackoverflow.com/questions/44849868/python-df-loc-not-working-for-variables
-		#			print("original val", data.loc[gene_lof, sample])
 					new_val = int(data.loc[gene_lof, sample]) + 1
-		#			new_val = int(data.loc[gene_lof, sample]) + len(line.info['ANN'])
-		#			print("new_val\n", new_val)
 					data.loc[gene_lof, sample] = new_val
-		#			print("new_val in df\n",  data.loc[gene_lof, sample])
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data, genes
 
