@@ -105,7 +105,7 @@ def gen_matrix(input_vcf, gff, out_prefix):
 					gene = line.info['ANN'][0].split("|")[3]
 					gene_lof = parse_gene(gene)
 
-					new_val = int(data.loc[gene_lof, sample]) + 1
+					new_val = data.loc[gene_lof, sample] + 1
 					data.loc[gene_lof, sample] = new_val
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data, genes
