@@ -69,16 +69,24 @@ def parse_gene(gene):
 def gen_matrix(input_vcf, gff, out_prefix):
 	genes = []
 	#find all the genes in a GFF file, creates a list, orders and finds unique genes
+	#this assumes the GTF will have the same general structure as GFF
+	#GTF annotations differ slightly so taking that into account
 	with open(gff[0], "r") as gff_file:
 		for line in gff_file:
 			if line.startswith("##FASTA"):
 				break
 			elif not line.startswith("#"):
 				ann = line.split("\t")[8]
-				id = ann.split(";")
-				if len(id) > 2:
-					name = id[2]
-					genes.append(name.replace('gene_name=','').rstrip("\n"))
+				if gff[0].endswith('.gtf'):
+					id = ann.split("; ")
+					if len(id) > 2:
+						name = id[2]
+						genes.append(name.replace('gene_name ','').rstrip("\n"))
+				else:
+					id = ann.split(";")
+					if len(id) > 2:
+						name = id[2]
+						genes.append(name.replace('gene_name=','').rstrip("\n"))
 
 	genes_std_uniq = sorted(set(genes))
 
