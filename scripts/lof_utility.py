@@ -105,12 +105,12 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	#return df so compare() can use it
 	gene_lof = None
 	for line in vcf_in:
-		if 'ANN' in line.info:
+		if 'LOF' in line.info:
 			for sample in list(line.header.samples):
 				if (line.samples[sample]['GT']).count(None):
 					continue
 				else:
-					gene = line.info['ANN'][0].split("|")[3]
+					gene = line.info['LOF'][0].split("|")[1]
 					gene_lof = parse_gene(gene)
 					if gene_lof:
 						new_val = data.loc[gene_lof, sample] + 1
