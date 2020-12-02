@@ -285,6 +285,84 @@ def samtools_index(args):
 	log_file.close()
 
 #######################################################################
+# SAMTOOLS PHASE
+#	Phase alleles for barcoding purposes
+#	DevNote - THIS IS FREEZING UP! Error Error
+#######################################################################
+
+@timing
+def phasing(bamfile, fileprefix, threads):
+	log_file=open('pipeline.log','a')
+	phase_log=open('phase.log','a')
+	cmd7 = ['samtools', 'phase', \
+		'-b', fileprefix, \
+		bamfile]
+	process7 = subprocess.Popen(cmd7, \
+		stdout=subprocess.PIPE, \
+		stderr=log_file)
+#		stderr=log_file, \
+#		shell=False)
+	while process7.wait() is None:
+		pass
+	process7.stdout.close()
+
+
+	for phasefile in [fileprefix + ".0", fileprefix + ".1"]:
+		cmd8 = ['samtools', 'index', \
+			'-@', str(threads), \
+			str(phasefile + ".bam"), \
+			str(phasefile + ".bai")]
+		process8 = subprocess.Popen(cmd8, \
+			stdout=subprocess.PIPE, \
+			stderr=log_file)
+#			stderr=log_file, \
+#			shell=False)
+		while process8.wait() is None:
+			pass
+		process8.stdout.close()
+
+	log_file.close()
+
+#######################################################################
+# BCFTOOLS
+#	Generate VCF files for phased files
+#	DevNote - should be combined with the version in barcodesearch
+#######################################################################
+
+@timing
+def phasevcf(allele0, allele1, reference, threads, qual):
+	log_file=open('pipeline.log','a')
+	quality = "%QUAL>" + str(qual)
+	for infile in [allele0, allele1]:
+		invcf = infile.replace(".bam", ".vcf.gz")
+
+		cmdA = ["bcftools", "mpileup", "--threads", str(threads), "--fasta-ref", reference, infile]
+		procA = subprocess.Popen(cmdA, stdout=subprocess.PIPE, stderr=log_file, shell=False)
+
+		cmdB = ["bcftools", "call", "--threads", str(threads), "-mv"]
+		procB = subprocess.Popen(cmdB, stdin=procA.stdout, stdout=subprocess.PIPE, stderr=log_file, shell=False)
+
+		cmdC = ["bcftools", "filter", "--threads", str(threads), "-i", quality, "-Oz", "-o", invcf]
+		procC = subprocess.Popen(cmdC, stdin=procB.stdout, stdout=subprocess.PIPE, stderr=log_file, shell=False)
+#		subprocess.Popen(cmdC, stdin=procB.stdout, stderr=log_file, shell=False)
+		while procC.wait() is None:
+			pass
+		procC.stdout.close()
+
+#		cmdD = ["bgzip", "-@", str(threads), str(infile + ".vcf")]
+#		procD = subprocess.Popen(cmdD, stdout=subprocess.PIPE, stderr=log_file, shell=False)
+#		subprocess.Popen(cmdD, stderr=log_file, shell=False)
+
+		cmdE = ["bcftools", "index", "-f", "--threads", str(threads), invcf]
+		procE = subprocess.Popen(cmdE, stdout=subprocess.PIPE, stderr=log_file, shell=False)
+#		subprocess.Popen(cmdE, stderr=log_file, shell=False)
+		while procE.wait() is None:
+			pass
+		procE.stdout.close()
+
+	log_file.close()
+
+#######################################################################
 # MAIN
 #	Check the input arguments:
 #		If FASTQ - map, sort and index
@@ -315,6 +393,21 @@ def main(args):
 		else:
 			bam_check(args)
 
+	# If BarcodeSearch is being run, check whether samtools phase has been run; if not, run it
+	# The functions below don't work! Pregenerate files for testing
+
+#	if args.command == "barcode":
+#		for infile in args.bamfile:
+#			noext = os.path.splitext(infile)[0]
+#			phase0 = noext + ".0.bam"
+#			phase1 = noext + ".1.bam"
+#			phase0vcf = noext + ".0.vcf.gz.csi"
+#			phase1vcf = noext + ".1.vcf.gz.csi"
+#
+#			if not (os.path.isfile(phase0) and os.path.isfile(phase1)):
+#				phasing(infile, noext, args.threads)
+#			if not (os.path.isfile(phase0vcf) and os.path.isfile(phase1vcf)):
+#				phasevcf(phase0, phase1, args.ref, args.threads, args.quality)
 	return(args.sortbam)
 
 #######################################################################

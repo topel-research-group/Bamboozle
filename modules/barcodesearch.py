@@ -13,11 +13,11 @@
 #
 #	This program is distributed in the hope that it will be useful,
 #	but WITHOUT ANY WARRANTY; without even the implied warranty of
-#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #	GNU General Public License for more details.
 #
 #	You should have received a copy of the GNU General Public License
-#	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#	along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #######################################################################
 # IMPORTS
@@ -32,12 +32,19 @@ from Levenshtein import distance
 from multiprocessing import Pool
 from time import time
 
+from collections import Counter
+from statistics import median
+import vcfpy
+
 #######################################################################
 # GET REASONABLE SAMPLE NAMES
 #######################################################################
 
 def FileName(long_name):
 	return os.path.splitext(os.path.basename(long_name))[0]
+
+def NoExt(long_name):
+	return os.path.splitext(long_name)[0]
 
 #######################################################################
 # RECORD ALL CONTIG LENGTHS BY CHECKING FIRST BAM FILE
@@ -57,16 +64,46 @@ def get_contig_lengths(firstbam):
 	return(contig_lengths)
 
 #######################################################################
+# RECORD ALL CONTIGS' AVERAGE COVERAGE PER BAM FILE
+#######################################################################
+
+def get_median(bamfile, contigs):
+	
+	coverage_stats = {}
+	for contig in contigs.keys():
+		coverage_stats[contig] = 0
+
+	cmd = ["samtools", "depth", "-aa", bamfile]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
+	current_contig = "None"
+	this_contig = {}
+	with process.stdout as result:
+		rows = (line.decode().split('\t') for line in result)
+		for row in rows:
+			ctg = str(row[0])
+			position = int(row[1])
+			coverage = int(row[2])
+			if current_contig == "None":
+				current_contig = ctg
+			this_contig[position] = coverage
+			if position == contigs[ctg]:
+				coverage_stats[current_contig] = median(this_contig.values())
+				this_contig = {}
+				current_contig = "None"
+	return(coverage_stats)
+
+#######################################################################
 # PARSE BAM FILES USING BCFTOOLS
+#	DevNote - adjust so that the VCF saves in the BAM's directory
 #######################################################################
 
 def bcf(infile, contig_list, quality, threads, reference):
 	print("\n" + FileName(infile))
 
-	if os.path.isfile(FileName(infile) + ".vcf.gz") == True:
+	if os.path.isfile(NoExt(infile) + ".vcf.gz") == True:
 		import gzip
 		print("VCF file already exists for",FileName(infile),"- reading file...")
-		process2 = gzip.open(FileName(infile) + ".vcf.gz", 'rt')
+		process2 = gzip.open(NoExt(infile) + ".vcf.gz", 'rt')
 	else:
 		cmdA = ["bcftools", "mpileup", "--threads", threads, "--fasta-ref", reference, infile]
 		procA = subprocess.Popen(cmdA, stdout=subprocess.PIPE, shell=False)
@@ -118,6 +155,11 @@ def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 		if not list(set(conserved) & set(variant_list[contig])):
 			windows[window_start] = [window_start,primer1_stop,primer2_start,window_stop]
 
+			# TEMPORARY - output name of added window
+			with open(contig + ".Windows.log", 'a') as outfile:
+				outfile.write("Window added: " + str(windows[window_start]) + "\n")
+			outfile.close()
+
 	return(windows)
 
 #######################################################################
@@ -143,73 +185,147 @@ def merge_windows(contig, window_dict):
 	return(merged)
 
 #######################################################################
+# SEQUENCE COMPARISON
+#######################################################################
+
+def compare(s, t, query, i):
+	if Counter(s) == Counter(t):
+		return f"{query} == {i}"
+	else:
+		pass
+
+#######################################################################
 # ENSURE UNIQUENESS OF VARIABLE REGIONS BETWEEN STRAINS
 # DevNote - this needs speeding up!
 #######################################################################
 
-def check_unique_windows(windows, contig, reference, infiles):
+def get_consensus(phase, bam, ref, my_range):
+	allele = ""
+	inbam = bam.replace(".bam", "." + str(phase) + ".bam")
+	invcf = bam.replace(".bam", "." + str(phase) + ".vcf.gz")
+
+	cmdD = ["samtools", "faidx", ref, my_range]
+	procD = subprocess.Popen(cmdD, stdout=subprocess.PIPE, shell=False)
+
+	cmdE = ["bcftools", "consensus", "-i", "GT=\"hom\"", invcf]
+	process3 = subprocess.Popen(cmdE, stdin=procD.stdout, stdout=subprocess.PIPE, shell=False)
+
+	with process3.stdout as result3:
+		rows3 = (line.decode() for line in result3)
+		for row3 in rows3:
+			if not row3.startswith(">"):
+				allele += row3.upper().strip("\n")
+	return(allele)
+
+def check_unique_windows(windows, contig, reference, infiles, medians):
 	final = {}
 
 	for window in windows[contig]:
+		# Temporary - print checked windows
+		with open("CheckedWindows." + contig + ".log", 'a') as outfile:
+			outfile.write(str(windows[contig][window]) + "\n")
+		outfile.close()
+		suitability = True
+		window_start = windows[contig][window][0]
+		window_end = windows[contig][window][3]
+		con_range = contig + ":" + str(window_start) + "-" + str(window_end)
 
-		compare_seqs = {}
+		alleles = {}
+		results = []
 		for bam in infiles:
-			compare_seqs[FileName(bam)] = ""
-			vcf_zipped = FileName(bam) + ".vcf.gz"
+			if suitability == True:
 
-			# In the interest of identifying reliable barcodes, only homozygous sites are considered
+			# Ensure the absence of low-support variants which may be problematic
+			# DevNote - currently using (0.4 * median coverage) as a coverage threshold
+			# Need to incorporate a too-high coverage threshold
 
-			con_range = contig + ":" + str(windows[contig][window][0]) + "-" + str(windows[contig][window][3])
-			cmdD = ["samtools", "faidx", reference, con_range]
-			procD =  subprocess.Popen(cmdD, stdout=subprocess.PIPE, shell=False)
+				my_median = medians[bam][contig]
+				fullvcf = os.path.splitext(bam)[0] + ".vcf.gz"
+				reader = vcfpy.Reader.from_path(fullvcf)
 
-			cmdE = ["bcftools", "consensus", "-i", "GT=\"hom\"", "--sample", bam, vcf_zipped]
-			process3 = subprocess.Popen(cmdE, stdin=procD.stdout, stdout=subprocess.PIPE, shell=False)
+				for record in reader.fetch(contig, window_start, window_end):
+					if record.INFO['DP'] < (my_median * 0.4):
+						with open("CheckedWindows." + contig + ".log", 'a') as outfile:
+							outfile.write("Window invalid!\n")
+						outfile.close()					
+						suitability == False
+						break
 
-			with process3.stdout as result3:
-				rows3 = (line.decode() for line in result3)
-				for row3 in rows3:
-					if not row3.startswith(">"):
-						compare_seqs[FileName(bam)] += (row3.upper().strip("\n"))
+			# Add each allele to a list in the relevant nested dictionary
+				alleles[bam] = ["", ""]
+				for phase in [0, 1]:
+					alleles[bam][phase] = get_consensus(phase, bam, reference, con_range)
 
-		# Ensure all variable regions are unique between samples
-		if (len(compare_seqs) == len(set(compare_seqs.values()))):
+#				allele = ""
+#				inbam = bam.replace(".bam", "." + str(phase) + ".bam")
+#				invcf = bam.replace(".bam", "." + str(phase) + ".vcf.gz")
+#
+#				cmdD = ["samtools", "faidx", reference, con_range]
+#				procD = subprocess.Popen(cmdD, stdout=subprocess.PIPE, shell=False)
+#
+#				cmdE = ["bcftools", "consensus", "-i", "GT=\"hom\"", invcf]
+#				process3 = subprocess.Popen(cmdE, stdin=procD.stdout, stdout=subprocess.PIPE, shell=False)
+#
+#				with process3.stdout as result3:
+#					rows3 = (line.decode() for line in result3)
+#					for row3 in rows3:
+#						if not row3.startswith(">"):
+#							allele += row3.upper().strip("\n")
+#
+#				alleles[bam][phase] = allele
+			else:
+				break
 
-			final[window] = windows[contig][window]
+#		# Searches for unique COMBINATIONS of alleles
+#		for seq in alleles:
+#			query = seq
+#			for i in alleles:
+#				if query == i:
+#					continue
+#				results.append(compare(alleles[query], alleles[i], query, i))
+#		if all(result is None for result in results):
 
-			# Calculate the number of differences between each pair of sequences
-			# DevNote - this step is taking the longest in this function
+		if suitability == True:
 
-			diff_counts = []
-			list1 = list(compare_seqs.values())
-			for i, j in list(combinations(range(0,len(list1)), 2)):
-				diff_counts.append(distance(list1[i],list1[j]))
+			# Searches for at least one unique allele per sample
+			all_alleles = [item for sublist in list(alleles.values()) for item in sublist]
+			unique_values = [x for x in all_alleles if all_alleles.count(x)==1]
 
-			# Add minimum and maximum differences to each window
-			final[window].append(min(diff_counts))
-			final[window].append(max(diff_counts))
+			alleles_are_unique = True
+			for sample in alleles.keys():
+				if not list(set(alleles[sample]) & set(unique_values)):
+					alleles_are_unique = False
+					break
+
+			if alleles_are_unique:
+				final[window] = windows[contig][window]
+
+#				# Re-add the calculator for between-allele differences
+#				diff_counts = []
+#				list1 = list(all_alleles.values())
+#				for i, j in list(combinations(range(0,len(list1)), 2)):
+#					diff_counts.append(distance(list1[i],list1[j]))
+#				final[window].append(min(diff_counts))
+#				final[window].append(max(diff_counts))
 
 			# Get the required sequences for conserved and variable regions
+				window_start = windows[contig][window][0]
+				primer1_stop = windows[contig][window][1]
+				primer2_start = windows[contig][window][2] + 1
+				window_stop = windows[contig][window][3]
 
-			window_start = windows[contig][window][0]
-			primer1_stop = windows[contig][window][1]
-			primer2_start = windows[contig][window][2] + 1
-			window_stop = windows[contig][window][3]
+				full_window = ""
 
-			window_range = contig + ":" + str(window_start) + "-" + str(window_stop)
-
-			full_window = ""
-
-			cmd4 = ["samtools", "faidx", reference, window_range]
-			process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=False)
-			with process4.stdout as result1:
-				rows1 = (line.decode() for line in result1)
-				for row1 in rows1:
-					if not row1.startswith(">"):
-						full_window += row1.strip("\n")
-			final[window].append(full_window[(window_start - window_start):(primer1_stop - window_start)])
-			final[window].append(full_window[(primer1_stop - window_start):(primer2_start - window_start)])
-			final[window].append(full_window[(primer2_start - window_start):((window_stop - window_start)+1)])
+				cmd4 = ["samtools", "faidx", reference, con_range]
+				process4 = subprocess.Popen(cmd4, stdout=subprocess.PIPE, shell=False)
+				with process4.stdout as result1:
+					rows1 = (line.decode() for line in result1)
+					for row1 in rows1:
+						if not row1.startswith(">"):
+							full_window += row1.strip("\n")
+				final[window].append(full_window[(window_start - window_start):(primer1_stop - window_start)])
+				final[window].append(full_window[(primer1_stop - window_start):(primer2_start - window_start)])
+				final[window].append(full_window[(primer2_start - window_start):((window_stop - window_start)+1)])
 
 	return(final)
 
@@ -248,6 +364,17 @@ def main(args):
 	# Record all contig lengths
 	contig_lengths = get_contig_lengths(args.sortbam[0])
 
+	# Record all files' median contig coverages
+	# NOT CURRENTLY IN USE
+	cov_stats = {}
+	for bam in args.sortbam:
+		cov_stats[bam] = {}
+
+	to_coverage = pool.starmap(get_median, \
+		[(bam, contig_lengths) for bam in args.sortbam])
+	for entry in range(0,len(args.sortbam)):
+		cov_stats[args.sortbam[entry]] = to_coverage[entry]
+
 	# Timing - time taken to get contig lengths
 	print_time("Get contig lengths", start_time)
 	start_time = time()
@@ -282,7 +409,7 @@ def main(args):
 	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
 	for bam in args.sortbam:
-		vcf_file = FileName(bam) + ".vcf"
+		vcf_file = NoExt(bam) + ".vcf"
 
 		# Generate or read in a VCF file for the current BAM
 		process2 = bcf(bam, contig_lengths, filter_qual, args.threads, args.ref)
@@ -290,8 +417,8 @@ def main(args):
 		# Generate a list of loci where variants occur
 		print("\nFinding variants...")
 		current_contig = ""
-		if os.path.isfile(FileName(bam) + ".vcf.gz") == True:
-			if os.path.isfile(FileName(bam) + ".vcf.gz.csi") == False:
+		if os.path.isfile(NoExt(bam) + ".vcf.gz") == True:
+			if os.path.isfile(NoExt(bam) + ".vcf.gz.csi") == False:
 				os.system("bcftools index --threads " + str(args.threads) + " " + vcf_file + ".gz")
 			for row2 in process2:
 				if not row2.startswith("#"):
@@ -331,7 +458,7 @@ def main(args):
 	for entry in range(0,len(contig_lengths)):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
-        # Timing - time taken to find valid windows
+	# Timing - time taken to find valid windows
 	print_time("Find valid windows", start_time)
 	start_time = time()
 
@@ -353,10 +480,13 @@ def main(args):
 	# Compare consensus sequences for all BAMs, to ensure they are truly unique,
 	# not merely differing from the reference in all the same positions
 	# DevNote - this needs speeding up!
+
+	# DevNote - Update in progress to interrogate phased information
+
 	print("\nChecking consensuses...")
 
 	to_final = pool.starmap(check_unique_windows, \
-		[(merged_dict, contig, args.ref, args.sortbam) for contig in contig_lengths])
+		[(merged_dict, contig, args.ref, args.sortbam, cov_stats) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
@@ -371,7 +501,7 @@ def main(args):
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
 
-		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
+		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\n")
 
 		for contig in final_dict:
 			window_number = 0
@@ -387,12 +517,10 @@ def main(args):
 				conserved_2_start = final_dict[contig][window][2] + 1
 				conserved_2_stop = final_dict[contig][window][3]
 				variable_len = conserved_2_start - variable_start
-				min_diffs = final_dict[contig][window][4] 
-				max_diffs = final_dict[contig][window][5]
 
-				conserved_1_seq = final_dict[contig][window][6]
-				variable_seq = final_dict[contig][window][7]
-				conserved_2_seq = final_dict[contig][window][8]
+				conserved_1_seq = final_dict[contig][window][4]
+				variable_seq = final_dict[contig][window][5]
+				conserved_2_seq = final_dict[contig][window][6]
 
 				for SNP in all_SNPs[contig]:
 					if variable_start < int(SNP) < variable_stop:
@@ -406,10 +534,14 @@ def main(args):
 				# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
 				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
 						str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
+#				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
+#						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
+#						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
+#						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
 				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
 						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
 						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
-						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
+						str(variable_len) + "\n"
 
 				output_bed.write(window_out)
 				output_txt.write(line_out)
