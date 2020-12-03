@@ -93,6 +93,29 @@ def get_median(bamfile, contigs):
 	return(coverage_stats)
 
 #######################################################################
+# IDENTIFY AREAS OF LOW COVERAGE FOR EACH SAMPLE
+#######################################################################
+
+def get_lowcov(bam, contigs, coverage_stats):
+	low_cov = {}
+	for contig in contigs:
+		low_cov[contig] = {}
+
+	cmdX = ["bedtools", "genomecov", "-bga", "-ibam", bam]
+	procX = subprocess.Popen(cmdX, stdout=subprocess.PIPE, shell=False)
+
+	with procX.stdout as result:
+		rows = (line.decode().split("\t") for line in result)
+		for row in rows:
+			ctg = str(row[0])
+			start_pos = int(row[1]) + 1
+			end_pos = int(row[2])
+			coverage = int(row[3])
+			if (coverage > coverage_stats[bam][ctg]*2) or (coverage < coverage_stats[bam][ctg]*0.5):
+				low_cov[ctg][start_pos] = [start_pos, end_pos, coverage]
+	return(low_cov)
+
+#######################################################################
 # PARSE BAM FILES USING BCFTOOLS
 #	DevNote - adjust so that the VCF saves in the BAM's directory
 #######################################################################
@@ -155,11 +178,6 @@ def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 		if not list(set(conserved) & set(variant_list[contig])):
 			windows[window_start] = [window_start,primer1_stop,primer2_start,window_stop]
 
-			# TEMPORARY - output name of added window
-			with open(contig + ".Windows.log", 'a') as outfile:
-				outfile.write("Window added: " + str(windows[window_start]) + "\n")
-			outfile.close()
-
 	return(windows)
 
 #######################################################################
@@ -195,11 +213,12 @@ def compare(s, t, query, i):
 		pass
 
 #######################################################################
-# ENSURE UNIQUENESS OF VARIABLE REGIONS BETWEEN STRAINS
-# DevNote - this needs speeding up!
+# GET CONSENSUS SEQUENCE FOR BOTH ALLELES AT A LOCUS
+# FROM A GIVEN SAMPLE
+#	SUBFUNCTION OF VERIFY_WINDOWS()
 #######################################################################
 
-def get_consensus(phase, bam, ref, my_range):
+def get_allele_consensus(phase, bam, ref, my_range):
 	allele = ""
 	inbam = bam.replace(".bam", "." + str(phase) + ".bam")
 	invcf = bam.replace(".bam", "." + str(phase) + ".vcf.gz")
@@ -217,7 +236,34 @@ def get_consensus(phase, bam, ref, my_range):
 				allele += row3.upper().strip("\n")
 	return(allele)
 
-def check_unique_windows(windows, contig, reference, infiles, medians):
+#######################################################################
+# CHECK COVERAGE OF VARIANTS IN A REGION IS HIGH ENOUGH
+#	SUBFUNCTION OF VERIFY_WINDOWS()
+# DevNote - currently doesn't work as intended!
+#######################################################################
+
+def check_coverage(median_list, bamfile, this_contig, window_start, window_end):
+	# Ensure the absence of low-support variants which may be problematic
+	## DevNote - adjust to check for suitably-sized overlap between 
+	## the window of interest and the low coverage regions
+
+	suitability = True
+#	my_median = median_list[bamfile][this_contig]
+#	fullvcf = os.path.splitext(bamfile)[0] + ".vcf.gz"
+#	reader = vcfpy.Reader.from_path(fullvcf)
+#
+#	for record in reader.fetch(this_contig, window_start, window_end):
+#		if record.INFO['DP'] < (my_median * 0.4):
+#			suitability = False
+#			break
+	return(suitability)
+
+#######################################################################
+# ENSURE UNIQUENESS AND COVERAGE OF VARIABLE REGIONS BETWEEN STRAINS
+# DevNote - needs speeding up!
+#######################################################################
+
+def verify_windows(windows, contig, reference, infiles, medians):
 	final = {}
 
 	for window in windows[contig]:
@@ -225,7 +271,6 @@ def check_unique_windows(windows, contig, reference, infiles, medians):
 		with open("CheckedWindows." + contig + ".log", 'a') as outfile:
 			outfile.write(str(windows[contig][window]) + "\n")
 		outfile.close()
-		suitability = True
 		window_start = windows[contig][window][0]
 		window_end = windows[contig][window][3]
 		con_range = contig + ":" + str(window_start) + "-" + str(window_end)
@@ -233,48 +278,15 @@ def check_unique_windows(windows, contig, reference, infiles, medians):
 		alleles = {}
 		results = []
 		for bam in infiles:
-			if suitability == True:
-
-			# Ensure the absence of low-support variants which may be problematic
-			# DevNote - currently using (0.4 * median coverage) as a coverage threshold
-			# Need to incorporate a too-high coverage threshold
-
-				my_median = medians[bam][contig]
-				fullvcf = os.path.splitext(bam)[0] + ".vcf.gz"
-				reader = vcfpy.Reader.from_path(fullvcf)
-
-				for record in reader.fetch(contig, window_start, window_end):
-					if record.INFO['DP'] < (my_median * 0.4):
-						with open("CheckedWindows." + contig + ".log", 'a') as outfile:
-							outfile.write("Window invalid!\n")
-						outfile.close()					
-						suitability == False
-						break
-
-			# Add each allele to a list in the relevant nested dictionary
+			# DevNote - this currently generates allele consensuses for all BAM files,
+			# even if an earlier one shows poor coverage; use a while condition?
+			if check_coverage(medians, bam, contig, window_start, window_end) == True:
+				# Add each allele to a list in the relevant nested dictionary
 				alleles[bam] = ["", ""]
 				for phase in [0, 1]:
-					alleles[bam][phase] = get_consensus(phase, bam, reference, con_range)
-
-#				allele = ""
-#				inbam = bam.replace(".bam", "." + str(phase) + ".bam")
-#				invcf = bam.replace(".bam", "." + str(phase) + ".vcf.gz")
-#
-#				cmdD = ["samtools", "faidx", reference, con_range]
-#				procD = subprocess.Popen(cmdD, stdout=subprocess.PIPE, shell=False)
-#
-#				cmdE = ["bcftools", "consensus", "-i", "GT=\"hom\"", invcf]
-#				process3 = subprocess.Popen(cmdE, stdin=procD.stdout, stdout=subprocess.PIPE, shell=False)
-#
-#				with process3.stdout as result3:
-#					rows3 = (line.decode() for line in result3)
-#					for row3 in rows3:
-#						if not row3.startswith(">"):
-#							allele += row3.upper().strip("\n")
-#
-#				alleles[bam][phase] = allele
+					alleles[bam][phase] = get_allele_consensus(phase, bam, reference, con_range)
 			else:
-				break
+				continue
 
 #		# Searches for unique COMBINATIONS of alleles
 #		for seq in alleles:
@@ -285,7 +297,7 @@ def check_unique_windows(windows, contig, reference, infiles, medians):
 #				results.append(compare(alleles[query], alleles[i], query, i))
 #		if all(result is None for result in results):
 
-		if suitability == True:
+		if len(alleles) == len(infiles):
 
 			# Searches for at least one unique allele per sample
 			all_alleles = [item for sublist in list(alleles.values()) for item in sublist]
@@ -300,13 +312,13 @@ def check_unique_windows(windows, contig, reference, infiles, medians):
 			if alleles_are_unique:
 				final[window] = windows[contig][window]
 
-#				# Re-add the calculator for between-allele differences
-#				diff_counts = []
-#				list1 = list(all_alleles.values())
-#				for i, j in list(combinations(range(0,len(list1)), 2)):
-#					diff_counts.append(distance(list1[i],list1[j]))
-#				final[window].append(min(diff_counts))
-#				final[window].append(max(diff_counts))
+				# Re-add the calculator for between-allele differences
+				diff_counts = []
+				list1 = list(set(all_alleles))
+				for i, j in list(combinations(range(0,len(list1)), 2)):
+					diff_counts.append(distance(list1[i],list1[j]))
+				final[window].append(min(diff_counts))
+				final[window].append(max(diff_counts))
 
 			# Get the required sequences for conserved and variable regions
 				window_start = windows[contig][window][0]
@@ -326,7 +338,14 @@ def check_unique_windows(windows, contig, reference, infiles, medians):
 				final[window].append(full_window[(window_start - window_start):(primer1_stop - window_start)])
 				final[window].append(full_window[(primer1_stop - window_start):(primer2_start - window_start)])
 				final[window].append(full_window[(primer2_start - window_start):((window_stop - window_start)+1)])
-
+			else:
+				with open("CheckedWindows." + contig + ".log", 'a') as outfile:
+					outfile.write("Not all samples at this locus contain a unique allele.")
+				outfile.close()
+		else:
+			with open("CheckedWindows." + contig + ".log", 'a') as outfile:
+				outfile.write("This window was very invalid!")
+			outfile.close()
 	return(final)
 
 #######################################################################
@@ -344,6 +363,62 @@ def print_time(step_name, start_time):
 #######################################################################
 
 def main(args):
+	# Timing - get start time
+	full_time = time()
+	start_time = time()
+
+	# Set number of threads
+	pool = Pool(processes = int(args.threads))
+
+	# Ensure the output files doesn't already exist
+	out_bed = args.outprefix + ".bed"
+	out_txt = args.outprefix + ".txt"
+
+	if os.path.isfile(out_bed) == True:
+		sys.exit("[Error] Output BED file already exists. Please choose another output prefix.")
+	if os.path.isfile(out_txt) == True:
+		sys.exit("[Error] Output TXT file already exists. Please choose another output prefix.")
+
+	# Record all contig lengths
+	contig_lengths = get_contig_lengths(args.sortbam[0])
+
+	# Timing - time taken to get contig lengths
+	print_time("Get contig lengths", start_time)
+	start_time = time()
+
+	# Record all files' median contig coverages
+	cov_stats = {}
+	for bam in args.sortbam:
+		cov_stats[bam] = {}
+
+	to_coverage = pool.starmap(get_median, \
+		[(bam, contig_lengths) for bam in args.sortbam])
+	for entry in range(0,len(args.sortbam)):
+		cov_stats[args.sortbam[entry]] = to_coverage[entry]
+
+	# Timing - time taken to get contig medians
+	print_time("Get median contig coverage stats", start_time)
+	start_time = time()
+
+	# Record all low-coverage areas per input BAM
+	low_cov = {}
+	for bam in args.sortbam:
+		low_cov[bam] = {}
+
+	to_lowcov = pool.starmap(get_lowcov, \
+		[(bam, contig_lengths, cov_stats) for bam in args.sortbam])
+	for entry in range(0,len(args.sortbam)):
+		low_cov[args.sortbam[entry]] = to_lowcov[entry]
+
+	# Timing - time taken to get low coverage stats
+	print_time("Get low coverage stats", start_time)
+	start_time = time()
+
+	with open("low_cov.txt", 'a') as outfile:
+		outfile.write(str(low_cov))
+	outfile.close()
+
+def main2(args):
 
 	# Timing - get start time
 	full_time = time()
@@ -364,8 +439,11 @@ def main(args):
 	# Record all contig lengths
 	contig_lengths = get_contig_lengths(args.sortbam[0])
 
+	# Timing - time taken to get contig lengths
+	print_time("Get contig lengths", start_time)
+	start_time = time()
+
 	# Record all files' median contig coverages
-	# NOT CURRENTLY IN USE
 	cov_stats = {}
 	for bam in args.sortbam:
 		cov_stats[bam] = {}
@@ -375,8 +453,22 @@ def main(args):
 	for entry in range(0,len(args.sortbam)):
 		cov_stats[args.sortbam[entry]] = to_coverage[entry]
 
-	# Timing - time taken to get contig lengths
-	print_time("Get contig lengths", start_time)
+	# Timing - time taken to get contig medians
+	print_time("Get median contig coverage stats", start_time)
+	start_time = time()
+
+	# Record all low-coverage areas per input BAM
+	low_cov = {}
+	for bam in args.sortbam:
+		low_cov[bam] = {}
+
+	to_lowcov = pool.starmap(get_lowcov, \
+		[(bam, contig_lengths, cov_stats) for bam in args.sortbam])
+	for entry in range(0,len(args.sortbam)):
+		low_cov[args.sortbam[entry]] = to_lowcov[entry]
+
+	# Timing - time taken to get low coverage stats
+	print_time("Get low coverage stats", start_time)
 	start_time = time()
 
 	# Set initial global lists/dictionaries
@@ -485,7 +577,7 @@ def main(args):
 
 	print("\nChecking consensuses...")
 
-	to_final = pool.starmap(check_unique_windows, \
+	to_final = pool.starmap(verify_windows, \
 		[(merged_dict, contig, args.ref, args.sortbam, cov_stats) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
@@ -501,7 +593,8 @@ def main(args):
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
 
-		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\n")
+#		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\n")
+		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
 
 		for contig in final_dict:
 			window_number = 0
@@ -518,9 +611,15 @@ def main(args):
 				conserved_2_stop = final_dict[contig][window][3]
 				variable_len = conserved_2_start - variable_start
 
-				conserved_1_seq = final_dict[contig][window][4]
-				variable_seq = final_dict[contig][window][5]
-				conserved_2_seq = final_dict[contig][window][6]
+				min_diffs = final_dict[contig][window][4]
+				max_diffs = final_dict[contig][window][5]
+				conserved_1_seq = final_dict[contig][window][6]
+				variable_seq = final_dict[contig][window][7]
+				conserved_2_seq = final_dict[contig][window][8]
+
+#				conserved_1_seq = final_dict[contig][window][4]
+#				variable_seq = final_dict[contig][window][5]
+#				conserved_2_seq = final_dict[contig][window][6]
 
 				for SNP in all_SNPs[contig]:
 					if variable_start < int(SNP) < variable_stop:
@@ -534,14 +633,14 @@ def main(args):
 				# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
 				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
 						str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
-#				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
-#						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
-#						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
-#						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
 				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
 						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
 						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
-						str(variable_len) + "\n"
+						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
+#				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
+#						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
+#						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
+#						str(variable_len) + "\n"
 
 				output_bed.write(window_out)
 				output_txt.write(line_out)
