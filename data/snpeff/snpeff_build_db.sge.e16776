@@ -1,0 +1,27 @@
+00:00:00	SnpEff version SnpEff 4.3t (build 2017-11-24 10:18), by Pablo Cingolani
+00:00:00	Command: 'build'
+00:00:00	Building database for 'Smarinoi.v112'
+00:00:00	Reading configuration file 'snpEff.config'. Genome: 'Smarinoi.v112'
+00:00:00	Reading config file: /home/andre/Bamboozle/data/snpeff/snpEff.config
+00:00:00	done
+....................................................................................................
+		10000	....................................................................................................
+		20000	....................................................................................................
+		30000	............................................................................................................................................................................................................................
+		10000	....................................................................................................................................................................00:00:05	Caracterizing exons by splicing (stage 1) : 
+..................................
+00:00:05	Caracterizing exons by splicing (stage 2) : 
+..................................00:00:05	done.
+00:00:05	[Optional] Rare amino acid annotations
+00:00:05	Warning: Cannot read optional protein sequence file '/home/andre/Bamboozle/data/snpeff/./Smarinoi.v112/protein.fa', nothing done.
+00:00:05	Saving database
+00:00:13	[Optional] Reading regulation elements: GFF
+00:00:13	Warning: Cannot read optional regulation file '/home/andre/Bamboozle/data/snpeff/./Smarinoi.v112/regulation.gff', nothing done.
+00:00:13	[Optional] Reading regulation elements: BED 
+00:00:13	Cannot find optional regulation dir '/home/andre/Bamboozle/data/snpeff/./Smarinoi.v112/regulation.bed/', nothing done.
+00:00:13	[Optional] Reading motifs: GFF
+00:00:13	Warning: Cannot open PWMs file /home/andre/Bamboozle/data/snpeff/./Smarinoi.v112/pwms.bin. Nothing done
+00:00:13	Done
+00:00:13	Logging
+00:00:14	Checking for updates...
+00:00:15	Done.

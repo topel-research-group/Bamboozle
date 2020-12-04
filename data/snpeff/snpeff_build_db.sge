@@ -1,0 +1,15 @@
+#$ -cwd
+#$ -q Annotation-2
+#$ -S /bin/bash
+#$ -pe mpi 8
+
+module load Java/v1.8.0_191
+module load snpEff/v.4.3t
+
+#FASTA:/proj/data26/Skeletonema_marinoi_genome_project/12_remove_redundancy/Fake_Primary_Removal/Smar_v1.1.2.fasta
+#GFF:/proj/data26/Skeletonema_marinoi_genome_project/03_Annotation/Skeletonema_marinoi_Ref_v1.1_Primary/Unique_models_per_locus_ManualCuration/Sm_ManualCuration.v1.1.2.gff
+#GTF:/proj/data26/Skeletonema_marinoi_genome_project/03_Annotation/Skeletonema_marinoi_Ref_v1.1_Primary/Unique_models_per_locus_ManualCuration/Sm_ManualCuration.v1.1.2.gtf
+
+#snpEff build -gff3 -v Smarinoi.v112 -c snpEff.config
+
+snpEff build -gtf22 -v Smarinoi.v112 -c snpEff.config

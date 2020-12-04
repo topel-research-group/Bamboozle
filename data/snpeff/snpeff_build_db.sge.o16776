@@ -1,0 +1,313 @@
+Reading GTF22 data file  : '/home/andre/Bamboozle/data/snpeff/./Smarinoi.v112/genes.gtf'
+
+	Total: 34002 markers added.
+
+	Create exons from CDS (if needed): 
+	Exons created for 0 transcripts.
+
+	Deleting redundant exons (if needed): 
+		Total transcripts with deleted exons: 0
+
+	Collapsing zero length introns (if needed): 
+		Total collapsed transcripts: 0
+	Reading sequences   :
+	FASTA file: '/home/andre/Bamboozle/data/snpeff/./genomes/Smarinoi.v112.fa' not found.
+	Reading FASTA file: '/home/andre/Bamboozle/data/snpeff/./Smarinoi.v112/sequences.fa'
+		Reading sequence 'Sm_000000F', length: 3534548
+		Adding genomic sequences to exons: 	Done (2785 sequences added, 0 ignored).
+		Reading sequence 'Sm_000001F', length: 2022245
+		Adding genomic sequences to exons: 	Done (1482 sequences added, 0 ignored).
+		Reading sequence 'Sm_000002F', length: 1812266
+		Adding genomic sequences to exons: 	Done (1308 sequences added, 0 ignored).
+		Reading sequence 'Sm_000003F', length: 1794525
+		Adding genomic sequences to exons: 	Done (1264 sequences added, 0 ignored).
+		Reading sequence 'Sm_000004F', length: 1823404
+		Adding genomic sequences to exons: 	Done (1217 sequences added, 0 ignored).
+		Reading sequence 'Sm_000005F', length: 1730404
+		Adding genomic sequences to exons: 	Done (1632 sequences added, 0 ignored).
+		Reading sequence 'Sm_000006F', length: 1651997
+		Adding genomic sequences to exons: 	Done (1112 sequences added, 0 ignored).
+		Reading sequence 'Sm_000007F', length: 1541760
+		Adding genomic sequences to exons: 	Done (1154 sequences added, 0 ignored).
+		Reading sequence 'Sm_000008F', length: 1592421
+		Adding genomic sequences to exons: 	Done (856 sequences added, 0 ignored).
+		Reading sequence 'Sm_000009F', length: 1506469
+		Adding genomic sequences to exons: 	Done (918 sequences added, 0 ignored).
+		Reading sequence 'Sm_000010F', length: 1486901
+		Adding genomic sequences to exons: 	Done (947 sequences added, 0 ignored).
+		Reading sequence 'Sm_000011F', length: 1395154
+		Adding genomic sequences to exons: 	Done (923 sequences added, 0 ignored).
+		Reading sequence 'Sm_000012F', length: 1395690
+		Adding genomic sequences to exons: 	Done (800 sequences added, 0 ignored).
+		Reading sequence 'Sm_000013F', length: 1298460
+		Adding genomic sequences to exons: 	Done (801 sequences added, 0 ignored).
+		Reading sequence 'Sm_000014F', length: 1343723
+		Adding genomic sequences to exons: 	Done (779 sequences added, 0 ignored).
+		Reading sequence 'Sm_000015F', length: 1252611
+		Adding genomic sequences to exons: 	Done (796 sequences added, 0 ignored).
+		Reading sequence 'Sm_000016F', length: 1237151
+		Adding genomic sequences to exons: 	Done (791 sequences added, 0 ignored).
+		Reading sequence 'Sm_000017F', length: 1182471
+		Adding genomic sequences to exons: 	Done (747 sequences added, 0 ignored).
+		Reading sequence 'Sm_000018F', length: 1066013
+		Adding genomic sequences to exons: 	Done (793 sequences added, 0 ignored).
+		Reading sequence 'Sm_000019F', length: 1072560
+		Adding genomic sequences to exons: 	Done (611 sequences added, 0 ignored).
+		Reading sequence 'Sm_000020F', length: 1037581
+		Adding genomic sequences to exons: 	Done (583 sequences added, 0 ignored).
+		Reading sequence 'Sm_000021F', length: 946594
+		Adding genomic sequences to exons: 	Done (529 sequences added, 0 ignored).
+		Reading sequence 'Sm_000022F', length: 925426
+		Adding genomic sequences to exons: 	Done (325 sequences added, 0 ignored).
+		Reading sequence 'Sm_000023F', length: 148802
+		Adding genomic sequences to exons: 	Done (70 sequences added, 0 ignored).
+		Reading sequence 'Sm_000024F', length: 855565
+		Adding genomic sequences to exons: 	Done (533 sequences added, 0 ignored).
+		Reading sequence 'Sm_000025F', length: 852372
+		Adding genomic sequences to exons: 	Done (570 sequences added, 0 ignored).
+		Reading sequence 'Sm_000027F', length: 830911
+		Adding genomic sequences to exons: 	Done (533 sequences added, 0 ignored).
+		Reading sequence 'Sm_000028F', length: 800310
+		Adding genomic sequences to exons: 	Done (686 sequences added, 0 ignored).
+		Reading sequence 'Sm_000029F', length: 803377
+		Adding genomic sequences to exons: 	Done (565 sequences added, 0 ignored).
+		Reading sequence 'Sm_000030F', length: 771863
+		Adding genomic sequences to exons: 	Done (538 sequences added, 0 ignored).
+		Reading sequence 'Sm_000031F', length: 134243
+		Adding genomic sequences to exons: 	Done (66 sequences added, 0 ignored).
+		Reading sequence 'Sm_000032F', length: 756370
+		Adding genomic sequences to exons: 	Done (397 sequences added, 0 ignored).
+		Reading sequence 'Sm_000033F', length: 746665
+		Adding genomic sequences to exons: 	Done (446 sequences added, 0 ignored).
+		Reading sequence 'Sm_000034F', length: 747626
+		Adding genomic sequences to exons: 	Done (404 sequences added, 0 ignored).
+		Reading sequence 'Sm_000036F', length: 664443
+		Adding genomic sequences to exons: 	Done (397 sequences added, 0 ignored).
+		Reading sequence 'Sm_000037F', length: 687756
+		Adding genomic sequences to exons: 	Done (359 sequences added, 0 ignored).
+		Reading sequence 'Sm_000038F', length: 695810
+		Adding genomic sequences to exons: 	Done (549 sequences added, 0 ignored).
+		Reading sequence 'Sm_000039F', length: 625970
+		Adding genomic sequences to exons: 	Done (234 sequences added, 0 ignored).
+		Reading sequence 'Sm_000040F', length: 596744
+		Adding genomic sequences to exons: 	Done (266 sequences added, 0 ignored).
+		Reading sequence 'Sm_000041F', length: 561394
+		Adding genomic sequences to exons: 	Done (212 sequences added, 0 ignored).
+		Reading sequence 'Sm_000042F', length: 554410
+		Adding genomic sequences to exons: 	Done (195 sequences added, 0 ignored).
+		Reading sequence 'Sm_000044F', length: 512862
+		Adding genomic sequences to exons: 	Done (278 sequences added, 0 ignored).
+		Reading sequence 'Sm_000047F', length: 441956
+		Adding genomic sequences to exons: 	Done (263 sequences added, 0 ignored).
+		Reading sequence 'Sm_000051F', length: 167761
+		Adding genomic sequences to exons: 	Done (82 sequences added, 0 ignored).
+		Reading sequence 'Sm_000052F', length: 407309
+		Adding genomic sequences to exons: 	Done (300 sequences added, 0 ignored).
+		Reading sequence 'Sm_000053F', length: 388901
+		Adding genomic sequences to exons: 	Done (125 sequences added, 0 ignored).
+		Reading sequence 'Sm_000054F', length: 378274
+		Adding genomic sequences to exons: 	Done (143 sequences added, 0 ignored).
+		Reading sequence 'Sm_000060F', length: 328241
+		Adding genomic sequences to exons: 	Done (86 sequences added, 0 ignored).
+		Reading sequence 'Sm_000061F', length: 324682
+		Adding genomic sequences to exons: 	Done (145 sequences added, 0 ignored).
+		Reading sequence 'Sm_000063F', length: 325881
+		Adding genomic sequences to exons: 	Done (141 sequences added, 0 ignored).
+		Reading sequence 'Sm_000064F', length: 320858
+		Adding genomic sequences to exons: 	Done (139 sequences added, 0 ignored).
+		Reading sequence 'Sm_000065F', length: 314558
+		Adding genomic sequences to exons: 	Done (124 sequences added, 0 ignored).
+		Reading sequence 'Sm_000067F', length: 297765
+		Adding genomic sequences to exons: 	Done (110 sequences added, 0 ignored).
+		Reading sequence 'Sm_000068F', length: 286145
+		Adding genomic sequences to exons: 	Done (155 sequences added, 0 ignored).
+		Reading sequence 'Sm_000070F', length: 291444
+		Adding genomic sequences to exons: 	Done (203 sequences added, 0 ignored).
+		Reading sequence 'Sm_000078F', length: 247352
+		Adding genomic sequences to exons: 	Done (178 sequences added, 0 ignored).
+		Reading sequence 'Sm_000080F', length: 245783
+		Adding genomic sequences to exons: 	Done (133 sequences added, 0 ignored).
+		Reading sequence 'Sm_000087F', length: 222947
+		Adding genomic sequences to exons: 	Done (54 sequences added, 0 ignored).
+		Reading sequence 'Sm_000091F', length: 202492
+		Adding genomic sequences to exons: 	Done (38 sequences added, 0 ignored).
+		Reading sequence 'Sm_000092F', length: 209879
+		Adding genomic sequences to exons: 	Done (88 sequences added, 0 ignored).
+		Reading sequence 'Sm_000096F', length: 200374
+		Adding genomic sequences to exons: 	Done (87 sequences added, 0 ignored).
+		Reading sequence 'Sm_000099F', length: 190189
+		Adding genomic sequences to exons: 	Done (65 sequences added, 0 ignored).
+		Reading sequence 'Sm_000100F', length: 184533
+		Adding genomic sequences to exons: 	Done (55 sequences added, 0 ignored).
+		Reading sequence 'Sm_000102F', length: 178716
+		Adding genomic sequences to exons: 	Done (56 sequences added, 0 ignored).
+		Reading sequence 'Sm_000108F', length: 169857
+		Adding genomic sequences to exons: 	Done (81 sequences added, 0 ignored).
+		Reading sequence 'Sm_000111F', length: 169564
+		Adding genomic sequences to exons: 	Done (118 sequences added, 0 ignored).
+		Reading sequence 'Sm_000115F', length: 149281
+		Adding genomic sequences to exons: 	Done (47 sequences added, 0 ignored).
+		Reading sequence 'Sm_000116F', length: 143812
+		Adding genomic sequences to exons: 	Done (68 sequences added, 0 ignored).
+		Reading sequence 'Sm_000135F', length: 112440
+		Adding genomic sequences to exons: 	Done (15 sequences added, 0 ignored).
+		Reading sequence 'Sm_000141F', length: 108114
+		Adding genomic sequences to exons: 	Done (15 sequences added, 0 ignored).
+		Reading sequence 'Sm_000145F', length: 91851
+		Adding genomic sequences to exons: 	Done (5 sequences added, 0 ignored).
+		Reading sequence 'Sm_000146F', length: 89577
+		Adding genomic sequences to exons: 	Done (48 sequences added, 0 ignored).
+		Reading sequence 'Sm_000148F', length: 86638
+		Adding genomic sequences to exons: 	Done (31 sequences added, 0 ignored).
+		Reading sequence 'Sm_000152F', length: 82627
+		Adding genomic sequences to exons: 	Done (27 sequences added, 0 ignored).
+		Reading sequence 'Sm_000164F', length: 71408
+		Adding genomic sequences to exons: 	Done (9 sequences added, 0 ignored).
+		Reading sequence 'Sm_000166F', length: 69922
+		Adding genomic sequences to exons: 	Done (18 sequences added, 0 ignored).
+		Reading sequence 'Sm_000181F', length: 58754
+		Adding genomic sequences to exons: 	Done (63 sequences added, 0 ignored).
+		Reading sequence 'Sm_000188F', length: 48544
+		Adding genomic sequences to exons: 	Done (40 sequences added, 0 ignored).
+		Reading sequence 'Sm_000352F', length: 7050
+		Adding genomic sequences to exons: 	Done (6 sequences added, 0 ignored).
+		Reading sequence 'Sm_000362F', length: 5221
+		Adding genomic sequences to exons: 	Done (3 sequences added, 0 ignored).
+		Reading sequence 'Sm_000363F', length: 5091
+		Adding genomic sequences to exons: 	Done (7 sequences added, 0 ignored).
+		Reading sequence 'Sm_plastid', length: 127202
+		Adding genomic sequences to exons: 	Done (141 sequences added, 0 ignored).
+		Reading sequence 'Sm_mitochondrion', length: 43586
+		Adding genomic sequences to exons: 	Done (39 sequences added, 0 ignored).
+	Total: 34002 sequences added, 0 sequences ignored.
+
+	Adjusting transcripts: 
+	Adjusting genes: 
+	Adjusting chromosomes lengths: 
+	Ranking exons: 
+	Create UTRs from CDS (if needed): 
+	Correcting exons based on frame information.
+	
+	Remove empty chromosomes: 
+
+	Marking as 'coding' from CDS information: 
+	Done: 17383 transcripts marked
+#-----------------------------------------------
+# Genome name                : 'Smarinoi_v112'
+# Genome version             : 'Smarinoi.v112'
+# Genome ID                  : 'Smarinoi.v112[0]'
+# Has protein coding info    : true
+# Has Tr. Support Level info : true
+# Genes                      : 17383
+# Protein coding genes       : 17383
+#-----------------------------------------------
+# Transcripts                : 17383
+# Avg. transcripts per gene  : 1.00
+# TSL transcripts            : 0
+#-----------------------------------------------
+# Checked transcripts        : 
+#               AA sequences :      0 ( 0.00% )
+#              DNA sequences :      0 ( 0.00% )
+#-----------------------------------------------
+# Protein coding transcripts : 17383
+#              Length errors :      0 ( 0.00% )
+#  STOP codons in CDS errors :      1 ( 0.01% )
+#         START codon errors :    494 ( 2.84% )
+#        STOP codon warnings :    349 ( 2.01% )
+#              UTR sequences :   9176 ( 52.79% )
+#               Total Errors :    495 ( 2.85% )
+#-----------------------------------------------
+# Cds                        : 33206
+# Exons                      : 34002
+# Exons with sequence        : 34002
+# Exons without sequence     : 0
+# Avg. exons per transcript  : 1.96
+#-----------------------------------------------
+# Number of chromosomes      : 83
+# Chromosomes                : Format 'chromo_name size codon_table'
+#		'Sm_000000F'	3534548	Standard
+#		'Sm_000001F'	2022245	Standard
+#		'Sm_000004F'	1823404	Standard
+#		'Sm_000002F'	1812266	Standard
+#		'Sm_000003F'	1794525	Standard
+#		'Sm_000005F'	1730404	Standard
+#		'Sm_000006F'	1651997	Standard
+#		'Sm_000008F'	1592421	Standard
+#		'Sm_000007F'	1541760	Standard
+#		'Sm_000009F'	1506469	Standard
+#		'Sm_000010F'	1486901	Standard
+#		'Sm_000012F'	1395690	Standard
+#		'Sm_000011F'	1395154	Standard
+#		'Sm_000014F'	1343723	Standard
+#		'Sm_000013F'	1298460	Standard
+#		'Sm_000015F'	1252611	Standard
+#		'Sm_000016F'	1237151	Standard
+#		'Sm_000017F'	1182471	Standard
+#		'Sm_000019F'	1072560	Standard
+#		'Sm_000018F'	1066013	Standard
+#		'Sm_000020F'	1037581	Standard
+#		'Sm_000021F'	946594	Standard
+#		'Sm_000022F'	925426	Standard
+#		'Sm_000024F'	855565	Standard
+#		'Sm_000025F'	852372	Standard
+#		'Sm_000027F'	830911	Standard
+#		'Sm_000029F'	803377	Standard
+#		'Sm_000028F'	800310	Standard
+#		'Sm_000030F'	771863	Standard
+#		'Sm_000032F'	756370	Standard
+#		'Sm_000034F'	747626	Standard
+#		'Sm_000033F'	746665	Standard
+#		'Sm_000038F'	695810	Standard
+#		'Sm_000037F'	687756	Standard
+#		'Sm_000036F'	664443	Standard
+#		'Sm_000039F'	625970	Standard
+#		'Sm_000040F'	596744	Standard
+#		'Sm_000041F'	561394	Standard
+#		'Sm_000042F'	554410	Standard
+#		'Sm_000044F'	512862	Standard
+#		'Sm_000047F'	441956	Standard
+#		'Sm_000052F'	407309	Standard
+#		'Sm_000053F'	388901	Standard
+#		'Sm_000054F'	378274	Standard
+#		'Sm_000060F'	328241	Standard
+#		'Sm_000063F'	325881	Standard
+#		'Sm_000061F'	324682	Standard
+#		'Sm_000064F'	320858	Standard
+#		'Sm_000065F'	314558	Standard
+#		'Sm_000067F'	297765	Standard
+#		'Sm_000070F'	291444	Standard
+#		'Sm_000068F'	286145	Standard
+#		'Sm_000078F'	247352	Standard
+#		'Sm_000080F'	245783	Standard
+#		'Sm_000087F'	222947	Standard
+#		'Sm_000092F'	209879	Standard
+#		'Sm_000091F'	202492	Standard
+#		'Sm_000096F'	200374	Standard
+#		'Sm_000099F'	190189	Standard
+#		'Sm_000100F'	184533	Standard
+#		'Sm_000102F'	178716	Standard
+#		'Sm_000108F'	169857	Standard
+#		'Sm_000111F'	169564	Standard
+#		'Sm_000051F'	167761	Standard
+#		'Sm_000115F'	149281	Standard
+#		'Sm_000023F'	148802	Standard
+#		'Sm_000116F'	143812	Standard
+#		'Sm_000031F'	134243	Standard
+#		'Sm_plastid'	127202	Bacterial_and_Plant_Plastid
+#		'Sm_000135F'	112440	Standard
+#		'Sm_000141F'	108114	Standard
+#		'Sm_000145F'	91851	Standard
+#		'Sm_000146F'	89577	Standard
+#		'Sm_000148F'	86638	Standard
+#		'Sm_000152F'	82627	Standard
+#		'Sm_000164F'	71408	Standard
+#		'Sm_000166F'	69922	Standard
+#		'Sm_000181F'	58754	Standard
+#		'Sm_000188F'	48544	Standard
+#		'Sm_mitochondrion'	43586	Mold_Mitochondrial
+#		'Sm_000352F'	7050	Standard
+#		'Sm_000362F'	5221	Standard
+#		'Sm_000363F'	5091	Standard
+#-----------------------------------------------
+
+		
