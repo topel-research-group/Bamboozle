@@ -93,13 +93,16 @@ def get_median(bamfile, contigs):
 	return(coverage_stats)
 
 #######################################################################
-# IDENTIFY AREAS OF LOW COVERAGE FOR EACH SAMPLE
+# IDENTIFY AREAS OF IRREGULAR COVERAGE FOR EACH SAMPLE
+#	DevNote - Currently, bad regions are defined as regions
+#		either less than half or more than twice the contig
+#		median; this should be adjusted
 #######################################################################
 
-def get_lowcov(bam, contigs, coverage_stats):
-	low_cov = {}
+def get_badcov(bam, contigs, coverage_stats):
+	bad_cov = {}
 	for contig in contigs:
-		low_cov[contig] = {}
+		bad_cov[contig] = {}
 
 	cmdX = ["bedtools", "genomecov", "-bga", "-ibam", bam]
 	procX = subprocess.Popen(cmdX, stdout=subprocess.PIPE, shell=False)
@@ -112,8 +115,8 @@ def get_lowcov(bam, contigs, coverage_stats):
 			end_pos = int(row[2])
 			coverage = int(row[3])
 			if (coverage > coverage_stats[bam][ctg]*2) or (coverage < coverage_stats[bam][ctg]*0.5):
-				low_cov[ctg][start_pos] = [start_pos, end_pos, coverage]
-	return(low_cov)
+				bad_cov[ctg][start_pos] = [start_pos, end_pos]
+	return(bad_cov)
 
 #######################################################################
 # PARSE BAM FILES USING BCFTOOLS
@@ -237,25 +240,35 @@ def get_allele_consensus(phase, bam, ref, my_range):
 	return(allele)
 
 #######################################################################
-# CHECK COVERAGE OF VARIANTS IN A REGION IS HIGH ENOUGH
+# CHECK COVERAGE OF VARIANTS IN A REGION IS GOOD ENOUGH
 #	SUBFUNCTION OF VERIFY_WINDOWS()
 # DevNote - currently doesn't work as intended!
 #######################################################################
 
-def check_coverage(median_list, bamfile, this_contig, window_start, window_end):
-	# Ensure the absence of low-support variants which may be problematic
-	## DevNote - adjust to check for suitably-sized overlap between 
-	## the window of interest and the low coverage regions
+def check_coverage(median_list, bad_regions, bamfile, this_contig, window_start, window_end):
+	# Ensure the window doesn't heavily overlap a bad-coverage region
+	## In this case, render unsuitable if such a region overlaps the
+	## proposed window by 10 bases (saves < 3aa indels)
 
 	suitability = True
-#	my_median = median_list[bamfile][this_contig]
-#	fullvcf = os.path.splitext(bamfile)[0] + ".vcf.gz"
-#	reader = vcfpy.Reader.from_path(fullvcf)
-#
-#	for record in reader.fetch(this_contig, window_start, window_end):
-#		if record.INFO['DP'] < (my_median * 0.4):
-#			suitability = False
-#			break
+
+	window_range = set(range(window_start, window_end + 1))
+
+	bad_overlap = 10
+
+	for badplace in bad_regions[this_contig]:
+		bad_start = bad_regions[this_contig][badplace][0]
+		bad_end = bad_regions[this_contig][badplace][1] + 1
+		bad_range = range(bad_start, bad_end)
+
+		if bad_start > window_end:
+			break
+		elif bad_end < window_start:
+			continue
+		elif len(window_range.intersection(bad_range)) >= bad_overlap:
+			suitability = False
+			break
+
 	return(suitability)
 
 #######################################################################
@@ -263,14 +276,10 @@ def check_coverage(median_list, bamfile, this_contig, window_start, window_end):
 # DevNote - needs speeding up!
 #######################################################################
 
-def verify_windows(windows, contig, reference, infiles, medians):
+def verify_windows(windows, contig, reference, infiles, medians, contig_badcov):
 	final = {}
 
 	for window in windows[contig]:
-		# Temporary - print checked windows
-		with open("CheckedWindows." + contig + ".log", 'a') as outfile:
-			outfile.write(str(windows[contig][window]) + "\n")
-		outfile.close()
 		window_start = windows[contig][window][0]
 		window_end = windows[contig][window][3]
 		con_range = contig + ":" + str(window_start) + "-" + str(window_end)
@@ -280,7 +289,7 @@ def verify_windows(windows, contig, reference, infiles, medians):
 		for bam in infiles:
 			# DevNote - this currently generates allele consensuses for all BAM files,
 			# even if an earlier one shows poor coverage; use a while condition?
-			if check_coverage(medians, bam, contig, window_start, window_end) == True:
+			if check_coverage(medians, contig_badcov, bam, contig, window_start, window_end) == True:
 				# Add each allele to a list in the relevant nested dictionary
 				alleles[bam] = ["", ""]
 				for phase in [0, 1]:
@@ -338,14 +347,6 @@ def verify_windows(windows, contig, reference, infiles, medians):
 				final[window].append(full_window[(window_start - window_start):(primer1_stop - window_start)])
 				final[window].append(full_window[(primer1_stop - window_start):(primer2_start - window_start)])
 				final[window].append(full_window[(primer2_start - window_start):((window_stop - window_start)+1)])
-			else:
-				with open("CheckedWindows." + contig + ".log", 'a') as outfile:
-					outfile.write("Not all samples at this locus contain a unique allele.")
-				outfile.close()
-		else:
-			with open("CheckedWindows." + contig + ".log", 'a') as outfile:
-				outfile.write("This window was very invalid!")
-			outfile.close()
 	return(final)
 
 #######################################################################
@@ -363,62 +364,10 @@ def print_time(step_name, start_time):
 #######################################################################
 
 def main(args):
-	# Timing - get start time
-	full_time = time()
-	start_time = time()
 
-	# Set number of threads
-	pool = Pool(processes = int(args.threads))
-
-	# Ensure the output files doesn't already exist
-	out_bed = args.outprefix + ".bed"
-	out_txt = args.outprefix + ".txt"
-
-	if os.path.isfile(out_bed) == True:
-		sys.exit("[Error] Output BED file already exists. Please choose another output prefix.")
-	if os.path.isfile(out_txt) == True:
-		sys.exit("[Error] Output TXT file already exists. Please choose another output prefix.")
-
-	# Record all contig lengths
-	contig_lengths = get_contig_lengths(args.sortbam[0])
-
-	# Timing - time taken to get contig lengths
-	print_time("Get contig lengths", start_time)
-	start_time = time()
-
-	# Record all files' median contig coverages
-	cov_stats = {}
-	for bam in args.sortbam:
-		cov_stats[bam] = {}
-
-	to_coverage = pool.starmap(get_median, \
-		[(bam, contig_lengths) for bam in args.sortbam])
-	for entry in range(0,len(args.sortbam)):
-		cov_stats[args.sortbam[entry]] = to_coverage[entry]
-
-	# Timing - time taken to get contig medians
-	print_time("Get median contig coverage stats", start_time)
-	start_time = time()
-
-	# Record all low-coverage areas per input BAM
-	low_cov = {}
-	for bam in args.sortbam:
-		low_cov[bam] = {}
-
-	to_lowcov = pool.starmap(get_lowcov, \
-		[(bam, contig_lengths, cov_stats) for bam in args.sortbam])
-	for entry in range(0,len(args.sortbam)):
-		low_cov[args.sortbam[entry]] = to_lowcov[entry]
-
-	# Timing - time taken to get low coverage stats
-	print_time("Get low coverage stats", start_time)
-	start_time = time()
-
-	with open("low_cov.txt", 'a') as outfile:
-		outfile.write(str(low_cov))
-	outfile.close()
-
-def main2(args):
+	#######################################################################
+	# STEP 1 - LAYING THE GROUNDWORK
+	#######################################################################
 
 	# Timing - get start time
 	full_time = time()
@@ -436,40 +385,22 @@ def main2(args):
 	if os.path.isfile(out_txt) == True:
 		sys.exit("[Error] Output TXT file already exists. Please choose another output prefix.")
 
-	# Record all contig lengths
+	#######################################################################
+	# STEP 2 - GET CONTIG LENGTH STATISTICS
+	#	OUT: contig_lengths = {contig1: length}
+	#######################################################################
+	# Included custom functions: get_contig_lengths
+	#######################################################################
+
 	contig_lengths = get_contig_lengths(args.sortbam[0])
 
 	# Timing - time taken to get contig lengths
 	print_time("Get contig lengths", start_time)
 	start_time = time()
 
-	# Record all files' median contig coverages
-	cov_stats = {}
-	for bam in args.sortbam:
-		cov_stats[bam] = {}
-
-	to_coverage = pool.starmap(get_median, \
-		[(bam, contig_lengths) for bam in args.sortbam])
-	for entry in range(0,len(args.sortbam)):
-		cov_stats[args.sortbam[entry]] = to_coverage[entry]
-
-	# Timing - time taken to get contig medians
-	print_time("Get median contig coverage stats", start_time)
-	start_time = time()
-
-	# Record all low-coverage areas per input BAM
-	low_cov = {}
-	for bam in args.sortbam:
-		low_cov[bam] = {}
-
-	to_lowcov = pool.starmap(get_lowcov, \
-		[(bam, contig_lengths, cov_stats) for bam in args.sortbam])
-	for entry in range(0,len(args.sortbam)):
-		low_cov[args.sortbam[entry]] = to_lowcov[entry]
-
-	# Timing - time taken to get low coverage stats
-	print_time("Get low coverage stats", start_time)
-	start_time = time()
+	########################################################################
+	# STEP 3 - SET SOME ADDITIONAL VARIABLES
+	########################################################################
 
 	# Set initial global lists/dictionaries
 	all_SNPs = {}
@@ -497,6 +428,54 @@ def main2(args):
 	# Set other values
 	filter_qual = "%QUAL>" + str(args.quality)
 
+	#######################################################################
+	# STEP 4 - GET CONTIG MEDIANS PER BAM FILE
+	#	OUT: cov_stats = {bam1: {contig1: median}}
+	#######################################################################
+	# Included custom functions: get_median
+	#######################################################################
+
+	cov_stats = {}
+	for bam in args.sortbam:
+		cov_stats[bam] = {}
+
+	to_coverage = pool.starmap(get_median, \
+		[(bam, contig_lengths) for bam in args.sortbam])
+	for entry in range(0,len(args.sortbam)):
+		cov_stats[args.sortbam[entry]] = to_coverage[entry]
+
+	# Timing - time taken to get contig medians
+	print_time("Get median contig coverage stats", start_time)
+	start_time = time()
+
+	#######################################################################
+	# STEP 5 - GET IRREGULAR COVERAGE REGIONS PER BAM FILE
+	#	OUT: bad_cov = {bam1: {contig1: {window1: [start, end]}}}
+	#######################################################################
+	# Included custom functions: get_badcov
+	#######################################################################
+
+	bad_cov = {}
+	for bam in args.sortbam:
+		bad_cov[bam] = {}
+
+	to_badcov = pool.starmap(get_badcov, \
+		[(bam, contig_lengths, cov_stats) for bam in args.sortbam])
+	for entry in range(0,len(args.sortbam)):
+		bad_cov[args.sortbam[entry]] = to_badcov[entry]
+
+	# Timing - time taken to get bad coverage stats
+	print_time("Get irregular coverage stats", start_time)
+	start_time = time()
+
+	#######################################################################
+	# STEP 6 - GENERATE A LIST OF POSITIONS WHERE VARIANTS OCCUR
+	#	OUT: all_variants = {contig1: [var1, var2, var3]}
+	#		all_SNPs = {contig1: [SNP1, SNP2, SNP3]}
+	#		all_indels = {contig1: [ind1, ind2, ind3]}
+	#######################################################################
+	# Included custom functions: bcf, get_variants
+	#######################################################################
 
 	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
@@ -516,7 +495,7 @@ def main2(args):
 				if not row2.startswith("#"):
 					current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 
-		# If a VCF file doesn't already exist, generate one, generate variant the list, then bgzip and index the new VCF
+		# If a VCF file doesn't already exist, generate one, generate the variant list, then bgzip and index the new VCF
 		else:
 			with process2.stdout as result2, open(vcf_file, "a") as output_file:
 				rows2 = (line.decode() for line in result2)
@@ -540,8 +519,16 @@ def main2(args):
 	print_time("Get lists of variants", start_time)
 	start_time = time()
 
-	# Step through each contig, assigning start and stop locations for window and primers
+	#######################################################################
+	# STEP 7 - STEP THROUGH EACH CONTIG LOOKING FOR WINDOWS WITH
+	#		VARIABLE CENTRES AND CONSERVED PRIMER SITES
+	# OUT: master_dict = {contig1: {window1: [start, p1end, p2start, end]}}
+	#######################################################################
+	# Included custom functions: find_windows
+	#######################################################################
 	# DevNote - this needs speeding up!
+	#######################################################################
+
 	print("\nChecking windows...")
 
 	to_master = pool.starmap(find_windows, \
@@ -554,7 +541,13 @@ def main2(args):
 	print_time("Find valid windows", start_time)
 	start_time = time()
 
-	# Merge overlapping windows
+	#######################################################################
+	# STEP 8 - MERGE OVERLAPPING WINDOWS
+	# OUT: merged_dict = {contig1: {window1: [start, p1end, p2start, end]}}
+	#######################################################################
+	# Included custom functions: merge_windows
+	#######################################################################
+
 	print("\nMerging overlapping windows...")
 
 	for contig in master_dict:
@@ -566,19 +559,26 @@ def main2(args):
 	print_time("Merge windows", start_time)
 	start_time = time()
 
-# Dev Note: Find a way to skip loci where the following type of error occurs:
-# `Warning: ignoring overlapping variant starting at 000215F:2953`
-
-	# Compare consensus sequences for all BAMs, to ensure they are truly unique,
-	# not merely differing from the reference in all the same positions
+	#######################################################################
+	# STEP 9 - ENSURE THAT EACH SAMPLE CONTAINS AT LEAST ONE UNIQUE ALLELE
+	#		AT EACH LOCUS, AND THAT THE COVERAGE IS ACCEPTABLE
+	# OUT: final_dict = {contig1: {window1: [start, p1end, p2start, end]}}
+	#######################################################################
+	# Included custom functions: verify_windows
+	#	Subfunctions: compare, get_allele_consensus, check_coverage
+	#######################################################################
+	# DevNote - find a way to skip loci where the following type of error occurs:
+	# `Warning: ignoring overlapping variant starting at 000215F:2953`
+	#######################################################################
 	# DevNote - this needs speeding up!
-
+	#######################################################################
 	# DevNote - Update in progress to interrogate phased information
+	#######################################################################
 
 	print("\nChecking consensuses...")
 
 	to_final = pool.starmap(verify_windows, \
-		[(merged_dict, contig, args.ref, args.sortbam, cov_stats) for contig in contig_lengths])
+		[(merged_dict, contig, args.ref, args.sortbam, cov_stats, bad_cov[bam]) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
@@ -587,7 +587,10 @@ def main2(args):
 	print_time("Get unique windows", start_time)
 	start_time = time()
 
-	# Report results in TXT and BED format
+	#######################################################################
+	# STEP 10 - REPORT RESULTS IN TXT AND BED FORMAT
+	#######################################################################
+
 	print("\nGenerating output files...")
 
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
