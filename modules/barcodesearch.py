@@ -121,6 +121,7 @@ def get_badcov(bam, contigs, coverage_stats):
 #######################################################################
 # PARSE BAM FILES USING BCFTOOLS
 #	DevNote - adjust so that the VCF saves in the BAM's directory
+#	DevNote - move this to the input_files.py module
 #######################################################################
 
 def bcf(infile, contig_list, quality, threads, reference):
@@ -371,7 +372,6 @@ def main(args):
 
 	# Timing - get start time
 	full_time = time()
-	start_time = time()
 
 	# Set number of threads
 	pool = Pool(processes = int(args.threads))
@@ -391,12 +391,12 @@ def main(args):
 	#######################################################################
 	# Included custom functions: get_contig_lengths
 	#######################################################################
+	start_time = time()
 
 	contig_lengths = get_contig_lengths(args.sortbam[0])
 
 	# Timing - time taken to get contig lengths
 	print_time("Get contig lengths", start_time)
-	start_time = time()
 
 	########################################################################
 	# STEP 3 - SET SOME ADDITIONAL VARIABLES
@@ -434,6 +434,7 @@ def main(args):
 	#######################################################################
 	# Included custom functions: get_median
 	#######################################################################
+	start_time = time()
 
 	cov_stats = {}
 	for bam in args.sortbam:
@@ -446,7 +447,6 @@ def main(args):
 
 	# Timing - time taken to get contig medians
 	print_time("Get median contig coverage stats", start_time)
-	start_time = time()
 
 	#######################################################################
 	# STEP 5 - GET IRREGULAR COVERAGE REGIONS PER BAM FILE
@@ -454,6 +454,7 @@ def main(args):
 	#######################################################################
 	# Included custom functions: get_badcov
 	#######################################################################
+	start_time = time()
 
 	bad_cov = {}
 	for bam in args.sortbam:
@@ -466,7 +467,6 @@ def main(args):
 
 	# Timing - time taken to get bad coverage stats
 	print_time("Get irregular coverage stats", start_time)
-	start_time = time()
 
 	#######################################################################
 	# STEP 6 - GENERATE A LIST OF POSITIONS WHERE VARIANTS OCCUR
@@ -476,6 +476,7 @@ def main(args):
 	#######################################################################
 	# Included custom functions: bcf, get_variants
 	#######################################################################
+	start_time = time()
 
 	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
@@ -517,7 +518,6 @@ def main(args):
 
 	# Timing - time taken to get lists of variants
 	print_time("Get lists of variants", start_time)
-	start_time = time()
 
 	#######################################################################
 	# STEP 7 - STEP THROUGH EACH CONTIG LOOKING FOR WINDOWS WITH
@@ -528,6 +528,7 @@ def main(args):
 	#######################################################################
 	# DevNote - this needs speeding up!
 	#######################################################################
+	start_time = time()
 
 	print("\nChecking windows...")
 
@@ -539,7 +540,6 @@ def main(args):
 
 	# Timing - time taken to find valid windows
 	print_time("Find valid windows", start_time)
-	start_time = time()
 
 	#######################################################################
 	# STEP 8 - MERGE OVERLAPPING WINDOWS
@@ -547,6 +547,7 @@ def main(args):
 	#######################################################################
 	# Included custom functions: merge_windows
 	#######################################################################
+	start_time = time()
 
 	print("\nMerging overlapping windows...")
 
@@ -557,7 +558,6 @@ def main(args):
 
 	# Timing - time taken to merge windows
 	print_time("Merge windows", start_time)
-	start_time = time()
 
 	#######################################################################
 	# STEP 9 - ENSURE THAT EACH SAMPLE CONTAINS AT LEAST ONE UNIQUE ALLELE
@@ -574,6 +574,7 @@ def main(args):
 	#######################################################################
 	# DevNote - Update in progress to interrogate phased information
 	#######################################################################
+	start_time = time()
 
 	print("\nChecking consensuses...")
 
@@ -585,11 +586,11 @@ def main(args):
 
 	# Timing - time taken to get unique windows
 	print_time("Get unique windows", start_time)
-	start_time = time()
 
 	#######################################################################
 	# STEP 10 - REPORT RESULTS IN TXT AND BED FORMAT
 	#######################################################################
+	start_time = time()
 
 	print("\nGenerating output files...")
 
