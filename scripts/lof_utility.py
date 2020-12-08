@@ -20,8 +20,11 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#INPUT: 
-#OUTPUT:
+#INPUT: A multi-sample VCF preferrably gone through modules/sv_caller.py and a GFF file
+#	whose gene and chromosome accessions correspond to those in the reference
+#	used to generate the VCF.
+#OUTPUT: A tab-delimited matrix of counts of LOF mutations across all samples listed in 
+#	the multi-sample VCF across all genes in the GFF.
 
 import argparse
 import os
