@@ -20,17 +20,15 @@
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#INPUT: 
+#OUTPUT:
+
 import argparse
 import os
 import pandas as pd
 import subprocess
 from pysam import VariantFile
 import scipy.stats as stats
-
-##INPUT:
-
-##OUTPUT:
-
 
 #read arguments
 parser = argparse.ArgumentParser(description='Provide an occurrence matrix of LOF-affected genes given a multi-sample VCF')
@@ -121,44 +119,8 @@ def gen_matrix(input_vcf, gff, out_prefix):
 	data.to_csv(out_prefix[0]+'.csv', sep='\t')
 	return data, genes
 
-def compare(out_prefix, pops, data, genes):
-
-	sig = pd.DataFrame(index=data.index)
-	list_of_pops = []
-
-	for pop in pops:
-		with open(pop) as infile:
-			pop_s = pop.split(".")[0]
-			pop_s = []
-			for ind in infile:
-				pop_s.append(ind.replace("\n",""))
-	
-			list_of_pops.append(pop_s)
-
-	for group in list_of_pops:
-		for gene in genes:
-			print(data[group].T[gene])
-
-
-	#find a way to call all inds in a pop so stats can be calculated
-#			mean_col = pop.split(".")[0]+"_mean"
-#			std_col = pop.split(".")[0]+"_std"
-#			stat_col = pop.split(".")[0]+"_stat"
-#			p_col = pop.split(".")[0]+"_sig"
-
-#			sig[mean_col] = data[pop_s].mean(axis=1)
-#			sig[std_col] = data[pop_s].std(axis=1)
-			
-			pop_id = pop.split(".")[0]
-#			print(type(sig))
-
 def main():
 	gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-#	data, genes = gen_matrix(args.input_vcf, args.gff, args.out_prefix)
-#	data, list_of_pops = compare(args.out_prefix, args.population, data, genes)
-#	result = pd.DataFrame(compare(args.out_prefix, args.population, data, list_of_pops))
-#	print(result.head)
-			
 
 if __name__ == "__main__":
     main()
