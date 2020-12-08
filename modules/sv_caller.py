@@ -2,7 +2,7 @@
 # coding=utf-8
 
 #André Soares - 15/04/2020
-#Pseudocode for a script calling SVs and inferring their LOF potential from BAM/SAM files
+#Pipeline for calling SVs and inferring their LOF potential from BAM/SAM files
 
 #	SVCaller provides a pipeline to call and annotate structural variants
 #	from reads mapped to a reference genome.
@@ -21,6 +21,12 @@
 #
 #       You should have received a copy of the GNU General Public License
 #       along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#INPUT: a BAM file mapped to a reference, a GFF with gene models, a SnpEff database
+#	built with the same reference and GFF, optionally, a VCF with SVs to be 
+#	subtracted (e.g. dataset of reads used to correct the reference) from the 
+#	final output of this script.
+#OUTPUT: a VCF of SVs detected and their respective genomic metadata.
 
 import sys
 import os
