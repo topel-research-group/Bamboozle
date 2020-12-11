@@ -27,15 +27,15 @@ import subprocess
 import os
 import sys
 import io
+import vcfpy
+import gzip
+import datetime
 from itertools import combinations
 from Levenshtein import distance
 from multiprocessing import Pool
 from time import time
-
 from collections import Counter
 from statistics import median
-import vcfpy
-import gzip
 
 #######################################################################
 # GET REASONABLE SAMPLE NAMES
@@ -143,7 +143,7 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 # DevNote - Any way to further speed up if/elif section?
 #######################################################################
 
-def find_windows(contig, con_len, window_len, primer_len, variant_list):
+def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile):
 	windows = {}
 
 	for window in range(0,(con_len - window_len)):
@@ -157,6 +157,10 @@ def find_windows(contig, con_len, window_len, primer_len, variant_list):
 
 		if not list(set(conserved) & set(variant_list)):
 			windows[window_start] = [window_start,primer1_stop,primer2_start,window_stop]
+
+	with open(logfile, 'a') as outfile:
+		outfile.write(str(len(windows)) + " preliminary windows found in contig " + contig + ".\n")
+	outfile.close()
 
 	return(windows)
 
@@ -253,7 +257,7 @@ def check_coverage(median_list, bad_regions, bamfile, this_contig, window_start,
 # DevNote - needs speeding up!
 #######################################################################
 
-def verify_windows(windows, contig, reference, infiles, medians, contig_badcov):
+def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, logfile):
 	final = {}
 
 	for window in windows:
@@ -324,6 +328,11 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov):
 				final[window].append(full_window[(window_start - window_start):(primer1_stop - window_start)])
 				final[window].append(full_window[(primer1_stop - window_start):(primer2_start - window_start)])
 				final[window].append(full_window[(primer2_start - window_start):((window_stop - window_start)+1)])
+
+	with open(logfile, 'a') as outfile:
+		outfile.write(str(len(final)) + " informative windows found in contig " + contig + ".\n")
+	outfile.close()
+
 	return(final)
 
 #######################################################################
@@ -365,10 +374,14 @@ def main(args):
 	out_bed = args.outprefix + ".bed"
 	out_txt = args.outprefix + ".txt"
 
-	if os.path.isfile(out_bed) == True:
+	barcode_log = barcode_log = "barcoding." + datetime.datetime.now().strftime("%d-%b-%Y") + ".log"
+
+	if os.path.isfile(out_bed):
 		sys.exit("[Error] Output BED file already exists. Please choose another output prefix.")
-	if os.path.isfile(out_txt) == True:
+	if os.path.isfile(out_txt):
 		sys.exit("[Error] Output TXT file already exists. Please choose another output prefix.")
+	if os.path.isfile(barcode_log):
+		sys.exit("[Error] Another log file exists from today. Please rename or delete it and retry.")
 
 	#######################################################################
 	# STEP 2 - GET CONTIG LENGTH STATISTICS
@@ -500,7 +513,7 @@ def main(args):
 	print("\nChecking windows...")
 
 	to_master = pool.starmap(find_windows, \
-	[(contig, contig_lengths[contig], args.window_size, args.primer_size, all_variants[contig]) for contig in contig_lengths])
+	[(contig, contig_lengths[contig], args.window_size, args.primer_size, all_variants[contig], barcode_log) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
@@ -544,7 +557,7 @@ def main(args):
 	print("\nChecking consensuses...")
 
 	to_final = pool.starmap(verify_windows, \
-		[(merged_dict[contig], contig, args.ref, args.sortbam, cov_stats, bad_cov) for contig in contig_lengths])
+		[(merged_dict[contig], contig, args.ref, args.sortbam, cov_stats, bad_cov, barcode_log) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
