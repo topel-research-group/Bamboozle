@@ -142,11 +142,11 @@ def geno(bamfile, ref, threads):
 	masked_vcf_out = "%s/%s_sorted_masked.vcf" % (out_dir, bam_name)
 	masked_vcf_geno = "%s/%s_sorted_masked_geno.vcf.gz" % (out_dir, bam_name)
 
-	cmd6a = ['bgzip', masked_vcf_out]
+	cmd6a = ['bgzip', '-f', masked_vcf_out]
 	proc6a = subprocess.Popen(cmd6a, shell=False)
 	std_out, std_error = proc6a.communicate()
 	
-	cmd6b = ['tabix', '-p', 'vcf', masked_vcf_out+'.gz']
+	cmd6b = ['tabix', '-f', '-p', 'vcf', masked_vcf_out+'.gz']
 	proc6b = subprocess.Popen(cmd6b, shell=False)
 	std_out, std_error = proc6b.communicate()
 

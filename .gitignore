@@ -20,5 +20,7 @@ testbed/
 data/snpeff/*/*.fa
 data/snpeff/*/*.gff
 data/snpeff/*/*.bin
+data/snpeff/*/*.sge
+data/snpeff/*/*.sge.*
 data/snpeff/snpEff.config
 modules/barcodesearch_*
