@@ -35,6 +35,7 @@ from time import time
 from collections import Counter
 from statistics import median
 import vcfpy
+import gzip
 
 #######################################################################
 # GET REASONABLE SAMPLE NAMES
@@ -114,34 +115,9 @@ def get_badcov(bam, contigs, coverage_stats):
 			start_pos = int(row[1]) + 1
 			end_pos = int(row[2])
 			coverage = int(row[3])
-			if (coverage > coverage_stats[bam][ctg]*2) or (coverage < coverage_stats[bam][ctg]*0.5):
+			if (coverage > coverage_stats[ctg]*2) or (coverage < coverage_stats[ctg]*0.5):
 				bad_cov[ctg][start_pos] = [start_pos, end_pos]
 	return(bad_cov)
-
-#######################################################################
-# PARSE BAM FILES USING BCFTOOLS
-#	DevNote - adjust so that the VCF saves in the BAM's directory
-#	DevNote - move this to the input_files.py module
-#######################################################################
-
-def bcf(infile, contig_list, quality, threads, reference):
-	print("\n" + FileName(infile))
-
-	if os.path.isfile(NoExt(infile) + ".vcf.gz") == True:
-		import gzip
-		print("VCF file already exists for",FileName(infile),"- reading file...")
-		process2 = gzip.open(NoExt(infile) + ".vcf.gz", 'rt')
-	else:
-		cmdA = ["bcftools", "mpileup", "--threads", threads, "--fasta-ref", reference, infile]
-		procA = subprocess.Popen(cmdA, stdout=subprocess.PIPE, shell=False)
-
-		cmdB = ["bcftools", "call", "--threads", threads, "-mv"]
-		procB = subprocess.Popen(cmdB, stdin=procA.stdout, stdout=subprocess.PIPE, shell=False)
-
-		cmdC = ["bcftools", "filter", "--threads", threads, "-i", quality]
-		process2 = subprocess.Popen(cmdC, stdin=procB.stdout, stdout=subprocess.PIPE, shell=False)
-
-	return(process2)
 
 #######################################################################
 # GENERATE A LIST OF LOCI WHERE VARIANTS OCCUR
@@ -167,10 +143,10 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 # DevNote - Any way to further speed up if/elif section?
 #######################################################################
 
-def find_windows(contig, contig_list, window_len, primer_len, variant_list):
+def find_windows(contig, con_len, window_len, primer_len, variant_list):
 	windows = {}
 
-	for window in range(0,(contig_list[contig] - window_len)):
+	for window in range(0,(con_len - window_len)):
 		window_start = int(window + 1)
 		window_stop = int(window_start + window_len)
 		primer1_stop = int(window_start + primer_len)
@@ -179,7 +155,7 @@ def find_windows(contig, contig_list, window_len, primer_len, variant_list):
 
 	# If no variants in primer sites, save the coordinates
 
-		if not list(set(conserved) & set(variant_list[contig])):
+		if not list(set(conserved) & set(variant_list)):
 			windows[window_start] = [window_start,primer1_stop,primer2_start,window_stop]
 
 	return(windows)
@@ -257,9 +233,9 @@ def check_coverage(median_list, bad_regions, bamfile, this_contig, window_start,
 
 	bad_overlap = 10
 
-	for badplace in bad_regions[this_contig]:
-		bad_start = bad_regions[this_contig][badplace][0]
-		bad_end = bad_regions[this_contig][badplace][1] + 1
+	for badplace in bad_regions:
+		bad_start = bad_regions[badplace][0]
+		bad_end = bad_regions[badplace][1] + 1
 		bad_range = range(bad_start, bad_end)
 
 		if bad_start > window_end:
@@ -280,9 +256,9 @@ def check_coverage(median_list, bad_regions, bamfile, this_contig, window_start,
 def verify_windows(windows, contig, reference, infiles, medians, contig_badcov):
 	final = {}
 
-	for window in windows[contig]:
-		window_start = windows[contig][window][0]
-		window_end = windows[contig][window][3]
+	for window in windows:
+		window_start = windows[window][0]
+		window_end = windows[window][3]
 		con_range = contig + ":" + str(window_start) + "-" + str(window_end)
 
 		alleles = {}
@@ -290,7 +266,7 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov):
 		for bam in infiles:
 			# DevNote - this currently generates allele consensuses for all BAM files,
 			# even if an earlier one shows poor coverage; use a while condition?
-			if check_coverage(medians, contig_badcov, bam, contig, window_start, window_end) == True:
+			if check_coverage(medians, contig_badcov[bam][contig], bam, contig, window_start, window_end) == True:
 				# Add each allele to a list in the relevant nested dictionary
 				alleles[bam] = ["", ""]
 				for phase in [0, 1]:
@@ -320,7 +296,7 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov):
 					break
 
 			if alleles_are_unique:
-				final[window] = windows[contig][window]
+				final[window] = windows[window]
 
 				# Re-add the calculator for between-allele differences
 				diff_counts = []
@@ -331,10 +307,10 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov):
 				final[window].append(max(diff_counts))
 
 			# Get the required sequences for conserved and variable regions
-				window_start = windows[contig][window][0]
-				primer1_stop = windows[contig][window][1]
-				primer2_start = windows[contig][window][2] + 1
-				window_stop = windows[contig][window][3]
+				window_start = windows[window][0]
+				primer1_stop = windows[window][1]
+				primer2_start = windows[window][2] + 1
+				window_stop = windows[window][3]
 
 				full_window = ""
 
@@ -363,6 +339,15 @@ def print_time(step_name, start_time):
 #######################################################################
 # MAIN
 #######################################################################
+
+# For debugging input_files.py
+def main2(args):
+	for infile in args.sortbam:
+		for FileExt in [".0.bam", ".0.bai", ".0.vcf.gz", ".0.vcf.gz.csi", ".1.bam", ".1.bai", ".1.vcf.gz", ".1.vcf.gz.csi"]:
+			if os.path.isfile(NoExt(infile) + FileExt):
+				print(NoExt(infile) + FileExt + " is present!")
+			else:
+				print("Error: " + NoExt(infile) + FileExt + " is missing!")
 
 def main(args):
 
@@ -461,7 +446,7 @@ def main(args):
 		bad_cov[bam] = {}
 
 	to_badcov = pool.starmap(get_badcov, \
-		[(bam, contig_lengths, cov_stats) for bam in args.sortbam])
+		[(bam, contig_lengths, cov_stats[bam]) for bam in args.sortbam])
 	for entry in range(0,len(args.sortbam)):
 		bad_cov[args.sortbam[entry]] = to_badcov[entry]
 
@@ -474,39 +459,21 @@ def main(args):
 	#		all_SNPs = {contig1: [SNP1, SNP2, SNP3]}
 	#		all_indels = {contig1: [ind1, ind2, ind3]}
 	#######################################################################
-	# Included custom functions: bcf, get_variants
+	# Included custom functions: get_variants
 	#######################################################################
 	start_time = time()
 
 	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
+	# HOW TO FIX THIS SO IT READS GZIP FILES STRAIGHTAWAY?
+
 	for bam in args.sortbam:
-		vcf_file = NoExt(bam) + ".vcf"
-
-		# Generate or read in a VCF file for the current BAM
-		process2 = bcf(bam, contig_lengths, filter_qual, args.threads, args.ref)
-
-		# Generate a list of loci where variants occur
 		print("\nFinding variants...")
 		current_contig = ""
-		if os.path.isfile(NoExt(bam) + ".vcf.gz") == True:
-			if os.path.isfile(NoExt(bam) + ".vcf.gz.csi") == False:
-				os.system("bcftools index --threads " + str(args.threads) + " " + vcf_file + ".gz")
-			for row2 in process2:
-				if not row2.startswith("#"):
-					current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 
-		# If a VCF file doesn't already exist, generate one, generate the variant list, then bgzip and index the new VCF
-		else:
-			with process2.stdout as result2, open(vcf_file, "a") as output_file:
-				rows2 = (line.decode() for line in result2)
-				for row2 in rows2:
-					output_file.write(row2)
-					if not row2.startswith("#"):
-						current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
-			output_file.close()
-			os.system("bgzip -@ " + str(args.threads) + " " + vcf_file)
-			os.system("bcftools index -f --threads " + str(args.threads) + " " + vcf_file + ".gz")
+		for row2 in gzip.open(NoExt(bam) + ".vcf.gz", 'rt'):
+			if not row2.startswith("#"):
+				current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 
 	# Get sorted lists of variant/SNP/indel positions, with duplicates removed
 	for contig in all_variants:
@@ -533,7 +500,7 @@ def main(args):
 	print("\nChecking windows...")
 
 	to_master = pool.starmap(find_windows, \
-	[(contig, contig_lengths, args.window_size, args.primer_size, all_variants) for contig in contig_lengths])
+	[(contig, contig_lengths[contig], args.window_size, args.primer_size, all_variants[contig]) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
@@ -572,14 +539,12 @@ def main(args):
 	#######################################################################
 	# DevNote - this needs speeding up!
 	#######################################################################
-	# DevNote - Update in progress to interrogate phased information
-	#######################################################################
 	start_time = time()
 
 	print("\nChecking consensuses...")
 
 	to_final = pool.starmap(verify_windows, \
-		[(merged_dict, contig, args.ref, args.sortbam, cov_stats, bad_cov[bam]) for contig in contig_lengths])
+		[(merged_dict[contig], contig, args.ref, args.sortbam, cov_stats, bad_cov) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
