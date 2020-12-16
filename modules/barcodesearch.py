@@ -38,6 +38,19 @@ from collections import Counter
 from statistics import median
 
 #######################################################################
+# DEFINE WINDOW CLASS
+#######################################################################
+
+class Window:
+	def __init__(self, winstart, p1stop, p2start, winstop):
+		self.winstart = winstart
+		self.p1stop = p1stop
+		self.p2start = p2start
+		self.winstop = winstop
+	def __str__(self):
+		return f"[{self.winstart}, {self.p1stop}, {self.p2start}, {self.winstop}]"
+
+#######################################################################
 # GET REASONABLE SAMPLE NAMES
 #######################################################################
 
@@ -140,11 +153,12 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 
 #######################################################################
 # IDENTIFY VARIABLE WINDOWS AND CONSERVED PRIMER SITES
-# DevNote - Any way to further speed up if/elif section?
+# OUT: [Window1, Window2, Window3, ...]
+# DevNote - Any way to further speed up if section?
 #######################################################################
 
 def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile):
-	windows = {}
+	windows = []
 
 	for window in range(0,(con_len - window_len)):
 		window_start = int(window + 1)
@@ -156,7 +170,7 @@ def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile)
 	# If no variants in primer sites, save the coordinates
 
 		if not list(set(conserved) & set(variant_list)):
-			windows[window_start] = [window_start,primer1_stop,primer2_start,window_stop]
+			windows.append(Window(window_start,primer1_stop,primer2_start,window_stop))
 
 	with open(logfile, 'a') as outfile:
 		outfile.write(str(len(windows)) + " preliminary windows found in contig " + contig + ".\n")
@@ -166,24 +180,25 @@ def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile)
 
 #######################################################################
 # MERGE OVERLAPPING WINDOWS
+# OUT: [Window1, Window2, Window3, ...]
 #######################################################################
 
-def merge_windows(contig, window_dict):
-	merged = {}	
-	saved_window = []
+def merge_windows(window_list):
+	merged = []
+	saved_window = Window(0,0,0,0)
 
-	for window_start in window_dict[contig]:
-		if not saved_window:
-			saved_window = window_dict[contig][window_start]
-		elif saved_window[0] <= window_dict[contig][window_start][0] <= saved_window[1]:
-			saved_window = [saved_window[0],window_dict[contig][window_start][1],\
-				saved_window[2],window_dict[contig][window_start][3]]
+	for window in window_list:
+		if saved_window == Window(0,0,0,0):
+			saved_window = Window(window.winstart, window.p1stop, window.p2start, window.winstop)
+		elif saved_window.winstart <= window.winstart <= saved_window.p1stop:
+			saved_window = Window(saved_window.winstart, window.p1stop, saved_window.p2start, window.winstop)
 		else:
-			merged[saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
-			saved_window = window_dict[contig][window_start]
+			merged.append(saved_window)
+			saved_window = Window(window.winstart, window.p1stop, window.p2start, window.winstop)
 
-		# Include the final merged window
-		merged[saved_window[0]] = [saved_window[0],saved_window[1],saved_window[2],saved_window[3]]
+	# Include the final merged window
+	merged.append(saved_window)
+
 	return(merged)
 
 #######################################################################
@@ -223,7 +238,6 @@ def get_allele_consensus(phase, bam, ref, my_range):
 #######################################################################
 # CHECK COVERAGE OF VARIANTS IN A REGION IS GOOD ENOUGH
 #	SUBFUNCTION OF VERIFY_WINDOWS()
-# DevNote - currently doesn't work as intended!
 #######################################################################
 
 def check_coverage(median_list, bad_regions, bamfile, this_contig, window_start, window_end):
@@ -254,23 +268,24 @@ def check_coverage(median_list, bad_regions, bamfile, this_contig, window_start,
 
 #######################################################################
 # ENSURE UNIQUENESS AND COVERAGE OF VARIABLE REGIONS BETWEEN STRAINS
+# OUT: [[Window, min_diffs, max_diffs, p1_seq, var_seq, p2_seq], [...]]
 # DevNote - needs speeding up!
 #######################################################################
 
 def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, logfile):
-	final = {}
+	final = []
+
+	good_windows = 0
 
 	for window in windows:
-		window_start = windows[window][0]
-		window_end = windows[window][3]
-		con_range = contig + ":" + str(window_start) + "-" + str(window_end)
+		con_range = contig + ":" + str(window.winstart) + "-" + str(window.winstop)
 
 		alleles = {}
 		results = []
 		for bam in infiles:
 			# DevNote - this currently generates allele consensuses for all BAM files,
 			# even if an earlier one shows poor coverage; use a while condition?
-			if check_coverage(medians, contig_badcov[bam][contig], bam, contig, window_start, window_end) == True:
+			if check_coverage(medians, contig_badcov[bam][contig], bam, contig, window.winstart, window.winstop) == True:
 				# Add each allele to a list in the relevant nested dictionary
 				alleles[bam] = ["", ""]
 				for phase in [0, 1]:
@@ -300,21 +315,18 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, 
 					break
 
 			if alleles_are_unique:
-				final[window] = windows[window]
+				final.append([])
+				final[good_windows].append(window)
 
 				# Re-add the calculator for between-allele differences
 				diff_counts = []
 				list1 = list(set(all_alleles))
 				for i, j in list(combinations(range(0,len(list1)), 2)):
 					diff_counts.append(distance(list1[i],list1[j]))
-				final[window].append(min(diff_counts))
-				final[window].append(max(diff_counts))
+				final[good_windows].append(min(diff_counts))
+				final[good_windows].append(max(diff_counts))
 
 			# Get the required sequences for conserved and variable regions
-				window_start = windows[window][0]
-				primer1_stop = windows[window][1]
-				primer2_start = windows[window][2] + 1
-				window_stop = windows[window][3]
 
 				full_window = ""
 
@@ -325,9 +337,10 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, 
 					for row1 in rows1:
 						if not row1.startswith(">"):
 							full_window += row1.strip("\n")
-				final[window].append(full_window[(window_start - window_start):(primer1_stop - window_start)])
-				final[window].append(full_window[(primer1_stop - window_start):(primer2_start - window_start)])
-				final[window].append(full_window[(primer2_start - window_start):((window_stop - window_start)+1)])
+				final[good_windows].append(full_window[0:(window.p1stop - window.winstart)])
+				final[good_windows].append(full_window[(window.p1stop - window.winstart):((window.p2start + 1) - window.winstart)])
+				final[good_windows].append(full_window[((window.p2start + 1) - window.winstart):((window.winstop - window.winstart) + 1)])
+				good_windows += 1
 
 	with open(logfile, 'a') as outfile:
 		outfile.write(str(len(final)) + " informative windows found in contig " + contig + ".\n")
@@ -415,13 +428,13 @@ def main(args):
 		all_files[contig] = []
 	master_dict = {}
 	for contig in contig_lengths:
-		master_dict[contig] = {}
+		master_dict[contig] = []
 	merged_dict = {}
 	for contig in contig_lengths:
-		merged_dict[contig] = {}
+		merged_dict[contig] = []
 	final_dict = {}
 	for contig in contig_lengths:
-		final_dict[contig] = {}
+		final_dict[contig] = []
 
 	# Set other values
 	filter_qual = "%QUAL>" + str(args.quality)
@@ -502,7 +515,7 @@ def main(args):
 	#######################################################################
 	# STEP 7 - STEP THROUGH EACH CONTIG LOOKING FOR WINDOWS WITH
 	#		VARIABLE CENTRES AND CONSERVED PRIMER SITES
-	# OUT: master_dict = {contig1: {window1: [start, p1end, p2start, end]}}
+	# OUT: master_dict = {contig1: [Window1, Window2, Window3]}
 	#######################################################################
 	# Included custom functions: find_windows
 	#######################################################################
@@ -523,7 +536,7 @@ def main(args):
 
 	#######################################################################
 	# STEP 8 - MERGE OVERLAPPING WINDOWS
-	# OUT: merged_dict = {contig1: {window1: [start, p1end, p2start, end]}}
+	# OUT: merged_dict = {contig1: [Window1, Window2, Window3]}
 	#######################################################################
 	# Included custom functions: merge_windows
 	#######################################################################
@@ -534,7 +547,7 @@ def main(args):
 	for contig in master_dict:
 		if master_dict[contig]:
 			print(contig)
-			merged_dict[contig] = merge_windows(contig, master_dict)
+			merged_dict[contig] = merge_windows(master_dict[contig])
 
 	# Timing - time taken to merge windows
 	print_time("Merge windows", start_time)
@@ -542,7 +555,7 @@ def main(args):
 	#######################################################################
 	# STEP 9 - ENSURE THAT EACH SAMPLE CONTAINS AT LEAST ONE UNIQUE ALLELE
 	#		AT EACH LOCUS, AND THAT THE COVERAGE IS ACCEPTABLE
-	# OUT: final_dict = {contig1: {window1: [start, p1end, p2start, end]}}
+	# OUT: final_dict = {contig1: [[Window1, min_diffs, max_diffs, p1_seq, var_seq, p2_seq],[...]]}
 	#######################################################################
 	# Included custom functions: verify_windows
 	#	Subfunctions: compare, get_allele_consensus, check_coverage
@@ -585,23 +598,19 @@ def main(args):
 				window_SNPs = 0
 				window_indels = 0
 
-				conserved_1_start = final_dict[contig][window][0]
-				conserved_1_stop = final_dict[contig][window][1] - 1
-				variable_start = final_dict[contig][window][1]
-				variable_stop = final_dict[contig][window][2]
-				conserved_2_start = final_dict[contig][window][2] + 1
-				conserved_2_stop = final_dict[contig][window][3]
+				conserved_1_start = window[0].winstart
+				conserved_1_stop = window[0].p1stop - 1
+				variable_start = window[0].p1stop
+				variable_stop = window[0].p2start
+				conserved_2_start = window[0].p2start + 1
+				conserved_2_stop = window[0].winstop
 				variable_len = conserved_2_start - variable_start
 
-				min_diffs = final_dict[contig][window][4]
-				max_diffs = final_dict[contig][window][5]
-				conserved_1_seq = final_dict[contig][window][6]
-				variable_seq = final_dict[contig][window][7]
-				conserved_2_seq = final_dict[contig][window][8]
-
-#				conserved_1_seq = final_dict[contig][window][4]
-#				variable_seq = final_dict[contig][window][5]
-#				conserved_2_seq = final_dict[contig][window][6]
+				min_diffs = window[1]
+				max_diffs = window[2]
+				conserved_1_seq = window[3]
+				variable_seq = window[4]
+				conserved_2_seq = window[5]
 
 				for SNP in all_SNPs[contig]:
 					if variable_start < int(SNP) < variable_stop:
