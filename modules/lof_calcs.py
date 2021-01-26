@@ -112,3 +112,53 @@ def melt_merge_pops(df1, df2):
     merged_temp = temp_df1.append(temp_df2, ignore_index=True)
 
     return merged_temp
+
+def count_lofs(df):
+    #counts numbers of times a gene has had LOF mutations detected per sample
+    #Input: dataframe of LOF mutations per sample (columns) and per gene (rows, index)
+    #Output: dataframe with total numbers of LOF counts per sample (rows) per bin (column)
+    
+    #create dummy dataframe from columns in input df, skipping 'genes' column
+    out_df = pd.DataFrame()
+    out_df['samples'] = df.columns
+    out_df = out_df[~out_df.samples.str.contains("genes")]
+
+    #create columns for output
+    out_df['LOF_count_0'] = 0
+    out_df['LOF_count_1'] = 0
+    out_df['LOF_count_2'] = 0
+    out_df['LOF_count_3'] = 0
+    out_df['LOF_count_4'] = 0
+    out_df['LOF_count_5'] = 0
+    out_df['LOF_count_6_10'] = 0
+    out_df['LOF_count_10_plus'] = 0
+
+    #loop through all samples
+    for sample in df.columns:
+        if sample not in 'genes':
+    #loop through all genes, after skipping 'genes' column
+            for idx in df.genes:
+                #if the value in the input df for that sample and gene is 0
+                if df[sample][idx] == 0:
+                #add one to output df, in column "LOF_count_0", same row as sample being analysed
+                    out_df.loc[out_df.samples == sample, "LOF_count_0"] += 1
+                elif df[sample][idx] == 1:
+                    out_df.loc[out_df.samples == sample, "LOF_count_1"] += 1
+                elif df[sample][idx] == 2:
+                    out_df.loc[out_df.samples == sample, "LOF_count_2"] += 1
+                elif df[sample][idx] == 3:
+                    out_df.loc[out_df.samples == sample, "LOF_count_3"] += 1
+                elif df[sample][idx] == 4:
+                    out_df.loc[out_df.samples == sample, "LOF_count_4"] += 1
+                elif df[sample][idx] == 5:
+                    out_df.loc[out_df.samples == sample, "LOF_count_5"] += 1
+                elif (df[sample][idx] > 5 & df[sample][idx] <= 10):
+                    out_df.loc[out_df.samples == sample, "LOF_count_6_10"] += 1
+                elif df[sample][idx] > 10:
+                    print(df[sample][idx])
+                    #out_df.loc[out_df.samples == sample, "LOF_count_10_plus"] += 1
+                else:
+                    break
+        else:
+            continue
+    return out_df
