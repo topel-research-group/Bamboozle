@@ -267,13 +267,59 @@ def check_coverage(median_list, bad_regions, bamfile, this_contig, window_start,
 	return(suitability)
 
 #######################################################################
+# PRINT WINDOW TO TEMPORARY FILE
+#	SUBFUNCTION OF VERIFY_WINDOWS()
+#######################################################################
+
+def print_to_temp(contig, window_number, result_list, contig_SNPs, contig_indels):
+	with open(contig + ".temp.bed", "a") as output_bed, open(contig + ".temp.txt", "a") as output_txt:
+		window_SNPs = 0
+		window_indels = 0
+
+		conserved_1_start = result_list[0].winstart
+		conserved_1_stop = result_list[0].p1stop - 1
+		variable_start = result_list[0].p1stop
+		variable_stop = result_list[0].p2start
+		conserved_2_start = result_list[0].p2start + 1
+		conserved_2_stop = result_list[0].winstop
+		variable_len = conserved_2_start - variable_start
+
+		min_diffs = result_list[1]
+		max_diffs = result_list[2]
+		conserved_1_seq = result_list[3]
+		variable_seq = result_list[4]
+		conserved_2_seq = result_list[5]
+
+		for SNP in contig_SNPs:
+			if variable_start < int(SNP) < variable_stop:
+				window_SNPs += 1
+		for indel in contig_indels:
+			if variable_start < int(indel) < variable_stop:
+				window_indels += 1
+
+		window_name = str(contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
+
+		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
+		window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
+				str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
+
+		line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
+				str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
+				str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
+				str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
+
+		output_bed.write(window_out)
+		output_txt.write(line_out)
+	output_bed.close()
+	output_txt.close()
+
+#######################################################################
 # ENSURE UNIQUENESS AND COVERAGE OF VARIABLE REGIONS BETWEEN STRAINS
 # OUT: [[Window, min_diffs, max_diffs, p1_seq, var_seq, p2_seq], [...]]
 # DevNote - needs speeding up!
 #######################################################################
 
-def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, logfile):
-	final = []
+def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, contig_SNPs, contig_indels, logfile):
 
 	good_windows = 0
 
@@ -282,6 +328,7 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, 
 
 		alleles = {}
 		results = []
+		to_print = []
 		for bam in infiles:
 			# DevNote - this currently generates allele consensuses for all BAM files,
 			# even if an earlier one shows poor coverage; use a while condition?
@@ -315,16 +362,15 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, 
 					break
 
 			if alleles_are_unique:
-				final.append([])
-				final[good_windows].append(window)
+				to_print.append(window)
 
 				# Re-add the calculator for between-allele differences
 				diff_counts = []
 				list1 = list(set(all_alleles))
 				for i, j in list(combinations(range(0,len(list1)), 2)):
 					diff_counts.append(distance(list1[i],list1[j]))
-				final[good_windows].append(min(diff_counts))
-				final[good_windows].append(max(diff_counts))
+				to_print.append(min(diff_counts))
+				to_print.append(max(diff_counts))
 
 			# Get the required sequences for conserved and variable regions
 
@@ -337,16 +383,18 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, 
 					for row1 in rows1:
 						if not row1.startswith(">"):
 							full_window += row1.strip("\n")
-				final[good_windows].append(full_window[0:(window.p1stop - window.winstart)])
-				final[good_windows].append(full_window[(window.p1stop - window.winstart):((window.p2start + 1) - window.winstart)])
-				final[good_windows].append(full_window[((window.p2start + 1) - window.winstart):((window.winstop - window.winstart) + 1)])
+				to_print.append(full_window[0:(window.p1stop - window.winstart)])
+				to_print.append(full_window[(window.p1stop - window.winstart):((window.p2start + 1) - window.winstart)])
+				to_print.append(full_window[((window.p2start + 1) - window.winstart):((window.winstop - window.winstart) + 1)])
 				good_windows += 1
 
+				print_to_temp(contig, good_windows, to_print, contig_SNPs, contig_indels)
+
 	with open(logfile, 'a') as outfile:
-		outfile.write(str(len(final)) + " informative windows found in contig " + contig + ".\n")
+		outfile.write(str(good_windows) + " informative windows found in contig " + contig + ".\n")
 	outfile.close()
 
-	return(final)
+	return("Done")
 
 #######################################################################
 # PRINT DURATION OF THE STEP
@@ -434,7 +482,7 @@ def main(args):
 		merged_dict[contig] = []
 	final_dict = {}
 	for contig in contig_lengths:
-		final_dict[contig] = []
+		final_dict[contig] = ""
 
 	# Set other values
 	filter_qual = "%QUAL>" + str(args.quality)
@@ -569,8 +617,10 @@ def main(args):
 
 	print("\nChecking consensuses...")
 
+	all_done = []
+
 	to_final = pool.starmap(verify_windows, \
-		[(merged_dict[contig], contig, args.ref, args.sortbam, cov_stats, bad_cov, barcode_log) for contig in contig_lengths])
+		[(merged_dict[contig], contig, args.ref, args.sortbam, cov_stats, bad_cov, all_SNPs[contig], all_indels[contig], barcode_log) for contig in contig_lengths])
 
 	for entry in range(0,len(contig_lengths)):
 		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
@@ -588,58 +638,39 @@ def main(args):
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
 
-#		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\n")
 		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
 
-		for contig in final_dict:
-			window_number = 0
-			for window in final_dict[contig]:
-				window_number += 1
-				window_SNPs = 0
-				window_indels = 0
+		for contig in contig_lengths:
+			input_bed = contig + ".temp.bed"
+			input_txt = contig + ".temp.txt"
 
-				conserved_1_start = window[0].winstart
-				conserved_1_stop = window[0].p1stop - 1
-				variable_start = window[0].p1stop
-				variable_stop = window[0].p2start
-				conserved_2_start = window[0].p2start + 1
-				conserved_2_stop = window[0].winstop
-				variable_len = conserved_2_start - variable_start
+			with open(input_bed, "r") as inbed:
+				for line in inbed:
+					output_bed.write(line)
+			inbed.close()
 
-				min_diffs = window[1]
-				max_diffs = window[2]
-				conserved_1_seq = window[3]
-				variable_seq = window[4]
-				conserved_2_seq = window[5]
-
-				for SNP in all_SNPs[contig]:
-					if variable_start < int(SNP) < variable_stop:
-						window_SNPs += 1
-				for indel in all_indels[contig]:
-					if variable_start < int(indel) < variable_stop:
-						window_indels += 1
-
-				window_name = str(contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
-
-				# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
-						str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
-				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
-						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
-						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
-						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
-#				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
-#						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
-#						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
-#						str(variable_len) + "\n"
-
-				output_bed.write(window_out)
-				output_txt.write(line_out)
-		output_bed.close()
-		output_txt.close()
+			with open(input_txt, "r") as intxt:
+				for line in intxt:
+					output_txt.write(line)
+			intxt.close()
+	output_bed.close()
+	output_txt.close()
 
 	# Timing - time taken to write output
 	print_time("Write output", start_time)
+
+	#######################################################################
+	# STEP 11 - REMOVE TEMPORARY FILES
+	#######################################################################
+	start_time = time()
+
+	print("\nRemoving temporary files...")
+
+	for contig in contig_lengths:
+		os.remove(contig + ".temp.bed")
+		os.remove(contig + ".temp.txt")
+
+	print_time("Remove temporary files", start_time)
 
 	# Timing - total pipeline time
 	total_time = "Total time: " + str(round(time() - full_time, 1)) + " seconds.\n"
