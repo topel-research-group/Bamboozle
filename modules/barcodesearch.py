@@ -320,7 +320,6 @@ def print_to_temp(contig, window_number, result_list, contig_SNPs, contig_indels
 #######################################################################
 
 def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, contig_SNPs, contig_indels, logfile):
-
 	good_windows = 0
 
 	for window in windows:
@@ -353,11 +352,13 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, 
 
 			# Searches for at least one unique allele per sample
 			all_alleles = [item for sublist in list(alleles.values()) for item in sublist]
-			unique_values = [x for x in all_alleles if all_alleles.count(x)==1]
+			unique_alleles = [x for x in all_alleles if all_alleles.count(x)==1]
 
+			# Compare set of sample's alleles and all unique alleles
+			# Each sample should contain at least one unique allele
 			alleles_are_unique = True
 			for sample in alleles.keys():
-				if not list(set(alleles[sample]) & set(unique_values)):
+				if not list(set(alleles[sample]) & set(unique_alleles)):
 					alleles_are_unique = False
 					break
 
@@ -461,7 +462,8 @@ def main(args):
 	# STEP 3 - SET SOME ADDITIONAL VARIABLES
 	########################################################################
 
-	# Set initial global lists/dictionaries
+	# Set initial lists/dictionaries
+
 	all_SNPs = {}
 	for contig in contig_lengths:
 		all_SNPs[contig] = []
@@ -579,6 +581,10 @@ def main(args):
 	for entry in range(0,len(contig_lengths)):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
+	# DevNote - trying to save memory space
+#	all_variants = "None"
+	all_variants.clear()
+
 	# Timing - time taken to find valid windows
 	print_time("Find valid windows", start_time)
 
@@ -596,6 +602,10 @@ def main(args):
 		if master_dict[contig]:
 			print(contig)
 			merged_dict[contig] = merge_windows(master_dict[contig])
+
+	# DevNote - trying to save memory space
+#	master_dict = "None"
+	master_dict.clear()
 
 	# Timing - time taken to merge windows
 	print_time("Merge windows", start_time)
