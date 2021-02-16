@@ -664,7 +664,7 @@ def main(args):
 		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
 
 		window_number = 0
-		for window in final_list:
+		for window in really_final_list:
 			window_number += 1
 			window_SNPs = 0
 			window_indels = 0
@@ -693,7 +693,7 @@ def main(args):
 			window_name = str(window[0].contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
 
 			# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-			window_out = str(window[0]/contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
+			window_out = str(window[0].contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
 					str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
 			line_out = str(window_name) + "\t" + str(window[0].contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
 					str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
