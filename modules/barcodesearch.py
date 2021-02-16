@@ -42,13 +42,14 @@ from statistics import median
 #######################################################################
 
 class Window:
-	def __init__(self, winstart, p1stop, p2start, winstop):
+	def __init__(self, contig, winstart, p1stop, p2start, winstop):
+		self.contig = contig
 		self.winstart = winstart
 		self.p1stop = p1stop
 		self.p2start = p2start
 		self.winstop = winstop
 	def __str__(self):
-		return f"[{self.winstart}, {self.p1stop}, {self.p2start}, {self.winstop}]"
+		return f"[{self.contig}, {self.winstart}, {self.p1stop}, {self.p2start}, {self.winstop}]"
 
 #######################################################################
 # GET REASONABLE SAMPLE NAMES
@@ -111,6 +112,7 @@ def get_median(bamfile, contigs):
 #	DevNote - Currently, bad regions are defined as regions
 #		either less than half or more than twice the contig
 #		median; this should be adjusted
+#	DevNote - Any efficient way to merge adjacent windows?
 #######################################################################
 
 def get_badcov(bam, contigs, coverage_stats):
@@ -170,7 +172,7 @@ def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile)
 	# If no variants in primer sites, save the coordinates
 
 		if not list(set(conserved) & set(variant_list)):
-			windows.append(Window(window_start,primer1_stop,primer2_start,window_stop))
+			windows.append(Window(contig,window_start,primer1_stop,primer2_start,window_stop))
 
 	with open(logfile, 'a') as outfile:
 		outfile.write(str(len(windows)) + " preliminary windows found in contig " + contig + ".\n")
@@ -183,18 +185,18 @@ def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile)
 # OUT: [Window1, Window2, Window3, ...]
 #######################################################################
 
-def merge_windows(window_list):
+def merge_windows(window_list, contig):
 	merged = []
-	saved_window = Window(0,0,0,0)
+	saved_window = Window(contig,0,0,0,0)
 
 	for window in window_list:
-		if saved_window == Window(0,0,0,0):
-			saved_window = Window(window.winstart, window.p1stop, window.p2start, window.winstop)
+		if saved_window == Window(contig,0,0,0,0):
+			saved_window = Window(contig,window.winstart, window.p1stop, window.p2start, window.winstop)
 		elif saved_window.winstart <= window.winstart <= saved_window.p1stop:
-			saved_window = Window(saved_window.winstart, window.p1stop, saved_window.p2start, window.winstop)
+			saved_window = Window(contig,saved_window.winstart, window.p1stop, saved_window.p2start, window.winstop)
 		else:
 			merged.append(saved_window)
-			saved_window = Window(window.winstart, window.p1stop, window.p2start, window.winstop)
+			saved_window = Window(contig,window.winstart, window.p1stop, window.p2start, window.winstop)
 
 	# Include the final merged window
 	merged.append(saved_window)
@@ -267,31 +269,72 @@ def check_coverage(median_list, bad_regions, bamfile, this_contig, window_start,
 	return(suitability)
 
 #######################################################################
+# ENSURE GOOD COVERAGE OF VARIABLE REGIONS BETWEEN STRAINS
+# OUT: [Window1, Window2, Window3, ...]
+# DevNote - formerly part of verify_windows()
+# DevNote - this currently generates allele consensuses for all BAM files,
+# even if an earlier one shows poor coverage; use a while condition?
+#######################################################################
+
+def good_coverage(windows, median_list, bad_regions, infiles, contig, logfile):
+	good_windows = []
+
+	for window in windows:
+		suitability = True
+		for bam in infiles:
+			window_range = set(range(window.winstart, window.winstop + 1))
+			bad_overlap = 10
+
+			for badplace in bad_regions[bam][window.contig]:
+				bad_start = bad_regions[bam][window.contig][badplace][0]
+				bad_end = bad_regions[bam][window.contig][badplace][1] + 1
+				bad_range = range(bad_start, bad_end)
+
+				if bad_start > window.winstop:
+					break
+				elif bad_end < window.winstart:
+					continue
+				elif len(window_range.intersection(bad_range)) >= bad_overlap:
+					suitability = False
+					break
+		if suitability == True:
+			good_windows.append(window)
+
+	with open(logfile, 'a') as outfile:
+		outfile.write(str(len(good_windows)) + " good coverage windows found in contig " + contig + ".\n")
+	outfile.close()
+
+	return(good_windows)
+
+#######################################################################
+# CHUNK UP good_cov_list TO SHARE EQUALLY BETWEEN PROCESSES IN THE
+#  FINAL STEP OF THE PIPELINE
+#######################################################################
+
+def chunks(lst, n):
+	for i in range(0, len(lst), n):
+		yield lst[i:i + n]
+
+#######################################################################
 # ENSURE UNIQUENESS AND COVERAGE OF VARIABLE REGIONS BETWEEN STRAINS
 # OUT: [[Window, min_diffs, max_diffs, p1_seq, var_seq, p2_seq], [...]]
 # DevNote - needs speeding up!
 #######################################################################
 
-def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, logfile):
+def verify_windows(windows, reference, infiles, medians, badcov):
 	final = []
 
 	good_windows = 0
 
 	for window in windows:
-		con_range = contig + ":" + str(window.winstart) + "-" + str(window.winstop)
-
+		con_range = window.contig + ":" + str(window.winstart) + "-" + str(window.winstop)
 		alleles = {}
 		results = []
 		for bam in infiles:
-			# DevNote - this currently generates allele consensuses for all BAM files,
-			# even if an earlier one shows poor coverage; use a while condition?
-			if check_coverage(medians, contig_badcov[bam][contig], bam, contig, window.winstart, window.winstop) == True:
-				# Add each allele to a list in the relevant nested dictionary
-				alleles[bam] = ["", ""]
-				for phase in [0, 1]:
-					alleles[bam][phase] = get_allele_consensus(phase, bam, reference, con_range)
-			else:
-				continue
+			# Add each allele to a list in the relevant nested dictionary
+			alleles[bam] = ["", ""]
+			for phase in [0, 1]:
+				alleles[bam][phase] = get_allele_consensus(phase, bam, reference, con_range)
 
 #		# Searches for unique COMBINATIONS of alleles
 #		for seq in alleles:
@@ -318,7 +361,7 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, 
 				final.append([])
 				final[good_windows].append(window)
 
-				# Re-add the calculator for between-allele differences
+			# Calculate between-allele differences
 				diff_counts = []
 				list1 = list(set(all_alleles))
 				for i, j in list(combinations(range(0,len(list1)), 2)):
@@ -341,10 +384,6 @@ def verify_windows(windows, contig, reference, infiles, medians, contig_badcov, 
 				final[good_windows].append(full_window[(window.p1stop - window.winstart):((window.p2start + 1) - window.winstart)])
 				final[good_windows].append(full_window[((window.p2start + 1) - window.winstart):((window.winstop - window.winstart) + 1)])
 				good_windows += 1
-
-	with open(logfile, 'a') as outfile:
-		outfile.write(str(len(final)) + " informative windows found in contig " + contig + ".\n")
-	outfile.close()
 
 	return(final)
 
@@ -432,9 +471,14 @@ def main(args):
 	merged_dict = {}
 	for contig in contig_lengths:
 		merged_dict[contig] = []
-	final_dict = {}
+
+	good_cov_dict = {}
 	for contig in contig_lengths:
-		final_dict[contig] = []
+		good_cov_dict[contig] = []
+
+#	final_dict = {}
+#	for contig in contig_lengths:
+#		final_dict[contig] = []
 
 	# Set other values
 	filter_qual = "%QUAL>" + str(args.quality)
@@ -547,10 +591,31 @@ def main(args):
 	for contig in master_dict:
 		if master_dict[contig]:
 			print(contig)
-			merged_dict[contig] = merge_windows(master_dict[contig])
+			merged_dict[contig] = merge_windows(master_dict[contig], contig)
+
+#	merged_list = [item for sublist in list(merged_dict.values()) for item in sublist]
 
 	# Timing - time taken to merge windows
 	print_time("Merge windows", start_time)
+
+	#######################################################################
+	# STEP 8.5 - EXCLUDE WINDOWS OF LOW COVERAGE
+	# OUT: good_cov_dict = {contig1: [Window1, Window2, Window3]}
+	#######################################################################
+	start_time = time()
+
+	print("\nChecking window coverage...")
+
+	to_good_cov = pool.starmap(good_coverage, \
+		[(merged_dict[contig], cov_stats, bad_cov, args.sortbam, contig, barcode_log) for contig in contig_lengths])
+
+	for entry in range(0,len(contig_lengths)):
+		good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
+
+	good_cov_list = [item for sublist in list(good_cov_dict.values()) for item in sublist]
+
+	# Timing - time taken to get good-coverage windows
+	print_time("Get good-coverage windows", start_time)
 
 	#######################################################################
 	# STEP 9 - ENSURE THAT EACH SAMPLE CONTAINS AT LEAST ONE UNIQUE ALLELE
@@ -569,11 +634,19 @@ def main(args):
 
 	print("\nChecking consensuses...")
 
-	to_final = pool.starmap(verify_windows, \
-		[(merged_dict[contig], contig, args.ref, args.sortbam, cov_stats, bad_cov, barcode_log) for contig in contig_lengths])
+	final_list = []
 
-	for entry in range(0,len(contig_lengths)):
-		final_dict[list(contig_lengths.keys())[entry]] = to_final[entry]
+	chunk_len = int(len(good_cov_list) / int(args.threads))
+
+	to_final = pool.starmap(verify_windows, \
+		[(chunky, args.ref, args.sortbam, cov_stats, bad_cov) for chunky in chunks(good_cov_list, chunk_len)])
+
+	chunk_no = int(args.threads)
+
+	for entry in range(0,chunk_no):
+		final_list.append(to_final[entry])
+
+	really_final_list = [item for sublist in final_list for item in sublist]
 
 	# Timing - time taken to get unique windows
 	print_time("Get unique windows", start_time)
@@ -588,55 +661,49 @@ def main(args):
 	with open(out_bed, "a") as output_bed, open(out_txt, "a") as output_txt:
 		output_bed.write("track name=PotentialBarcodes description=\"Potential barcodes\"\n")
 
-#		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\n")
 		output_txt.write("window_name\tcontig\tconserved_1_start\tconserved_1_end\tconserved_1_seq\tvariable_start\tvariable_end\tvariable_seq\tconserved_2_start\tconserved_2_end\tconserved_2_seq\tvariable_length\tmin_diffs\tmax_diffs\n")
 
-		for contig in final_dict:
-			window_number = 0
-			for window in final_dict[contig]:
-				window_number += 1
-				window_SNPs = 0
-				window_indels = 0
+		window_number = 0
+		for window in final_list:
+			window_number += 1
+			window_SNPs = 0
+			window_indels = 0
 
-				conserved_1_start = window[0].winstart
-				conserved_1_stop = window[0].p1stop - 1
-				variable_start = window[0].p1stop
-				variable_stop = window[0].p2start
-				conserved_2_start = window[0].p2start + 1
-				conserved_2_stop = window[0].winstop
-				variable_len = conserved_2_start - variable_start
+			conserved_1_start = window[0].winstart
+			conserved_1_stop = window[0].p1stop - 1
+			variable_start = window[0].p1stop
+			variable_stop = window[0].p2start
+			conserved_2_start = window[0].p2start + 1
+			conserved_2_stop = window[0].winstop
+			variable_len = conserved_2_start - variable_start
 
-				min_diffs = window[1]
-				max_diffs = window[2]
-				conserved_1_seq = window[3]
-				variable_seq = window[4]
-				conserved_2_seq = window[5]
+			min_diffs = window[1]
+			max_diffs = window[2]
+			conserved_1_seq = window[3]
+			variable_seq = window[4]
+			conserved_2_seq = window[5]
 
-				for SNP in all_SNPs[contig]:
-					if variable_start < int(SNP) < variable_stop:
-						window_SNPs += 1
-				for indel in all_indels[contig]:
-					if variable_start < int(indel) < variable_stop:
-						window_indels += 1
+			for SNP in all_SNPs[window[0].contig]:
+				if variable_start < int(SNP) < variable_stop:
+					window_SNPs += 1
+			for indel in all_indels[window[0].contig]:
+				if variable_start < int(indel) < variable_stop:
+					window_indels += 1
 
-				window_name = str(contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
+			window_name = str(window[0].contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
 
-				# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-				window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
-						str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
-				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
-						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
-						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
-						str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
-#				line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
-#						str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
-#						str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
-#						str(variable_len) + "\n"
+			# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
+			window_out = str(window[0]/contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
+					str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
+			line_out = str(window_name) + "\t" + str(window[0].contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
+					str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
+					str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
+					str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
 
-				output_bed.write(window_out)
-				output_txt.write(line_out)
-		output_bed.close()
-		output_txt.close()
+			output_bed.write(window_out)
+			output_txt.write(line_out)
+	output_bed.close()
+	output_txt.close()
 
 	# Timing - time taken to write output
 	print_time("Write output", start_time)
