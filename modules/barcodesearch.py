@@ -30,6 +30,7 @@ import io
 import vcfpy
 import gzip
 import datetime
+import pickle
 from itertools import combinations
 from Levenshtein import distance
 from multiprocessing import Pool
@@ -321,7 +322,7 @@ def chunks(lst, n):
 # DevNote - needs speeding up!
 #######################################################################
 
-def verify_windows(windows, reference, infiles, medians, badcov):
+def verify_windows(windows, reference, infiles, medians, badcov, out_dir):
 	final = []
 
 	good_windows = 0
@@ -383,6 +384,17 @@ def verify_windows(windows, reference, infiles, medians, badcov):
 				final[good_windows].append(full_window[0:(window.p1stop - window.winstart)])
 				final[good_windows].append(full_window[(window.p1stop - window.winstart):((window.p2start + 1) - window.winstart)])
 				final[good_windows].append(full_window[((window.p2start + 1) - window.winstart):((window.winstop - window.winstart) + 1)])
+
+			# Print the sequences to a FASTA file in the FASTA output directory
+				output_file = out_dir + "/" + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop) + "_alleles.fasta"
+				with open(output_file, "a") as outfile:
+					for bam in infiles:
+						for phase in [0, 1]:
+							fasta_header = FileName(bam) + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop) + "_alleles_" + str(phase)
+							outfile.write(">" + fasta_header + "\n")
+							outfile.write(alleles[bam][phase] + "\n")
+				outfile.close()
+
 				good_windows += 1
 
 	return(final)
@@ -425,6 +437,7 @@ def main(args):
 	# Ensure the output files doesn't already exist
 	out_bed = args.outprefix + ".bed"
 	out_txt = args.outprefix + ".txt"
+	out_fasta_dir = args.outprefix + "_alleles"
 
 	barcode_log = barcode_log = "barcoding." + datetime.datetime.now().strftime("%d-%b-%Y") + ".log"
 
@@ -434,6 +447,11 @@ def main(args):
 		sys.exit("[Error] Output TXT file already exists. Please choose another output prefix.")
 	if os.path.isfile(barcode_log):
 		sys.exit("[Error] Another log file exists from today. Please rename or delete it and retry.")
+
+	if os.path.isdir(out_fasta_dir):
+		sys.exit("[Error] Output FASTA directory already exists. Please choose another output prefix.")
+	else:
+		os.mkdir(out_fasta_dir)
 
 	#######################################################################
 	# STEP 2 - GET CONTIG LENGTH STATISTICS
@@ -471,14 +489,10 @@ def main(args):
 	merged_dict = {}
 	for contig in contig_lengths:
 		merged_dict[contig] = []
-
 	good_cov_dict = {}
 	for contig in contig_lengths:
 		good_cov_dict[contig] = []
 
-#	final_dict = {}
-#	for contig in contig_lengths:
-#		final_dict[contig] = []
 
 	# Set other values
 	filter_qual = "%QUAL>" + str(args.quality)
@@ -593,15 +607,16 @@ def main(args):
 			print(contig)
 			merged_dict[contig] = merge_windows(master_dict[contig], contig)
 
-#	merged_list = [item for sublist in list(merged_dict.values()) for item in sublist]
-
 	# Timing - time taken to merge windows
 	print_time("Merge windows", start_time)
 
 	#######################################################################
-	# STEP 8.5 - EXCLUDE WINDOWS OF LOW COVERAGE
+	# STEP 9 - EXCLUDE WINDOWS OF LOW COVERAGE
 	# OUT: good_cov_dict = {contig1: [Window1, Window2, Window3]}
 	#######################################################################
+	# Included custom functions: good_coverage
+	#######################################################################
+
 	start_time = time()
 
 	print("\nChecking window coverage...")
@@ -618,9 +633,9 @@ def main(args):
 	print_time("Get good-coverage windows", start_time)
 
 	#######################################################################
-	# STEP 9 - ENSURE THAT EACH SAMPLE CONTAINS AT LEAST ONE UNIQUE ALLELE
+	# STEP 10 - ENSURE THAT EACH SAMPLE CONTAINS AT LEAST ONE UNIQUE ALLELE
 	#		AT EACH LOCUS, AND THAT THE COVERAGE IS ACCEPTABLE
-	# OUT: final_dict = {contig1: [[Window1, min_diffs, max_diffs, p1_seq, var_seq, p2_seq],[...]]}
+	# OUT: really_final_list = [[Window1, min_diffs, max_diffs, p1_seq, var_seq, p2_seq],[Window2, ...]]
 	#######################################################################
 	# Included custom functions: verify_windows
 	#	Subfunctions: compare, get_allele_consensus, check_coverage
@@ -636,10 +651,23 @@ def main(args):
 
 	final_list = []
 
+	# If each chunk would be less than 2 Gb, then split evenly among threads
+	# Otherwise, split so that each chunk is < 2 Gb
+
 	chunk_len = int(len(good_cov_list) / int(args.threads))
 
+	print("good_cov_list pickle: " + str(len(pickle.dumps(good_cov_list))) + " bytes.\n")
+	print("args.ref pickle: " + str(len(pickle.dumps(args.ref))) + " bytes.\n")
+	print("args.sortbam pickle: " + str(len(pickle.dumps(args.sortbam))) + " bytes.\n")
+	print("cov_stats pickle: " + str(len(pickle.dumps(cov_stats))) + " bytes.\n")
+	print("bad_cov pickle " + str(len(pickle.dumps(bad_cov))) + " bytes.\n")
+	print("Size of chunks passed to each process:\n")
+
+	for chunky in chunks(good_cov_list, chunk_len):
+		print(str(len(pickle.dumps([chunky, args.ref, args.sortbam, cov_stats, bad_cov, out_fasta_dir]))) + "\n")
+
 	to_final = pool.starmap(verify_windows, \
-		[(chunky, args.ref, args.sortbam, cov_stats, bad_cov) for chunky in chunks(good_cov_list, chunk_len)])
+		[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, out_fasta_dir) for chunky in chunks(good_cov_list, chunk_len)])
 
 	chunk_no = int(args.threads)
 
@@ -652,7 +680,7 @@ def main(args):
 	print_time("Get unique windows", start_time)
 
 	#######################################################################
-	# STEP 10 - REPORT RESULTS IN TXT AND BED FORMAT
+	# STEP 11 - REPORT RESULTS IN TXT AND BED FORMAT
 	#######################################################################
 	start_time = time()
 
