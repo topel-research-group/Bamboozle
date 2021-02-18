@@ -461,10 +461,6 @@ def main(args):
 
 	contig_lengths = get_contig_lengths(args.sortbam[0])
 
-	with open("contig_lengths_v3.log", "a") as outlog:
-		outlog.write(str(contig_lengths))
-	outlog.close()
-
 	# Timing - time taken to get contig lengths
 	print_time("Get contig lengths", start_time)
 
@@ -516,10 +512,6 @@ def main(args):
 	for entry in range(0,len(args.sortbam)):
 		cov_stats[args.sortbam[entry]] = to_coverage[entry]
 
-	with open("cov_stats_v3.log", "a") as outlog:
-		outlog.write(str(cov_stats))
-	outlog.close()
-
 	# Timing - time taken to get contig medians
 	print_time("Get median contig coverage stats", start_time)
 
@@ -539,10 +531,6 @@ def main(args):
 		[(bam, contig_lengths, cov_stats[bam]) for bam in args.sortbam])
 	for entry in range(0,len(args.sortbam)):
 		bad_cov[args.sortbam[entry]] = to_badcov[entry]
-
-	with open("bad_cov_v3.log", "a") as outlog:
-		outlog.write(str(bad_cov))
-	outlog.close()
 
 	# Timing - time taken to get bad coverage stats
 	print_time("Get irregular coverage stats", start_time)
@@ -577,14 +565,6 @@ def main(args):
 	for contig in all_indels:
 		all_indels[contig] = sorted(list(set(all_indels[contig])), key=int)
 
-	with open("all_variants_v3.log", "a") as outlog1, open("all_SNPs_v3.log", "a") as outlog2, open("all_indels_v3.log", "a") as outlog3:
-		outlog1.write(str(all_variants))
-		outlog2.write(str(all_SNPs))
-		outlog3.write(str(all_indels))
-	outlog1.close()
-	outlog2.close()
-	outlog3.close()
-
 	# Timing - time taken to get lists of variants
 	print_time("Get lists of variants", start_time)
 
@@ -607,10 +587,6 @@ def main(args):
 	for entry in range(0,len(contig_lengths)):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
-	with open("master_dict_v3.log", "a") as outlog:
-		outlog.write(str(master_dict))
-	outlog.close()
-
 	# Timing - time taken to find valid windows
 	print_time("Find valid windows", start_time)
 
@@ -628,10 +604,6 @@ def main(args):
 		if master_dict[contig]:
 			print(contig)
 			merged_dict[contig] = merge_windows(master_dict[contig], contig)
-
-	with open("merged_dict_v3.log", "a") as outlog:
-		outlog.write(str(merged_dict))
-	outlog.close()
 
 	# Timing - time taken to merge windows
 	print_time("Merge windows", start_time)
@@ -654,12 +626,6 @@ def main(args):
 		good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
 
 	good_cov_list = [item for sublist in list(good_cov_dict.values()) for item in sublist]
-
-	with open("good_cov_dict_v3.log", "a") as outlog1, open("good_cov_list_v3.log", "a") as outlog2:
-		outlog1.write(str(good_cov_dict))
-		outlog2.write(str(good_cov_list))
-	outlog1.close()
-	outlog2.close()
 
 	# Timing - time taken to get good-coverage windows
 	print_time("Get good-coverage windows", start_time)
@@ -707,12 +673,6 @@ def main(args):
 		final_list.append(to_final[entry])
 
 	really_final_list = [item for sublist in final_list for item in sublist]
-
-	with open("final_list_v3.log", "a") as outlog1, open("really_final_list_v3.log", "a") as outlog2:
-		outlog1.write(str(final_list))
-		outlog2.write(str(really_final_list))
-	outlog1.close()
-	outlog2.close()
 
 	# Timing - time taken to get unique windows
 	print_time("Get unique windows", start_time)
