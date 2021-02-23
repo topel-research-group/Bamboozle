@@ -550,7 +550,7 @@ def main(args):
 	# HOW TO FIX THIS SO IT READS GZIP FILES STRAIGHTAWAY?
 
 	for bam in args.sortbam:
-		print("\nFinding variants...")
+		print("\nFinding variants in " + FileName(bam) + "...")
 		current_contig = ""
 
 		for row2 in gzip.open(NoExt(bam) + ".vcf.gz", 'rt'):
