@@ -315,53 +315,6 @@ def chunks(lst, n):
 		yield lst[i:i + n]
 
 #######################################################################
-# PRINT WINDOW TO TEMPORARY FILE
-#	SUBFUNCTION OF VERIFY_WINDOWS()
-#######################################################################
-
-def print_to_temp(contig, window_number, result_list, contig_SNPs, contig_indels):
-	with open(contig + ".temp.bed", "a") as output_bed, open(contig + ".temp.txt", "a") as output_txt:
-		window_SNPs = 0
-		window_indels = 0
-
-		conserved_1_start = result_list[0].winstart
-		conserved_1_stop = result_list[0].p1stop - 1
-		variable_start = result_list[0].p1stop
-		variable_stop = result_list[0].p2start
-		conserved_2_start = result_list[0].p2start + 1
-		conserved_2_stop = result_list[0].winstop
-		variable_len = conserved_2_start - variable_start
-
-		min_diffs = result_list[1]
-		max_diffs = result_list[2]
-		conserved_1_seq = result_list[3]
-		variable_seq = result_list[4]
-		conserved_2_seq = result_list[5]
-
-		for SNP in contig_SNPs:
-			if variable_start < int(SNP) < variable_stop:
-				window_SNPs += 1
-		for indel in contig_indels:
-			if variable_start < int(indel) < variable_stop:
-				window_indels += 1
-
-		window_name = str(contig) + "_" + str(window_number) + "_SNPs_" + str(window_SNPs) + "_indels_" + str(window_indels)
-
-		# Fields 7 and 8 (thickStart and thickEnd) represent the start and stop positions of the non-primer part of the window
-		window_out = str(contig) + "\t" + str(conserved_1_start - 1) + "\t" + str(conserved_2_stop) + "\t" + \
-				str(window_name) + "\t0\t.\t" + str(conserved_1_stop) + "\t" + str(variable_stop) + "\n"
-
-		line_out = str(window_name) + "\t" + str(contig) + "\t" + str(conserved_1_start) + "\t" + str(conserved_1_stop) + "\t" + conserved_1_seq + "\t" + \
-				str(variable_start) + "\t" + str(variable_stop) + "\t" + variable_seq + "\t" + \
-				str(conserved_2_start) + "\t" + str(conserved_2_stop) + "\t" + conserved_2_seq + "\t" + \
-				str(variable_len) + "\t" + str(min_diffs) + "\t" + str(max_diffs) + "\n"
-
-		output_bed.write(window_out)
-		output_txt.write(line_out)
-	output_bed.close()
-	output_txt.close()
-
-#######################################################################
 # ENSURE UNIQUENESS AND COVERAGE OF VARIABLE REGIONS BETWEEN STRAINS
 # OUT: [[Window, min_diffs, max_diffs, p1_seq, var_seq, p2_seq], [...]]
 # DevNote - needs speeding up!
@@ -376,7 +329,6 @@ def verify_windows(windows, reference, infiles, medians, badcov, out_dir):
 		con_range = window.contig + ":" + str(window.winstart) + "-" + str(window.winstop)
 		alleles = {}
 		results = []
-		to_print = []
 		for bam in infiles:
 			# Add each allele to a list in the relevant nested dictionary
 			alleles[bam] = ["", ""]
@@ -407,15 +359,16 @@ def verify_windows(windows, reference, infiles, medians, badcov, out_dir):
 					break
 
 			if alleles_are_unique:
-				to_print.append(window)
+				final.append([])
+				final[good_windows].append(window)
 
 			# Calculate between-allele differences
 				diff_counts = []
 				list1 = list(set(all_alleles))
 				for i, j in list(combinations(range(0,len(list1)), 2)):
 					diff_counts.append(distance(list1[i],list1[j]))
-				to_print.append(min(diff_counts))
-				to_print.append(max(diff_counts))
+				final[good_windows].append(min(diff_counts))
+				final[good_windows].append(max(diff_counts))
 
 			# Get the required sequences for conserved and variable regions
 
@@ -445,7 +398,7 @@ def verify_windows(windows, reference, infiles, medians, badcov, out_dir):
 
 				good_windows += 1
 
-	return("Done")
+	return(final)
 
 #######################################################################
 # PRINT DURATION OF THE STEP
@@ -518,7 +471,7 @@ def main(args):
 	# STEP 3 - SET SOME ADDITIONAL VARIABLES
 	########################################################################
 
-	# Set initial lists/dictionaries
+	# Set initial global lists/dictionaries
 
 	all_SNPs = {}
 	for contig in contig_lengths:
@@ -638,7 +591,6 @@ def main(args):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
 	# DevNote - trying to save memory space
-#	all_variants = "None"
 	all_variants.clear()
 
 	# Timing - time taken to find valid windows
@@ -660,7 +612,6 @@ def main(args):
 			merged_dict[contig] = merge_windows(master_dict[contig], contig)
 
 	# DevNote - trying to save memory space
-#	master_dict = "None"
 	master_dict.clear()
 
 	# Timing - time taken to merge windows
@@ -791,19 +742,6 @@ def main(args):
 
 	# Timing - time taken to write output
 	print_time("Write output", start_time)
-
-	#######################################################################
-	# STEP 11 - REMOVE TEMPORARY FILES
-	#######################################################################
-	start_time = time()
-
-	print("\nRemoving temporary files...")
-
-	for contig in contig_lengths:
-		os.remove(contig + ".temp.bed")
-		os.remove(contig + ".temp.txt")
-
-	print_time("Remove temporary files", start_time)
 
 	# Timing - total pipeline time
 	total_time = "Total time: " + str(round(time() - full_time, 1)) + " seconds.\n"
