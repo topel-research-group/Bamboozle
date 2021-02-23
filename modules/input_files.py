@@ -393,10 +393,10 @@ def main(args):
 			phase0vcf = noext + ".0.vcf.gz.csi"
 			phase1vcf = noext + ".1.vcf.gz.csi"
 
-			if args.haploid:
+			if args.ploidy == "haploid":
 				if not os.path.isfile(mainvcf):
 					sys.exit("[Error] Please ensure that you run 'bcftools index' on all input files. This will be automated in future versions of Bamboozle.")
-			if args.diploid:
+			if args.ploidy == "diploid":
 				if not (os.path.isfile(phase0) and os.path.isfile(phase1)):
 					print("Generating phased BAM files")
 					phasing(infile, noext, args.threads)

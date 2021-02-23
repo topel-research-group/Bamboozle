@@ -268,6 +268,29 @@ def get_allele_consensus(phase, bam, ref, my_range):
 	return(allele)
 
 #######################################################################
+# AS get_allele_consensus(), BUT WHEN DEALING WITH HAPLOID SAMPLES
+#       SUBFUNCTION OF VERIFY_WINDOWS()
+# DevNote - merge with get_allele_consensus()?
+#######################################################################
+
+def get_consensus_haploid(bam, ref, my_range):
+	allele = ""
+	invcf = bam.replace(".bam", ".vcf.gz")
+
+	cmdD = ["samtools", "faidx", ref, my_range]
+	procD = subprocess.Popen(cmdD, stdout=subprocess.PIPE, shell=False)
+
+	cmdE = ["bcftools", "consensus", "-i", "GT=\"hom\"", invcf]
+	process3 = subprocess.Popen(cmdE, stdin=procD.stdout, stdout=subprocess.PIPE, shell=False)
+
+	with process3.stdout as result3:
+		rows3 = (line.decode() for line in result3)
+		for row3 in rows3:
+			if not row3.startswith(">"):
+				allele += row3.upper().strip("\n")
+	return(allele)
+
+#######################################################################
 # ENSURE GOOD COVERAGE OF VARIABLE REGIONS BETWEEN STRAINS
 # OUT: [Window1, Window2, Window3, ...]
 # DevNote - formerly part of verify_windows()
@@ -317,10 +340,10 @@ def chunks(lst, n):
 #######################################################################
 # ENSURE UNIQUENESS AND COVERAGE OF VARIABLE REGIONS BETWEEN STRAINS
 # OUT: [[Window, min_diffs, max_diffs, p1_seq, var_seq, p2_seq], [...]]
-# DevNote - needs speeding up!
+# DevNote - Needs adjusting to accept haploids
 #######################################################################
 
-def verify_windows(windows, reference, infiles, medians, badcov, out_dir):
+def verify_windows(windows, reference, infiles, medians, badcov, ploidy, out_dir):
 	final = []
 
 	good_windows = 0
@@ -329,11 +352,17 @@ def verify_windows(windows, reference, infiles, medians, badcov, out_dir):
 		con_range = window.contig + ":" + str(window.winstart) + "-" + str(window.winstop)
 		alleles = {}
 		results = []
-		for bam in infiles:
-			# Add each allele to a list in the relevant nested dictionary
-			alleles[bam] = ["", ""]
-			for phase in [0, 1]:
-				alleles[bam][phase] = get_allele_consensus(phase, bam, reference, con_range)
+
+		if ploidy == "haploid":
+			for bam in infiles:
+				alleles[bam] = get_consensus_haploid(bam, reference, con_range)
+
+		elif ploidy == "diploid":
+			for bam in infiles:
+				# Add each allele to a list in the relevant nested dictionary
+				alleles[bam] = ["", ""]
+				for phase in [0, 1]:
+					alleles[bam][phase] = get_allele_consensus(phase, bam, reference, con_range)
 
 #		# Searches for unique COMBINATIONS of alleles
 #		for seq in alleles:
@@ -346,17 +375,23 @@ def verify_windows(windows, reference, infiles, medians, badcov, out_dir):
 
 		if len(alleles) == len(infiles):
 
-			# Searches for at least one unique allele per sample
-			all_alleles = [item for sublist in list(alleles.values()) for item in sublist]
-			unique_alleles = [x for x in all_alleles if all_alleles.count(x)==1]
+			if ploidy == "diploid":
+				# Searches for at least one unique allele per sample
+				all_alleles = [item for sublist in list(alleles.values()) for item in sublist]
+				unique_alleles = [x for x in all_alleles if all_alleles.count(x)==1]
 
 			# Compare set of sample's alleles and all unique alleles
 			# Each sample should contain at least one unique allele
 			alleles_are_unique = True
-			for sample in alleles.keys():
-				if not list(set(alleles[sample]) & set(unique_alleles)):
-					alleles_are_unique = False
-					break
+
+#			if ploidy == "haploid":
+#				# Check whether the number of unique alleles equals the number of inputs
+
+			if ploidy == "diploid":
+				for sample in alleles.keys():
+					if not list(set(alleles[sample]) & set(unique_alleles)):
+						alleles_are_unique = False
+						break
 
 			if alleles_are_unique:
 				final.append([])
@@ -390,10 +425,15 @@ def verify_windows(windows, reference, infiles, medians, badcov, out_dir):
 				output_file = out_dir + "/" + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop) + "_alleles.fasta"
 				with open(output_file, "a") as outfile:
 					for bam in infiles:
-						for phase in [0, 1]:
-							fasta_header = FileName(bam) + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop) + "_alleles_" + str(phase)
+						if ploidy == "haploid":
+							fasta_header = FileName(bam) + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop)
 							outfile.write(">" + fasta_header + "\n")
-							outfile.write(alleles[bam][phase] + "\n")
+							outfile.write(alleles[bam] + "\n")
+						elif ploidy == "diploid":
+							for phase in [0, 1]:
+								fasta_header = FileName(bam) + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop) + "_alleles_" + str(phase)
+								outfile.write(">" + fasta_header + "\n")
+								outfile.write(alleles[bam][phase] + "\n")
 				outfile.close()
 
 				good_windows += 1
@@ -674,7 +714,7 @@ def main(args):
 		print(str(len(pickle.dumps([chunky, args.ref, args.sortbam, cov_stats, bad_cov, out_fasta_dir]))) + "\n")
 
 	to_final = pool.starmap(verify_windows, \
-		[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, out_fasta_dir) for chunky in chunks(good_cov_list, chunk_len)])
+		[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, args.ploidy, out_fasta_dir) for chunky in chunks(good_cov_list, chunk_len)])
 
 	chunk_no = int(args.threads)
 
