@@ -177,13 +177,21 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 		print(contig)
 	variant_dict[contig_name].append(variant_position)
 
-# DevNote - implement method to extract this information from GATK-derived VCFs
-# Split column 5 on commas, then compare lengths with column 4
+	refgen = vcf_row.split("\t")[3]
+	this_var = vcf_row.split("\t")[4]
 
-	if "INDEL" in vcf_row.split("\t")[7]:
+	if "," in this_var:
+		var1 = this_var.split(",")[0]
+		var2 = this_var.split(",")[1]
+		if len(var1) != len(refgen) or len(var2) != len(refgen):
+			indel_dict[contig_name].append(variant_position)
+		else:
+			SNP_dict[contig_name].append(variant_position)
+	elif len(this_var) != len(refgen):
 		indel_dict[contig_name].append(variant_position)
 	else:
 		SNP_dict[contig_name].append(variant_position)
+
 	return(contig)
 
 #######################################################################
