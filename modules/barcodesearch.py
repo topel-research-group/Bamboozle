@@ -177,6 +177,9 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 		print(contig)
 	variant_dict[contig_name].append(variant_position)
 
+# DevNote - implement method to extract this information from GATK-derived VCFs
+# Split column 5 on commas, then compare lengths with column 4
+
 	if "INDEL" in vcf_row.split("\t")[7]:
 		indel_dict[contig_name].append(variant_position)
 	else:
@@ -378,14 +381,18 @@ def verify_windows(windows, reference, infiles, medians, badcov, ploidy, out_dir
 			if ploidy == "diploid":
 				# Searches for at least one unique allele per sample
 				all_alleles = [item for sublist in list(alleles.values()) for item in sublist]
-				unique_alleles = [x for x in all_alleles if all_alleles.count(x)==1]
+			if ploidy == "haploid":
+				all_alleles = list(alleles.values())
+			unique_alleles = [x for x in all_alleles if all_alleles.count(x)==1]
 
 			# Compare set of sample's alleles and all unique alleles
 			# Each sample should contain at least one unique allele
+			# For haploids, all alleles should be unique
 			alleles_are_unique = True
 
-#			if ploidy == "haploid":
-#				# Check whether the number of unique alleles equals the number of inputs
+			if ploidy == "haploid":
+				if len(all_alleles) != len(unique_alleles):
+					alleles_are_unique = False
 
 			if ploidy == "diploid":
 				for sample in alleles.keys():
@@ -426,12 +433,12 @@ def verify_windows(windows, reference, infiles, medians, badcov, ploidy, out_dir
 				with open(output_file, "a") as outfile:
 					for bam in infiles:
 						if ploidy == "haploid":
-							fasta_header = FileName(bam) + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop)
+							fasta_header = FileName(bam) + "_" + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop)
 							outfile.write(">" + fasta_header + "\n")
 							outfile.write(alleles[bam] + "\n")
 						elif ploidy == "diploid":
 							for phase in [0, 1]:
-								fasta_header = FileName(bam) + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop) + "_alleles_" + str(phase)
+								fasta_header = FileName(bam) + "_" + window.contig + "_" + str(window.winstart) + "-" + str(window.winstop) + "_alleles_" + str(phase)
 								outfile.write(">" + fasta_header + "\n")
 								outfile.write(alleles[bam][phase] + "\n")
 				outfile.close()
