@@ -200,24 +200,33 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 # DevNote - Any way to further speed up if section?
 #######################################################################
 
-def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile):
-	windows = []
+def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile, tempdirectory):
+	tempfile = tempdirectory + "/find_windows." + contig + ".pickle"
+	if os.path.isfile(tempfile):
+		with open(tempfile, "rb") as infile:
+			windows = pickle.load(infile)
+		infile.close()
 
-	for window in range(0,(con_len - window_len)):
-		window_start = int(window + 1)
-		window_stop = int(window_start + window_len)
-		primer1_stop = int(window_start + primer_len)
-		primer2_start = int(window_stop - primer_len)
-		conserved = list(range(window_start,primer1_stop+1)) + list(range(primer2_start,window_stop+1))
+	else:
+		windows = []
 
-	# If no variants in primer sites, save the coordinates
+		for window in range(0,(con_len - window_len)):
+			window_start = int(window + 1)
+			window_stop = int(window_start + window_len)
+			primer1_stop = int(window_start + primer_len)
+			primer2_start = int(window_stop - primer_len)
+			conserved = list(range(window_start,primer1_stop+1)) + list(range(primer2_start,window_stop+1))
 
-		if not list(set(conserved) & set(variant_list)):
-			windows.append(Window(contig,window_start,primer1_stop,primer2_start,window_stop))
+		# If no variants in primer sites, save the coordinates
 
-	with open(logfile, 'a') as outfile:
-		outfile.write(str(len(windows)) + " preliminary windows found in contig " + contig + ".\n")
-	outfile.close()
+			if not list(set(conserved) & set(variant_list)):
+				windows.append(Window(contig,window_start,primer1_stop,primer2_start,window_stop))
+
+		with open(logfile, 'a') as outfile1, open(tempfile, 'wb') as outfile2:
+			outfile1.write(str(len(windows)) + " preliminary windows found in contig " + contig + ".\n")
+			pickle.dump(windows, outfile2)
+		outfile1.close()
+		outfile2.close()
 
 	return(windows)
 
@@ -514,10 +523,10 @@ def main(args):
 		sys.exit("[Error] Output BED file already exists. Please choose another output prefix.")
 	if os.path.isfile(out_txt):
 		sys.exit("[Error] Output TXT file already exists. Please choose another output prefix.")
-	if os.path.isfile(barcode_log):
+	if os.path.isfile(barcode_log) and not args.resume:
 		sys.exit("[Error] Another log file exists from today. Please rename or delete it and retry.")
 
-	if os.path.isdir(out_fasta_dir):
+	if os.path.isdir(out_fasta_dir) and not args.resume:
 		sys.exit("[Error] Output FASTA directory already exists. Please choose another output prefix.")
 	else:
 		os.mkdir(out_fasta_dir)
@@ -710,7 +719,7 @@ def main(args):
 		print("\nChecking windows...")
 
 		to_master = pool.starmap(find_windows, \
-		[(contig, contig_lengths[contig], args.window_size, args.primer_size, all_variants[contig], barcode_log) for contig in contig_lengths])
+		[(contig, contig_lengths[contig], args.window_size, args.primer_size, all_variants[contig], barcode_log, out_pickle_tmp) for contig in contig_lengths])
 
 		for entry in range(0,len(contig_lengths)):
 			master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
@@ -719,6 +728,10 @@ def main(args):
 		with open(out_pickle_tmp + "/master_dict.pickle", "wb") as outfile:
 			pickle.dump(master_dict, outfile)
 		outfile.close()
+
+		# Delete per-contig find_windows temporary files
+		for contig in contig_lengths:
+			os.remove(out_pickle_tmp + "/find_windows." + contig + ".pickle")
 
 		# DevNote - trying to save memory space
 		all_variants.clear()
