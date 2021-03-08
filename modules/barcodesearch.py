@@ -494,6 +494,7 @@ def main(args):
 	out_bed = args.outprefix + ".bed"
 	out_txt = args.outprefix + ".txt"
 	out_fasta_dir = args.outprefix + "_alleles"
+	out_pickle_tmp = args.outprefix + "_tmpdir"
 
 	barcode_log = barcode_log = "barcoding." + datetime.datetime.now().strftime("%d-%b-%Y") + ".log"
 
@@ -509,6 +510,9 @@ def main(args):
 	else:
 		os.mkdir(out_fasta_dir)
 
+	if not args.resume:
+		os.mkdir(out_pickle_tmp)
+
 	#######################################################################
 	# STEP 2 - GET CONTIG LENGTH STATISTICS
 	#	OUT: contig_lengths = {contig1: length}
@@ -518,6 +522,11 @@ def main(args):
 	start_time = time()
 
 	contig_lengths = get_contig_lengths(args.sortbam[0])
+
+	# Export contig_lengths to pickle
+	with open(out_pickle_tmp + "/contig_lengths.pickle", "wb") as outfile:
+		pickle.dump(contig_lengths, outfile)
+	outfile.close()
 
 	# Timing - time taken to get contig lengths
 	print_time("Get contig lengths", start_time)
@@ -570,6 +579,11 @@ def main(args):
 	for entry in range(0,len(args.sortbam)):
 		cov_stats[args.sortbam[entry]] = to_coverage[entry]
 
+	# Export cov_stats to pickle
+	with open(out_pickle_tmp + "/cov_stats.pickle", "wb") as outfile:
+		pickle.dump(cov_stats, outfile)
+	outfile.close()
+
 	# Timing - time taken to get contig medians
 	print_time("Get median contig coverage stats", start_time)
 
@@ -589,6 +603,11 @@ def main(args):
 		[(bam, contig_lengths, cov_stats[bam]) for bam in args.sortbam])
 	for entry in range(0,len(args.sortbam)):
 		bad_cov[args.sortbam[entry]] = to_badcov[entry]
+
+	# Export bad_cov to pickle
+	with open(out_pickle_tmp + "/bad_cov.pickle", "wb") as outfile:
+		pickle.dump(bad_cov, outfile)
+	outfile.close()
 
 	# Timing - time taken to get bad coverage stats
 	print_time("Get irregular coverage stats", start_time)
@@ -623,6 +642,16 @@ def main(args):
 	for contig in all_indels:
 		all_indels[contig] = sorted(list(set(all_indels[contig])), key=int)
 
+	# Export all_variants, all_SNPs, and all_indels to pickles
+
+	with open(out_pickle_tmp + "/all_variants.pickle", "wb") as outfile1, open(out_pickle_tmp + "/all_SNPs.pickle", "wb") as outfile2, open(out_pickle_tmp + "/all_indels.pickle", "wb") as outfile3:
+		pickle.dump(all_variants, outfile1)
+		pickle.dump(all_SNPs, outfile2)
+		pickle.dump(all_indels, outfile3)
+	outfile1.close()
+	outfile2.close()
+	outfile3.close()
+
 	# Timing - time taken to get lists of variants
 	print_time("Get lists of variants", start_time)
 
@@ -645,6 +674,11 @@ def main(args):
 	for entry in range(0,len(contig_lengths)):
 		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
+	# Export master_dict to pickle
+	with open(out_pickle_tmp + "/master_dict.pickle", "wb") as outfile:
+		pickle.dump(master_dict, outfile)
+	outfile.close()
+
 	# DevNote - trying to save memory space
 	all_variants.clear()
 
@@ -665,6 +699,11 @@ def main(args):
 		if master_dict[contig]:
 			print(contig)
 			merged_dict[contig] = merge_windows(master_dict[contig], contig)
+
+	# Export merged_dict to pickle
+	with open(out_pickle_tmp + "/merged_dict.pickle", "wb") as outfile:
+		pickle.dump(merged_dict, outfile)
+	outfile.close()
 
 	# DevNote - trying to save memory space
 	master_dict.clear()
@@ -690,6 +729,11 @@ def main(args):
 		good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
 
 	good_cov_list = [item for sublist in list(good_cov_dict.values()) for item in sublist]
+
+	# Export good_cov_list to pickle
+	with open(out_pickle_tmp + "/good_cov_list.pickle", "wb") as outfile:
+		pickle.dump(good_cov_list, outfile)
+	outfile.close()
 
 	# Timing - time taken to get good-coverage windows
 	print_time("Get good-coverage windows", start_time)
@@ -737,6 +781,11 @@ def main(args):
 		final_list.append(to_final[entry])
 
 	really_final_list = [item for sublist in final_list for item in sublist]
+
+	# Export really_final_list to pickle
+	with open(out_pickle_tmp + "/really_final_list.pickle", "wb") as outfile:
+		pickle.dump(really_final_list, outfile)
+	outfile.close()
 
 	# Timing - time taken to get unique windows
 	print_time("Get unique windows", start_time)
