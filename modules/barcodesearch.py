@@ -481,7 +481,7 @@ def main2(args):
 def main(args):
 
 	#######################################################################
-	# STEP 1 - LAYING THE GROUNDWORK
+	# LAYING THE GROUNDWORK
 	#######################################################################
 
 	# Timing - get start time
@@ -489,6 +489,18 @@ def main(args):
 
 	# Set number of threads
 	pool = Pool(processes = int(args.threads))
+
+	# If using --resume, check which step to continue from
+	if args.resume:
+		step_list = ["Get contig lengths", "Get median contig coverage stats", "Get irregular coverage stats", "Get lists of variants", \
+			"Find valid windows", "Merge windows", "Get good-coverage windows", "Get unique windows"]
+
+		with open("time.log", "r") as logfile:
+			lines = logfile.read().splitlines()
+		logfile.close()
+		gofrom = step_list.index(lines[-1].split(":")[0]) + 1
+	else:
+		gofrom = 0
 
 	# Ensure the output files doesn't already exist
 	out_bed = args.outprefix + ".bed"
@@ -514,25 +526,31 @@ def main(args):
 		os.mkdir(out_pickle_tmp)
 
 	#######################################################################
-	# STEP 2 - GET CONTIG LENGTH STATISTICS
+	# STEP 1 - GET CONTIG LENGTH STATISTICS
 	#	OUT: contig_lengths = {contig1: length}
 	#######################################################################
 	# Included custom functions: get_contig_lengths
 	#######################################################################
-	start_time = time()
+	if gofrom < 1:
+		start_time = time()
 
-	contig_lengths = get_contig_lengths(args.sortbam[0])
+		contig_lengths = get_contig_lengths(args.sortbam[0])
 
-	# Export contig_lengths to pickle
-	with open(out_pickle_tmp + "/contig_lengths.pickle", "wb") as outfile:
-		pickle.dump(contig_lengths, outfile)
-	outfile.close()
+		# Export contig_lengths to pickle
+		with open(out_pickle_tmp + "/contig_lengths.pickle", "wb") as outfile:
+			pickle.dump(contig_lengths, outfile)
+		outfile.close()
 
-	# Timing - time taken to get contig lengths
-	print_time("Get contig lengths", start_time)
+		# Timing - time taken to get contig lengths
+		print_time("Get contig lengths", start_time)
+
+	else:
+		with open(out_pickle_tmp + "/contig_lengths.pickle", "rb") as infile:
+			contig_lengths = pickle.load(infile)
+		infile.close()
 
 	########################################################################
-	# STEP 3 - SET SOME ADDITIONAL VARIABLES
+	# SET SOME ADDITIONAL VARIABLES
 	########################################################################
 
 	# Set initial global lists/dictionaries
@@ -563,100 +581,122 @@ def main(args):
 	filter_qual = "%QUAL>" + str(args.quality)
 
 	#######################################################################
-	# STEP 4 - GET CONTIG MEDIANS PER BAM FILE
+	# STEP 2 - GET CONTIG MEDIANS PER BAM FILE
 	#	OUT: cov_stats = {bam1: {contig1: median}}
 	#######################################################################
 	# Included custom functions: get_median
 	#######################################################################
-	start_time = time()
+	if gofrom < 2:
+		start_time = time()
 
-	cov_stats = {}
-	for bam in args.sortbam:
-		cov_stats[bam] = {}
+		cov_stats = {}
+		for bam in args.sortbam:
+			cov_stats[bam] = {}
 
-	to_coverage = pool.starmap(get_median, \
-		[(bam, contig_lengths) for bam in args.sortbam])
-	for entry in range(0,len(args.sortbam)):
-		cov_stats[args.sortbam[entry]] = to_coverage[entry]
+		to_coverage = pool.starmap(get_median, \
+			[(bam, contig_lengths) for bam in args.sortbam])
+		for entry in range(0,len(args.sortbam)):
+			cov_stats[args.sortbam[entry]] = to_coverage[entry]
 
-	# Export cov_stats to pickle
-	with open(out_pickle_tmp + "/cov_stats.pickle", "wb") as outfile:
-		pickle.dump(cov_stats, outfile)
-	outfile.close()
+		# Export cov_stats to pickle
+		with open(out_pickle_tmp + "/cov_stats.pickle", "wb") as outfile:
+			pickle.dump(cov_stats, outfile)
+		outfile.close()
 
-	# Timing - time taken to get contig medians
-	print_time("Get median contig coverage stats", start_time)
+		# Timing - time taken to get contig medians
+		print_time("Get median contig coverage stats", start_time)
+
+	else:
+		with open(out_pickle_tmp + "/cov_stats.pickle", "rb") as infile:
+			cov_stats = pickle.load(infile)
+		infile.close()
 
 	#######################################################################
-	# STEP 5 - GET IRREGULAR COVERAGE REGIONS PER BAM FILE
+	# STEP 3 - GET IRREGULAR COVERAGE REGIONS PER BAM FILE
 	#	OUT: bad_cov = {bam1: {contig1: {window1: [start, end]}}}
 	#######################################################################
 	# Included custom functions: get_badcov
 	#######################################################################
-	start_time = time()
+	if gofrom < 3:
+		start_time = time()
 
-	bad_cov = {}
-	for bam in args.sortbam:
-		bad_cov[bam] = {}
+		bad_cov = {}
+		for bam in args.sortbam:
+			bad_cov[bam] = {}
 
-	to_badcov = pool.starmap(get_badcov, \
-		[(bam, contig_lengths, cov_stats[bam]) for bam in args.sortbam])
-	for entry in range(0,len(args.sortbam)):
-		bad_cov[args.sortbam[entry]] = to_badcov[entry]
+		to_badcov = pool.starmap(get_badcov, \
+			[(bam, contig_lengths, cov_stats[bam]) for bam in args.sortbam])
+		for entry in range(0,len(args.sortbam)):
+			bad_cov[args.sortbam[entry]] = to_badcov[entry]
 
-	# Export bad_cov to pickle
-	with open(out_pickle_tmp + "/bad_cov.pickle", "wb") as outfile:
-		pickle.dump(bad_cov, outfile)
-	outfile.close()
+		# Export bad_cov to pickle
+		with open(out_pickle_tmp + "/bad_cov.pickle", "wb") as outfile:
+			pickle.dump(bad_cov, outfile)
+		outfile.close()
 
-	# Timing - time taken to get bad coverage stats
-	print_time("Get irregular coverage stats", start_time)
+		# Timing - time taken to get bad coverage stats
+		print_time("Get irregular coverage stats", start_time)
+
+	else:
+		with open(out_pickle_tmp + "/bad_cov.pickle", "rb") as infile:
+			bad_cov = pickle.load(infile)
+		infile.close()
 
 	#######################################################################
-	# STEP 6 - GENERATE A LIST OF POSITIONS WHERE VARIANTS OCCUR
+	# STEP 4 - GENERATE A LIST OF POSITIONS WHERE VARIANTS OCCUR
 	#	OUT: all_variants = {contig1: [var1, var2, var3]}
 	#		all_SNPs = {contig1: [SNP1, SNP2, SNP3]}
 	#		all_indels = {contig1: [ind1, ind2, ind3]}
 	#######################################################################
 	# Included custom functions: get_variants
 	#######################################################################
-	start_time = time()
+	if gofrom < 4:
+		start_time = time()
 
-	print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
+		print("Searching for potential barcodes in",len(args.sortbam),"file(s).")
 
-	# HOW TO FIX THIS SO IT READS GZIP FILES STRAIGHTAWAY?
+		# HOW TO FIX THIS SO IT READS GZIP FILES STRAIGHTAWAY?
 
-	for bam in args.sortbam:
-		print("\nFinding variants in " + FileName(bam) + "...")
-		current_contig = ""
+		for bam in args.sortbam:
+			print("\nFinding variants in " + FileName(bam) + "...")
+			current_contig = ""
 
-		for row2 in gzip.open(NoExt(bam) + ".vcf.gz", 'rt'):
-			if not row2.startswith("#"):
-				current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
+			for row2 in gzip.open(NoExt(bam) + ".vcf.gz", 'rt'):
+				if not row2.startswith("#"):
+					current_contig = get_variants(row2, all_variants, all_indels, all_SNPs, current_contig)
 
-	# Get sorted lists of variant/SNP/indel positions, with duplicates removed
-	for contig in all_variants:
-		all_variants[contig] = sorted(list(set(all_variants[contig])), key=int)
-	for contig in all_SNPs:
-		all_SNPs[contig] = sorted(list(set(all_SNPs[contig])), key=int)
-	for contig in all_indels:
-		all_indels[contig] = sorted(list(set(all_indels[contig])), key=int)
+		# Get sorted lists of variant/SNP/indel positions, with duplicates removed
+		for contig in all_variants:
+			all_variants[contig] = sorted(list(set(all_variants[contig])), key=int)
+		for contig in all_SNPs:
+			all_SNPs[contig] = sorted(list(set(all_SNPs[contig])), key=int)
+		for contig in all_indels:
+			all_indels[contig] = sorted(list(set(all_indels[contig])), key=int)
 
-	# Export all_variants, all_SNPs, and all_indels to pickles
+		# Export all_variants, all_SNPs, and all_indels to pickles
 
-	with open(out_pickle_tmp + "/all_variants.pickle", "wb") as outfile1, open(out_pickle_tmp + "/all_SNPs.pickle", "wb") as outfile2, open(out_pickle_tmp + "/all_indels.pickle", "wb") as outfile3:
-		pickle.dump(all_variants, outfile1)
-		pickle.dump(all_SNPs, outfile2)
-		pickle.dump(all_indels, outfile3)
-	outfile1.close()
-	outfile2.close()
-	outfile3.close()
+		with open(out_pickle_tmp + "/all_variants.pickle", "wb") as outfile1, open(out_pickle_tmp + "/all_SNPs.pickle", "wb") as outfile2, open(out_pickle_tmp + "/all_indels.pickle", "wb") as outfile3:
+			pickle.dump(all_variants, outfile1)
+			pickle.dump(all_SNPs, outfile2)
+			pickle.dump(all_indels, outfile3)
+		outfile1.close()
+		outfile2.close()
+		outfile3.close()
 
-	# Timing - time taken to get lists of variants
-	print_time("Get lists of variants", start_time)
+		# Timing - time taken to get lists of variants
+		print_time("Get lists of variants", start_time)
+
+	else:
+		with open(out_pickle_tmp + "/all_variants.pickle", "rb") as infile1, open(out_pickle_tmp + "/all_SNPs.pickle", "rb") as infile2, open(out_pickle_tmp + "/all_indels.pickle", "rb") as infile3:
+			all_variants = pickle.load(infile1)
+			all_SNPs = pickle.load(infile2)
+			all_indels = pickle.load(infile3)
+		infile1.close()
+		infile2.close()
+		infile3.close()
 
 	#######################################################################
-	# STEP 7 - STEP THROUGH EACH CONTIG LOOKING FOR WINDOWS WITH
+	# STEP 5 - STEP THROUGH EACH CONTIG LOOKING FOR WINDOWS WITH
 	#		VARIABLE CENTRES AND CONSERVED PRIMER SITES
 	# OUT: master_dict = {contig1: [Window1, Window2, Window3]}
 	#######################################################################
@@ -664,82 +704,99 @@ def main(args):
 	#######################################################################
 	# DevNote - this needs speeding up!
 	#######################################################################
-	start_time = time()
+	if gofrom < 5:
+		start_time = time()
 
-	print("\nChecking windows...")
+		print("\nChecking windows...")
 
-	to_master = pool.starmap(find_windows, \
-	[(contig, contig_lengths[contig], args.window_size, args.primer_size, all_variants[contig], barcode_log) for contig in contig_lengths])
+		to_master = pool.starmap(find_windows, \
+		[(contig, contig_lengths[contig], args.window_size, args.primer_size, all_variants[contig], barcode_log) for contig in contig_lengths])
 
-	for entry in range(0,len(contig_lengths)):
-		master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
+		for entry in range(0,len(contig_lengths)):
+			master_dict[list(contig_lengths.keys())[entry]] = to_master[entry]
 
-	# Export master_dict to pickle
-	with open(out_pickle_tmp + "/master_dict.pickle", "wb") as outfile:
-		pickle.dump(master_dict, outfile)
-	outfile.close()
+		# Export master_dict to pickle
+		with open(out_pickle_tmp + "/master_dict.pickle", "wb") as outfile:
+			pickle.dump(master_dict, outfile)
+		outfile.close()
 
-	# DevNote - trying to save memory space
-	all_variants.clear()
+		# DevNote - trying to save memory space
+		all_variants.clear()
 
-	# Timing - time taken to find valid windows
-	print_time("Find valid windows", start_time)
+		# Timing - time taken to find valid windows
+		print_time("Find valid windows", start_time)
+
+	else:
+		with open(out_pickle_tmp + "/master_dict.pickle", "rb") as infile:
+			master_dict = pickle.load(infile)
+		infile.close()
 
 	#######################################################################
-	# STEP 8 - MERGE OVERLAPPING WINDOWS
+	# STEP 6 - MERGE OVERLAPPING WINDOWS
 	# OUT: merged_dict = {contig1: [Window1, Window2, Window3]}
 	#######################################################################
 	# Included custom functions: merge_windows
 	#######################################################################
-	start_time = time()
+	if gofrom < 6:
+		start_time = time()
 
-	print("\nMerging overlapping windows...")
+		print("\nMerging overlapping windows...")
 
-	for contig in master_dict:
-		if master_dict[contig]:
-			print(contig)
-			merged_dict[contig] = merge_windows(master_dict[contig], contig)
+		for contig in master_dict:
+			if master_dict[contig]:
+				print(contig)
+				merged_dict[contig] = merge_windows(master_dict[contig], contig)
 
-	# Export merged_dict to pickle
-	with open(out_pickle_tmp + "/merged_dict.pickle", "wb") as outfile:
-		pickle.dump(merged_dict, outfile)
-	outfile.close()
+		# Export merged_dict to pickle
+		with open(out_pickle_tmp + "/merged_dict.pickle", "wb") as outfile:
+			pickle.dump(merged_dict, outfile)
+		outfile.close()
 
-	# DevNote - trying to save memory space
-	master_dict.clear()
+		# DevNote - trying to save memory space
+		master_dict.clear()
 
-	# Timing - time taken to merge windows
-	print_time("Merge windows", start_time)
+		# Timing - time taken to merge windows
+		print_time("Merge windows", start_time)
+
+	else:
+		with open(out_pickle_tmp + "/merged_dict.pickle", "rb") as infile:
+			merged_dict = pickle.load(infile)
+		infile.close()
 
 	#######################################################################
-	# STEP 9 - EXCLUDE WINDOWS OF LOW COVERAGE
+	# STEP 7 - EXCLUDE WINDOWS OF LOW COVERAGE
 	# OUT: good_cov_dict = {contig1: [Window1, Window2, Window3]}
 	#######################################################################
 	# Included custom functions: good_coverage
 	#######################################################################
+	if gofrom < 7:
+		start_time = time()
 
-	start_time = time()
+		print("\nChecking window coverage...")
 
-	print("\nChecking window coverage...")
+		to_good_cov = pool.starmap(good_coverage, \
+			[(merged_dict[contig], cov_stats, bad_cov, args.sortbam, contig, barcode_log) for contig in contig_lengths])
 
-	to_good_cov = pool.starmap(good_coverage, \
-		[(merged_dict[contig], cov_stats, bad_cov, args.sortbam, contig, barcode_log) for contig in contig_lengths])
+		for entry in range(0,len(contig_lengths)):
+			good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
 
-	for entry in range(0,len(contig_lengths)):
-		good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
+		good_cov_list = [item for sublist in list(good_cov_dict.values()) for item in sublist]
 
-	good_cov_list = [item for sublist in list(good_cov_dict.values()) for item in sublist]
+		# Export good_cov_list to pickle
+		with open(out_pickle_tmp + "/good_cov_list.pickle", "wb") as outfile:
+			pickle.dump(good_cov_list, outfile)
+		outfile.close()
 
-	# Export good_cov_list to pickle
-	with open(out_pickle_tmp + "/good_cov_list.pickle", "wb") as outfile:
-		pickle.dump(good_cov_list, outfile)
-	outfile.close()
+		# Timing - time taken to get good-coverage windows
+		print_time("Get good-coverage windows", start_time)
 
-	# Timing - time taken to get good-coverage windows
-	print_time("Get good-coverage windows", start_time)
+	else:
+		with open(out_pickle_tmp + "/good_cov_list.pickle", "rb") as infile:
+			good_cov_list = pickle.load(infile)
+		infile.close()
 
 	#######################################################################
-	# STEP 10 - ENSURE THAT EACH SAMPLE CONTAINS AT LEAST ONE UNIQUE ALLELE
+	# STEP 8 - ENSURE THAT EACH SAMPLE CONTAINS AT LEAST ONE UNIQUE ALLELE
 	#		AT EACH LOCUS, AND THAT THE COVERAGE IS ACCEPTABLE
 	# OUT: really_final_list = [[Window1, min_diffs, max_diffs, p1_seq, var_seq, p2_seq],[Window2, ...]]
 	#######################################################################
@@ -751,47 +808,53 @@ def main(args):
 	#######################################################################
 	# DevNote - this needs speeding up!
 	#######################################################################
-	start_time = time()
+	if gofrom < 8:
+		start_time = time()
 
-	print("\nChecking consensuses...")
+		print("\nChecking consensuses...")
 
-	final_list = []
+		final_list = []
 
-	# If each chunk would be less than 2 Gb, then split evenly among threads
-	# Otherwise, split so that each chunk is < 2 Gb
+		# If each chunk would be less than 2 Gb, then split evenly among threads
+		# Otherwise, split so that each chunk is < 2 Gb
 
-	chunk_len = int(len(good_cov_list) / int(args.threads))
+		chunk_len = int(len(good_cov_list) / int(args.threads))
 
-	print("good_cov_list pickle: " + str(len(pickle.dumps(good_cov_list))) + " bytes.\n")
-	print("args.ref pickle: " + str(len(pickle.dumps(args.ref))) + " bytes.\n")
-	print("args.sortbam pickle: " + str(len(pickle.dumps(args.sortbam))) + " bytes.\n")
-	print("cov_stats pickle: " + str(len(pickle.dumps(cov_stats))) + " bytes.\n")
-	print("bad_cov pickle " + str(len(pickle.dumps(bad_cov))) + " bytes.\n")
-	print("Size of chunks passed to each process:\n")
+		print("good_cov_list pickle: " + str(len(pickle.dumps(good_cov_list))) + " bytes.\n")
+		print("args.ref pickle: " + str(len(pickle.dumps(args.ref))) + " bytes.\n")
+		print("args.sortbam pickle: " + str(len(pickle.dumps(args.sortbam))) + " bytes.\n")
+		print("cov_stats pickle: " + str(len(pickle.dumps(cov_stats))) + " bytes.\n")
+		print("bad_cov pickle " + str(len(pickle.dumps(bad_cov))) + " bytes.\n")
+		print("Size of chunks passed to each process:\n")
 
-	for chunky in chunks(good_cov_list, chunk_len):
-		print(str(len(pickle.dumps([chunky, args.ref, args.sortbam, cov_stats, bad_cov, out_fasta_dir]))) + "\n")
+		for chunky in chunks(good_cov_list, chunk_len):
+			print(str(len(pickle.dumps([chunky, args.ref, args.sortbam, cov_stats, bad_cov, out_fasta_dir]))) + "\n")
 
-	to_final = pool.starmap(verify_windows, \
-		[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, args.ploidy, out_fasta_dir) for chunky in chunks(good_cov_list, chunk_len)])
+		to_final = pool.starmap(verify_windows, \
+			[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, args.ploidy, out_fasta_dir) for chunky in chunks(good_cov_list, chunk_len)])
 
-	chunk_no = int(args.threads)
+		chunk_no = int(args.threads)
 
-	for entry in range(0,chunk_no):
-		final_list.append(to_final[entry])
+		for entry in range(0,chunk_no):
+			final_list.append(to_final[entry])
 
-	really_final_list = [item for sublist in final_list for item in sublist]
+		really_final_list = [item for sublist in final_list for item in sublist]
 
-	# Export really_final_list to pickle
-	with open(out_pickle_tmp + "/really_final_list.pickle", "wb") as outfile:
-		pickle.dump(really_final_list, outfile)
-	outfile.close()
+		# Export really_final_list to pickle
+		with open(out_pickle_tmp + "/really_final_list.pickle", "wb") as outfile:
+			pickle.dump(really_final_list, outfile)
+		outfile.close()
 
-	# Timing - time taken to get unique windows
-	print_time("Get unique windows", start_time)
+		# Timing - time taken to get unique windows
+		print_time("Get unique windows", start_time)
+
+	else:
+		with open(out_pickle_tmp + "/really_final_list.pickle", "rb") as infile:
+			really_final_list = pickle.load(infile)
+		infile.close()
 
 	#######################################################################
-	# STEP 11 - REPORT RESULTS IN TXT AND BED FORMAT
+	# STEP 9 - REPORT RESULTS IN TXT AND BED FORMAT
 	#######################################################################
 	start_time = time()
 
