@@ -188,6 +188,8 @@ barcode.add_argument("--primer_size", type=int, default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode (default: 21)")
 barcode.add_argument("--ploidy", type=str, \
 			help="Ploidy of samples. Must be either haploid or diploid")
+barcode.add_argument("--resume", action="store_true", \
+			help="Resume an aborted run")
 
 # SV caller command
 sv = subparsers.add_parser("lof", parents=[input_commands, other_commands], \
