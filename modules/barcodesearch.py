@@ -31,6 +31,7 @@ import vcfpy
 import gzip
 import datetime
 import pickle
+import shutil
 from itertools import combinations
 from Levenshtein import distance
 from multiprocessing import Pool
@@ -528,8 +529,6 @@ def main(args):
 
 	if os.path.isdir(out_fasta_dir) and not args.resume:
 		sys.exit("[Error] Output FASTA directory already exists. Please choose another output prefix.")
-	else:
-		os.mkdir(out_fasta_dir)
 
 	if not args.resume:
 		os.mkdir(out_pickle_tmp)
@@ -826,6 +825,10 @@ def main(args):
 
 		print("\nChecking consensuses...")
 
+		# Make directory for saving alleles
+		if not os.path.isdir(out_fasta_dir):
+			os.mkdir(out_fasta_dir)
+
 		final_list = []
 
 		# If each chunk would be less than 2 Gb, then split evenly among threads
@@ -833,22 +836,28 @@ def main(args):
 
 		chunk_len = int(len(good_cov_list) / int(args.threads))
 
-		print("good_cov_list pickle: " + str(len(pickle.dumps(good_cov_list))) + " bytes.\n")
-		print("args.ref pickle: " + str(len(pickle.dumps(args.ref))) + " bytes.\n")
-		print("args.sortbam pickle: " + str(len(pickle.dumps(args.sortbam))) + " bytes.\n")
-		print("cov_stats pickle: " + str(len(pickle.dumps(cov_stats))) + " bytes.\n")
-		print("bad_cov pickle " + str(len(pickle.dumps(bad_cov))) + " bytes.\n")
-		print("Size of chunks passed to each process:\n")
-
-		for chunky in chunks(good_cov_list, chunk_len):
-			print(str(len(pickle.dumps([chunky, args.ref, args.sortbam, cov_stats, bad_cov, out_fasta_dir]))) + "\n")
+		if args.verbose:
+			print("good_cov_list pickle: " + str(len(pickle.dumps(good_cov_list))) + " bytes.\n")
+			print("args.ref pickle: " + str(len(pickle.dumps(args.ref))) + " bytes.\n")
+			print("args.sortbam pickle: " + str(len(pickle.dumps(args.sortbam))) + " bytes.\n")
+			print("cov_stats pickle: " + str(len(pickle.dumps(cov_stats))) + " bytes.\n")
+			print("bad_cov pickle " + str(len(pickle.dumps(bad_cov))) + " bytes.\n")
 
 		to_final = pool.starmap(verify_windows, \
 			[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, args.ploidy, out_fasta_dir) for chunky in chunks(good_cov_list, chunk_len)])
 
 		chunk_no = int(args.threads)
 
+		# DevNote - print to_final chunks to file
 		for entry in range(0,chunk_no):
+#			if not os.isfile(out_pickle_tmp + "/final_list.chunk" + str(entry) + ".pickle"):
+#				with open(out_pickle_tmp + "/final_list.chunk" + str(entry) + ".pickle", "wb") as outfile:
+#					pickle.dump(to_final[entry], outfile)
+#				outfile.close()
+#			else:
+#				with open(out_pickle_tmp + "/final_list.chunk" + str(entry) + ".pickle", "rb") as infile:
+#					to_final[entry] = 
+
 			final_list.append(to_final[entry])
 
 		really_final_list = [item for sublist in final_list for item in sublist]
@@ -922,6 +931,10 @@ def main(args):
 
 	# Timing - time taken to write output
 	print_time("Write output", start_time)
+
+	# Delete checkpoint files if not in --dev mode
+	if not args.dev:
+		shutil.rmtree(out_pickle_tmp)
 
 	# Timing - total pipeline time
 	total_time = "Total time: " + str(round(time() - full_time, 1)) + " seconds.\n"
