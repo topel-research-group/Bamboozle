@@ -764,6 +764,12 @@ def main(args):
 			pickle.dump(merged_dict, outfile)
 		outfile.close()
 
+		# Write number of merged windows to logfile
+		with open(barcode_log, 'a') as outlog:
+			for contig in merged_dict:
+				outlog.write(str(len(merged_dict[contig])) + " merged windows found in contig " + contig + ".\n")
+		outlog.close()
+
 		# DevNote - trying to save memory space
 		master_dict.clear()
 
