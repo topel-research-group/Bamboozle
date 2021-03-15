@@ -232,29 +232,6 @@ def find_windows(contig, con_len, window_len, primer_len, variant_list, logfile,
 	return(windows)
 
 #######################################################################
-# MERGE OVERLAPPING WINDOWS
-# OUT: [Window1, Window2, Window3, ...]
-#######################################################################
-
-def merge_windows(window_list, contig):
-	merged = []
-	saved_window = Window(contig,0,0,0,0)
-
-	for window in window_list:
-		if saved_window == Window(contig,0,0,0,0):
-			saved_window = Window(contig,window.winstart, window.p1stop, window.p2start, window.winstop)
-		elif saved_window.winstart <= window.winstart <= saved_window.p1stop:
-			saved_window = Window(contig,saved_window.winstart, window.p1stop, saved_window.p2start, window.winstop)
-		else:
-			merged.append(saved_window)
-			saved_window = Window(contig,window.winstart, window.p1stop, window.p2start, window.winstop)
-
-	# Include the final merged window
-	merged.append(saved_window)
-
-	return(merged)
-
-#######################################################################
 # SEQUENCE COMPARISON
 #######################################################################
 
@@ -348,6 +325,29 @@ def good_coverage(windows, median_list, bad_regions, infiles, contig, logfile):
 	outfile.close()
 
 	return(good_windows)
+
+#######################################################################
+# MERGE OVERLAPPING WINDOWS
+# OUT: [Window1, Window2, Window3, ...]
+#######################################################################
+
+def merge_windows(window_list, contig):
+	merged = []
+	saved_window = Window(contig,0,0,0,0)
+
+	for window in window_list:
+		if saved_window == Window(contig,0,0,0,0):
+			saved_window = Window(contig,window.winstart, window.p1stop, window.p2start, window.winstop)
+		elif saved_window.winstart <= window.winstart <= saved_window.p1stop:
+			saved_window = Window(contig,saved_window.winstart, window.p1stop, saved_window.p2start, window.winstop)
+		else:
+			merged.append(saved_window)
+			saved_window = Window(contig,window.winstart, window.p1stop, window.p2start, window.winstop)
+
+	# Include the final merged window
+	merged.append(saved_window)
+
+	return(merged)
 
 #######################################################################
 # CHUNK UP good_cov_list TO SHARE EQUALLY BETWEEN PROCESSES IN THE
@@ -578,12 +578,12 @@ def main(args):
 	master_dict = {}
 	for contig in contig_lengths:
 		master_dict[contig] = []
-	merged_dict = {}
-	for contig in contig_lengths:
-		merged_dict[contig] = []
 	good_cov_dict = {}
 	for contig in contig_lengths:
 		good_cov_dict[contig] = []
+	merged_dict = {}
+	for contig in contig_lengths:
+		merged_dict[contig] = []
 
 	# Set other values
 	filter_qual = "%QUAL>" + str(args.quality)
@@ -744,24 +744,59 @@ def main(args):
 		infile.close()
 
 	#######################################################################
-	# STEP 6 - MERGE OVERLAPPING WINDOWS
-	# OUT: merged_dict = {contig1: [Window1, Window2, Window3]}
+	# STEP 6 - EXCLUDE WINDOWS OF LOW COVERAGE
+	# OUT: good_cov_dict = {contig1: [Window1, Window2, Window3]}
 	#######################################################################
-	# Included custom functions: merge_windows
+	# Included custom functions: good_coverage
 	#######################################################################
 	if gofrom < 6:
 		start_time = time()
 
+		print("\nChecking window coverage...")
+
+		to_good_cov = pool.starmap(good_coverage, \
+			[(master_dict[contig], cov_stats, bad_cov, args.sortbam, contig, barcode_log) for contig in contig_lengths])
+
+		for entry in range(0,len(contig_lengths)):
+			good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
+
+		# Export good_cov_dict to pickle
+		with open(out_pickle_tmp + "/good_cov_dict.pickle", "wb") as outfile:
+			pickle.dump(good_cov_dict, outfile)
+		outfile.close()
+
+		# DevNote - trying to save memory space
+		master_dict.clear()
+
+		# Timing - time taken to get good-coverage windows
+		print_time("Get good-coverage windows", start_time)
+
+	else:
+		with open(out_pickle_tmp + "/good_cov_dict.pickle", "rb") as infile:
+			good_cov_dict = pickle.load(infile)
+		infile.close()
+
+	#######################################################################
+	# STEP 7 - MERGE OVERLAPPING WINDOWS
+	# OUT: merged_dict = {contig1: [Window1, Window2, Window3]}
+	#######################################################################
+	# Included custom functions: merge_windows
+	#######################################################################
+	if gofrom < 7:
+		start_time = time()
+
 		print("\nMerging overlapping windows...")
 
-		for contig in master_dict:
-			if master_dict[contig]:
+		for contig in good_cov_dict:
+			if good_cov_dict[contig]:
 				print(contig)
-				merged_dict[contig] = merge_windows(master_dict[contig], contig)
+				merged_dict[contig] = merge_windows(good_cov_dict[contig], contig)
 
-		# Export merged_dict to pickle
-		with open(out_pickle_tmp + "/merged_dict.pickle", "wb") as outfile:
-			pickle.dump(merged_dict, outfile)
+		merged_list = [item for sublist in list(merged_dict.values()) for item in sublist]
+
+		# Export merged_list to pickle
+		with open(out_pickle_tmp + "/merged_list.pickle", "wb") as outfile:
+			pickle.dump(merged_list, outfile)
 		outfile.close()
 
 		# Write number of merged windows to logfile
@@ -770,47 +805,12 @@ def main(args):
 				outlog.write(str(len(merged_dict[contig])) + " merged windows found in contig " + contig + ".\n")
 		outlog.close()
 
-		# DevNote - trying to save memory space
-		master_dict.clear()
-
 		# Timing - time taken to merge windows
 		print_time("Merge windows", start_time)
 
 	else:
-		with open(out_pickle_tmp + "/merged_dict.pickle", "rb") as infile:
-			merged_dict = pickle.load(infile)
-		infile.close()
-
-	#######################################################################
-	# STEP 7 - EXCLUDE WINDOWS OF LOW COVERAGE
-	# OUT: good_cov_dict = {contig1: [Window1, Window2, Window3]}
-	#######################################################################
-	# Included custom functions: good_coverage
-	#######################################################################
-	if gofrom < 7:
-		start_time = time()
-
-		print("\nChecking window coverage...")
-
-		to_good_cov = pool.starmap(good_coverage, \
-			[(merged_dict[contig], cov_stats, bad_cov, args.sortbam, contig, barcode_log) for contig in contig_lengths])
-
-		for entry in range(0,len(contig_lengths)):
-			good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
-
-		good_cov_list = [item for sublist in list(good_cov_dict.values()) for item in sublist]
-
-		# Export good_cov_list to pickle
-		with open(out_pickle_tmp + "/good_cov_list.pickle", "wb") as outfile:
-			pickle.dump(good_cov_list, outfile)
-		outfile.close()
-
-		# Timing - time taken to get good-coverage windows
-		print_time("Get good-coverage windows", start_time)
-
-	else:
-		with open(out_pickle_tmp + "/good_cov_list.pickle", "rb") as infile:
-			good_cov_list = pickle.load(infile)
+		with open(out_pickle_tmp + "/merged_list.pickle", "rb") as infile:
+			merged_list = pickle.load(infile)
 		infile.close()
 
 	#######################################################################
@@ -840,17 +840,17 @@ def main(args):
 		# If each chunk would be less than 2 Gb, then split evenly among threads
 		# Otherwise, split so that each chunk is < 2 Gb
 
-		chunk_len = int(len(good_cov_list) / int(args.threads))
+		chunk_len = int(len(merged_list) / int(args.threads))
 
-		if args.verbose:
-			print("good_cov_list pickle: " + str(len(pickle.dumps(good_cov_list))) + " bytes.\n")
+		if args.dev:
+			print("merged_list pickle: " + str(len(pickle.dumps(merged_list))) + " bytes.\n")
 			print("args.ref pickle: " + str(len(pickle.dumps(args.ref))) + " bytes.\n")
 			print("args.sortbam pickle: " + str(len(pickle.dumps(args.sortbam))) + " bytes.\n")
 			print("cov_stats pickle: " + str(len(pickle.dumps(cov_stats))) + " bytes.\n")
 			print("bad_cov pickle " + str(len(pickle.dumps(bad_cov))) + " bytes.\n")
 
 		to_final = pool.starmap(verify_windows, \
-			[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, args.ploidy, out_fasta_dir) for chunky in chunks(good_cov_list, chunk_len)])
+			[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, args.ploidy, out_fasta_dir) for chunky in chunks(merged_list, chunk_len)])
 
 		chunk_no = int(args.threads)
 
