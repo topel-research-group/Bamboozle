@@ -34,6 +34,7 @@
 # IMPORTS
 #######################################################################
 
+import os
 import subprocess
 from statistics import median
 
@@ -126,6 +127,8 @@ def main(args):
 			if args.complex:
 				bed_header = "track name=WeirdCoverage" + "\t" + "description='Areas +/- 50% of median coverage'" + "\n"
 				output_file.write(bed_header)
+
+			# DevNote = using samtools faidx there may be a more elegant way to report the last contig
 
 			with process.stdout as result:
 				rows = (line.decode().split('\t') for line in result)

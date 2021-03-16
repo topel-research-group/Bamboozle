@@ -178,7 +178,7 @@ long_coverage.add_argument("-l", "--limits", type=int, nargs=2, \
 
 # Barcode command
 barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands, threshold_command], \
-				usage="bamboozle.py barcode -f <ref> -b <bam1> <bam2> ... <bamN> -o <prefix> [options]", \
+				usage="bamboozle.py barcode -f <ref> -b <bam1> <bam2> ... <bamN> -o <prefix> --ploidy {haploid | diploid} [options]", \
 				help="Search the input (sorted) BAM files for suitable barcode regions")
 barcode.add_argument("-q", "--quality", type=int, default="20", \
 			help="Quality threshold for filtering variants (default: 20)")
@@ -186,6 +186,10 @@ barcode.add_argument("--window_size", type=int, default="5000", \
 			help="Window size for barcode search (default: 5000)")
 barcode.add_argument("--primer_size", type=int, default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode (default: 21)")
+barcode.add_argument("--ploidy", type=str, \
+			help="Ploidy of samples. Must be either haploid or diploid")
+barcode.add_argument("--resume", action="store_true", \
+			help="Resume an aborted run")
 
 # SV caller command
 sv = subparsers.add_parser("lof", parents=[input_commands, other_commands], \
@@ -389,6 +393,8 @@ def main():
 		import modules.barcodesearch as bcs
 		check_bcftools()
 		check_bedtools()
+		if args.ploidy not in ["haploid", "diploid"]:
+			sys.exit("[Error] Please specify whether your samples are haploid or diploid using --ploidy.")
 		if not args.outprefix:
 			sys.exit("[Error] Please ensure that an output file prefix [-o] is given.")
 		elif args.dev:
