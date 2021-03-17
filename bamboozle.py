@@ -89,7 +89,7 @@ contig_command = argparse.ArgumentParser(add_help=False)
 contig_command.add_argument("-c", "--contig", \
 				help="Gives per-contig coverage stats")
 
-# Arguments included only in coverage, deletion1, deletion2, deletion3, deletionx, homohetero, and barcode
+# Arguments included only in coverage, deletion1, deletion2, deletion3, deletionx, and homohetero
 threshold_command = argparse.ArgumentParser(add_help=False)
 threshold_command.add_argument('-d', '--threshold', type=int, nargs='?', const='1', default='20', \
 				help='Threshold for calculating the coverage percentage (default: 20)')
@@ -177,13 +177,13 @@ long_coverage.add_argument("-l", "--limits", type=int, nargs=2, \
 			help="Specify lower and upper limits for long_coverage function")
 
 # Barcode command
-barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands, threshold_command], \
+barcode = subparsers.add_parser("barcode", parents=[input_commands, other_commands], \
 				usage="bamboozle.py barcode -f <ref> -b <bam1> <bam2> ... <bamN> -o <prefix> --ploidy {haploid | diploid} [options]", \
 				help="Search the input (sorted) BAM files for suitable barcode regions")
 barcode.add_argument("-q", "--quality", type=int, default="20", \
 			help="Quality threshold for filtering variants (default: 20)")
-barcode.add_argument("--window_size", type=int, default="5000", \
-			help="Window size for barcode search (default: 5000)")
+barcode.add_argument("--window_size", type=int, default="500", \
+			help="Window size for barcode search (default: 500)")
 barcode.add_argument("--primer_size", type=int, default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode (default: 21)")
 barcode.add_argument("--ploidy", type=str, \
