@@ -90,10 +90,10 @@ def get_median(bamfile, contigs):
 	for contig in contigs.keys():
 		coverage_stats[contig] = 0
 
-	cmd = ["samtools", "depth", "-aa", bamfile]
+	cmd = ["samtools", "depth", bamfile]
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
 	current_contig = "None"
-	this_contig = {}
+	this_contig = []
 	with process.stdout as result:
 		rows = (line.decode().split('\t') for line in result)
 		for row in rows:
@@ -102,11 +102,13 @@ def get_median(bamfile, contigs):
 			coverage = int(row[2])
 			if current_contig == "None":
 				current_contig = ctg
-			this_contig[position] = coverage
-			if position == contigs[ctg]:
-				coverage_stats[current_contig] = median(this_contig.values())
-				this_contig = {}
-				current_contig = "None"
+			if ctg != current_contig:
+				coverage_stats[current_contig] = median(this_contig)
+				this_contig = []
+				current_contig = ctg
+			this_contig.append(coverage)
+	coverage_stats[current_contig] = median(this_contig)
+	
 	return(coverage_stats)
 
 #######################################################################
