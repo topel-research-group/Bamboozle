@@ -186,6 +186,8 @@ barcode.add_argument("--window_size", type=int, default="500", \
 			help="Window size for barcode search (default: 500)")
 barcode.add_argument("--primer_size", type=int, default="21", \
 			help="Desired size of conserved regions at beginning and end of barcode (default: 21)")
+barcode.add_argument("--badcov", type=int, default="10", \
+			help="Number of high/low coverage bases allowed per window (default: 10)")
 barcode.add_argument("--ploidy", type=str, \
 			help="Ploidy of samples. Must be either haploid or diploid")
 barcode.add_argument("--resume", action="store_true", \

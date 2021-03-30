@@ -23,4 +23,4 @@ data/snpeff/*/*.bin
 data/snpeff/*/*.sge
 data/snpeff/*/*.sge.*
 data/snpeff/snpEff.config
-modules/barcodesearch_*
+modules/BarcodeTangents/

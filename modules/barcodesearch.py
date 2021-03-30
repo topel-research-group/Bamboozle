@@ -298,14 +298,14 @@ def get_consensus_haploid(bam, ref, my_range):
 # even if an earlier one shows poor coverage; use a while condition?
 #######################################################################
 
-def good_coverage(windows, median_list, bad_regions, infiles, contig, logfile):
+def good_coverage(windows, median_list, bad_regions, badcov_threshold, infiles, contig, logfile):
 	good_windows = []
 
 	for window in windows:
 		suitability = True
 		for bam in infiles:
 			window_range = set(range(window.winstart, window.winstop + 1))
-			bad_overlap = 10
+			bad_overlap = badcov_threshold
 
 			for badplace in bad_regions[bam][window.contig]:
 				bad_start = badplace[0]
@@ -757,7 +757,7 @@ def main(args):
 		print("\nChecking window coverage...")
 
 		to_good_cov = pool.starmap(good_coverage, \
-			[(master_dict[contig], cov_stats, bad_cov, args.sortbam, contig, barcode_log) for contig in contig_lengths])
+			[(master_dict[contig], cov_stats, bad_cov, args.badcov, args.sortbam, contig, barcode_log) for contig in contig_lengths])
 
 		for entry in range(0,len(contig_lengths)):
 			good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
