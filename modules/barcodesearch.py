@@ -654,10 +654,12 @@ def main(args):
 		start_time = time()
 
 		bad_cov = {}
-		for bam in args.sortbam:
-			bad_cov[bam] = {}
+		for contig in contig_lengths:
+			bad_cov[contig] = []
 
-		bad_cov_temp = bad_cov
+		bad_cov_temp = {}
+		for bam in args.sortbam:
+			bad_cov_temp[bam] = {}
 
 		to_badcov = pool.starmap(get_badcov, \
 			[(bam, contig_lengths, cov_stats[bam]) for bam in args.sortbam])
