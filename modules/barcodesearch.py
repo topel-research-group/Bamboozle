@@ -168,6 +168,29 @@ def get_badcov(bam, contigs, coverage_stats):
 	return(bad_cov)
 
 #######################################################################
+# MERGE OVERLAPPING BADCOV WINDOWS FROM DIFFERENT BAM FILES
+# Code adapted from https://stackoverflow.com/questions/58535825/combine-overlapping-ranges-of-numbers
+#######################################################################
+
+def any_items_overlap(l):
+
+	# For each possible pair of sublists
+	for item1, item2 in combinations(l, 2):
+
+		min1, max1 = item1
+		min2, max2 = item2
+
+		# If no overlap, ignore this pair
+		if min1 > max2 or max1 < min2:
+			continue
+
+		# If overlap exists, return pair
+		else:
+			return item1, item2
+
+	return None
+
+#######################################################################
 # GENERATE A LIST OF LOCI WHERE VARIANTS OCCUR
 #######################################################################
 
@@ -307,7 +330,7 @@ def good_coverage(windows, median_list, bad_regions, badcov_threshold, infiles, 
 			window_range = set(range(window.winstart, window.winstop + 1))
 			bad_overlap = badcov_threshold
 
-			for badplace in bad_regions[bam][window.contig]:
+			for badplace in bad_regions[window.contig]:
 				bad_start = badplace[0]
 				bad_end = badplace[1] + 1
 				bad_range = range(bad_start, bad_end)
@@ -366,7 +389,7 @@ def chunks(lst, n):
 # DevNote - Needs adjusting to accept haploids
 #######################################################################
 
-def verify_windows(windows, reference, infiles, medians, badcov, ploidy, out_dir):
+def verify_windows(windows, reference, infiles, medians, ploidy, out_dir):
 	final = []
 
 	good_windows = 0
@@ -634,10 +657,40 @@ def main(args):
 		for bam in args.sortbam:
 			bad_cov[bam] = {}
 
+		bad_cov_temp = bad_cov
+
 		to_badcov = pool.starmap(get_badcov, \
 			[(bam, contig_lengths, cov_stats[bam]) for bam in args.sortbam])
 		for entry in range(0,len(args.sortbam)):
-			bad_cov[args.sortbam[entry]] = to_badcov[entry]
+			bad_cov_temp[args.sortbam[entry]] = to_badcov[entry]
+
+		# Merge overlapping badcov windows
+		## Code adapted from https://stackoverflow.com/questions/58535825/combine-overlapping-ranges-of-numbers
+		## and https://stackoverflow.com/questions/36955553/sorting-list-of-lists-by-the-first-element-of-each-sub-list
+
+		for contig in contig_lengths:
+			for bamfile in bad_cov_temp:
+				for window in bad_cov_temp[bamfile][contig]:
+					bad_cov[contig].append(window)
+
+		for contig in bad_cov:
+			while True:
+				if not any_items_overlap(bad_cov[contig]):
+					# No items overlapped - break the loop and finish
+					break
+				else:
+					item1, item2 = any_items_overlap(bad_cov[contig])
+
+					# Remove the items from the main list
+					bad_cov[contig].remove(item1)
+					bad_cov[contig].remove(item2)
+
+					# Replace them with a merged version
+					item_values = item1 + item2
+					bad_cov[contig].append([min(item_values), max(item_values)])
+					# Start the loop again to check for any other overlaps
+
+			bad_cov[contig] = sorted(bad_cov[contig], key=lambda x: x[0])
 
 		# Export bad_cov to pickle
 		with open(out_pickle_tmp + "/bad_cov.pickle", "wb") as outfile:
@@ -852,7 +905,7 @@ def main(args):
 			print("bad_cov pickle " + str(len(pickle.dumps(bad_cov))) + " bytes.\n")
 
 		to_final = pool.starmap(verify_windows, \
-			[(chunky, args.ref, args.sortbam, cov_stats, bad_cov, args.ploidy, out_fasta_dir) for chunky in chunks(merged_list, chunk_len)])
+			[(chunky, args.ref, args.sortbam, cov_stats, args.ploidy, out_fasta_dir) for chunky in chunks(merged_list, chunk_len)])
 
 		chunk_no = int(args.threads)
 
