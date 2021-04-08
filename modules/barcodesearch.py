@@ -666,9 +666,15 @@ def main(args):
 		for entry in range(0,len(args.sortbam)):
 			bad_cov_temp[args.sortbam[entry]] = to_badcov[entry]
 
+		# Timing - time taken to get bad coverage stats
+		print_time("Get irregular coverage stats", start_time)
+
+
 		# Merge overlapping badcov windows
 		## Code adapted from https://stackoverflow.com/questions/58535825/combine-overlapping-ranges-of-numbers
 		## and https://stackoverflow.com/questions/36955553/sorting-list-of-lists-by-the-first-element-of-each-sub-list
+
+		start_time = time()
 
 		for contig in contig_lengths:
 			for bamfile in bad_cov_temp:
@@ -700,7 +706,7 @@ def main(args):
 		outfile.close()
 
 		# Timing - time taken to get bad coverage stats
-		print_time("Get irregular coverage stats", start_time)
+		print_time("Merge irregular coverage windows", start_time)
 
 	else:
 		with open(out_pickle_tmp + "/bad_cov.pickle", "rb") as infile:
