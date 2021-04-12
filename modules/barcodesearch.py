@@ -298,27 +298,31 @@ def get_consensus_haploid(bam, ref, my_range):
 # even if an earlier one shows poor coverage; use a while condition?
 #######################################################################
 
-def good_coverage(windows, median_list, bad_regions, badcov_threshold, infiles, contig, logfile):
+def good_coverage(windows, median_list, bad_regions, badcov_threshold, infiles, contig, no_mappers, logfile):
 	good_windows = []
 
 	for window in windows:
 		suitability = True
 		for bam in infiles:
-			window_range = set(range(window.winstart, window.winstop + 1))
-			bad_overlap = badcov_threshold
+			if not [bam, window.contig] in no_mappers:
+				window_range = set(range(window.winstart, window.winstop + 1))
+				bad_overlap = badcov_threshold
 
-			for badplace in bad_regions[bam][window.contig]:
-				bad_start = badplace[0]
-				bad_end = badplace[1] + 1
-				bad_range = range(bad_start, bad_end)
+				for badplace in bad_regions[bam][window.contig]:
+					bad_start = badplace[0]
+					bad_end = badplace[1] + 1
+					bad_range = range(bad_start, bad_end)
 
-				if bad_start > window.winstop:
-					break
-				elif bad_end < window.winstart:
-					continue
-				elif len(window_range.intersection(bad_range)) >= bad_overlap:
-					suitability = False
-					break
+					if bad_start > window.winstop:
+						break
+					elif bad_end < window.winstart:
+						continue
+					elif len(window_range.intersection(bad_range)) >= bad_overlap:
+						suitability = False
+						break
+			else:
+				suitability = False
+				break
 		if suitability == True:
 			good_windows.append(window)
 
@@ -621,6 +625,12 @@ def main(args):
 			cov_stats = pickle.load(infile)
 		infile.close()
 
+	no_mappers = []
+	for bam in cov_stats:
+		for contig in cov_stats[bam]:
+			if cov_stats[bam][contig] == 0:
+				no_mappers.append([bam, contig])
+
 	#######################################################################
 	# STEP 3 - GET IRREGULAR COVERAGE REGIONS PER BAM FILE
 	#	OUT: bad_cov = {bam1: {contig1: {window1: [start, end]}}}
@@ -757,7 +767,7 @@ def main(args):
 		print("\nChecking window coverage...")
 
 		to_good_cov = pool.starmap(good_coverage, \
-			[(master_dict[contig], cov_stats, bad_cov, args.badcov, args.sortbam, contig, barcode_log) for contig in contig_lengths])
+			[(master_dict[contig], cov_stats, bad_cov, args.badcov, args.sortbam, contig, no_mappers, barcode_log) for contig in contig_lengths])
 
 		for entry in range(0,len(contig_lengths)):
 			good_cov_dict[list(contig_lengths.keys())[entry]] = to_good_cov[entry]
