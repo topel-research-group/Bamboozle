@@ -76,7 +76,13 @@ def get_contig_lengths(firstbam):
 	with process.stdout as result:
 		rows = (line.decode() for line in result)
 		for row in rows:
-			if row.split("\t")[0] != "*":
+#			if row.split("\t")[0] != "*":
+
+			### DEBUG
+			if not row.split("\t")[0] in ["*", "Arenibacter_Chromosome", "Kordia_Chromosome", \
+			"Marinobacter_Chromosome", "Rhodobiaceae_Chromosome"]:
+			###
+
 				contig_lengths[row.split("\t")[0]] = int(row.split("\t")[1])
 	return(contig_lengths)
 
@@ -100,13 +106,18 @@ def get_median(bamfile, contigs):
 			ctg = str(row[0])
 			position = int(row[1])
 			coverage = int(row[2])
-			if current_contig == "None":
-				current_contig = ctg
-			if ctg != current_contig:
-				coverage_stats[current_contig] = median(this_contig)
-				this_contig = []
-				current_contig = ctg
-			this_contig.append(coverage)
+
+			###DEBUG
+			if ctg in contigs.keys():
+
+				if current_contig == "None":
+					current_contig = ctg
+				if ctg != current_contig:
+					coverage_stats[current_contig] = median(this_contig)
+					this_contig = []
+					current_contig = ctg
+				this_contig.append(coverage)
+
 	coverage_stats[current_contig] = median(this_contig)
 	
 	return(coverage_stats)
@@ -135,31 +146,34 @@ def get_badcov(bam, contigs, coverage_stats):
 			end_pos = int(row[2])
 			coverage = int(row[3])
 
+			### DEBUG
+			if ctg in bad_cov.keys():
+
 		# If this is the first window checked, save the contig name
-			if this_window.contig == "":
-				this_window.contig = ctg
+				if this_window.contig == "":
+					this_window.contig = ctg
 
 		# Is it the same contig as the previous window?
 		# If not, save the existing window, and shift contig
-			if this_window.contig != ctg and this_window != Window(ctg,"","","",""):
-				bad_cov[this_window.contig].append([this_window.winstart, this_window.winstop])
-				this_window = Window(ctg,"","","","")
+				if this_window.contig != ctg and this_window != Window(ctg,"","","",""):
+					bad_cov[this_window.contig].append([this_window.winstart, this_window.winstop])
+					this_window = Window(ctg,"","","","")
 
 		# Check whether the window fulfils the criteria
-			if (coverage > coverage_stats[ctg]*2) or (coverage < coverage_stats[ctg]*0.5):
+				if (coverage > coverage_stats[ctg]*2) or (coverage < coverage_stats[ctg]*0.5):
 
 		# If yes, and this is the first window in the contig, save the position
-				if this_window.winstart == "":
-					this_window = Window(ctg,start_pos,"","",end_pos)
+					if this_window.winstart == "":
+						this_window = Window(ctg,start_pos,"","",end_pos)
 
 		# If yes, and it's adjacent to the previous saved window, extend the existing window
-				elif start_pos == (this_window.winstop + 1):
-					this_window.winstop = end_pos
+					elif start_pos == (this_window.winstop + 1):
+						this_window.winstop = end_pos
 
 		# Otherwise, export the existing window to bad_cov and save the new one
-				else:
-					bad_cov[this_window.contig].append([this_window.winstart, this_window.winstop])
-					this_window = Window(ctg,start_pos,"","",end_pos)
+					else:
+						bad_cov[this_window.contig].append([this_window.winstart, this_window.winstop])
+						this_window = Window(ctg,start_pos,"","",end_pos)
 
 		# Output the final window
 		if this_window != Window(ctg,"","","",""):
@@ -175,25 +189,29 @@ def get_variants(vcf_row, variant_dict, indel_dict, SNP_dict, contig):
 	contig_name = vcf_row.split("\t")[0]
 	variant_position = int(vcf_row.split("\t")[1])
 
-	if not contig == contig_name:
-		contig = contig_name
-		print(contig)
-	variant_dict[contig_name].append(variant_position)
+	### DEBUG
+	if not contig_name in ["*", "Arenibacter_Chromosome", "Kordia_Chromosome", \
+                        "Marinobacter_Chromosome", "Rhodobiaceae_Chromosome"]:
 
-	refgen = vcf_row.split("\t")[3]
-	this_var = vcf_row.split("\t")[4]
+		if not contig == contig_name:
+			contig = contig_name
+			print(contig)
+		variant_dict[contig_name].append(variant_position)
 
-	if "," in this_var:
-		var1 = this_var.split(",")[0]
-		var2 = this_var.split(",")[1]
-		if len(var1) != len(refgen) or len(var2) != len(refgen):
+		refgen = vcf_row.split("\t")[3]
+		this_var = vcf_row.split("\t")[4]
+
+		if "," in this_var:
+			var1 = this_var.split(",")[0]
+			var2 = this_var.split(",")[1]
+			if len(var1) != len(refgen) or len(var2) != len(refgen):
+				indel_dict[contig_name].append(variant_position)
+			else:
+				SNP_dict[contig_name].append(variant_position)
+		elif len(this_var) != len(refgen):
 			indel_dict[contig_name].append(variant_position)
 		else:
 			SNP_dict[contig_name].append(variant_position)
-	elif len(this_var) != len(refgen):
-		indel_dict[contig_name].append(variant_position)
-	else:
-		SNP_dict[contig_name].append(variant_position)
 
 	return(contig)
 
@@ -549,6 +567,14 @@ def main(args):
 		start_time = time()
 
 		contig_lengths = get_contig_lengths(args.sortbam[0])
+
+		### DEBUG
+
+		with open(barcode_log, 'a') as outfile:
+			outfile.write(str(contig_lengths))
+		outfile.close()
+
+		###
 
 		# Export contig_lengths to pickle
 		with open(out_pickle_tmp + "/contig_lengths.pickle", "wb") as outfile:
