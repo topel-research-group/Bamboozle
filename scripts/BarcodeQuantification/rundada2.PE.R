@@ -223,3 +223,20 @@ dfcopy <- df
 # Write ASV file with ASV abundances to file
 df$sequence <- NULL
 write.table(df, file = paste0(outpath,"/ASV_table.tsv"), sep="\t", row.names = FALSE, quote = FALSE, na = '')
+
+##########################
+
+# Output strain-specific data with less parsing in Bash
+
+getstrain <- assignSpecies(dfcopy$sequence, paste0(refpath,"/reference.fasta"), allowMultiple=TRUE)
+getstrain <- as.data.frame(getstrain)
+dfcopy$strain <- getstrain$Species
+
+dfcopy$strain <- ifelse(is.na(dfcopy$strain),dfcopy$ASV_ID, dfcopy$strain)
+
+dfcopy <- dfcopy[,c(ncol(dfcopy),3:ncol(dfcopy)-1,1)]
+
+summdf <- as.data.frame(dfcopy %>% mutate(strain = strsplit(as.character(strain), "/")) %>% unnest(strain) %>% group_by(strain) %>% summarise_if(is.numeric, sum))
+
+write.table(summdf, file=paste0(outpath,"/strain_table.tsv"), sep="\t", row.names = FALSE, quote = FALSE, na = '')
+saveRDS(summdf, paste0(outpath,"/logs/strain_table.rds"))
