@@ -19,7 +19,7 @@ reffile <- ""	# Reference FASTA file, formatted for dada2's assignSpecies
 
 ###
 
-outdir <- "dada2_out"
+outpath <- "dada2_out"
 if (dir.exists(outpath) == FALSE) {
 	dir.create(outpath)
 	print("Output directory created.")
