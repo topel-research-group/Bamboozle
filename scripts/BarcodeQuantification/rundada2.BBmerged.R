@@ -15,12 +15,11 @@ set.seed(100)
 # Set variables
 
 path <- ""	# Directory containing (nested) input files
-outpath <- ""	# Directory to save output files
-refpath <- ""	# Directory containing reference fastas
-filterpath <- file.path(outpath, "")	# Subdirectory to save reads output by filterAndTrim
+reffile <- ""	# Reference FASTA file, formatted for dada2's assignSpecies
 
 ###
 
+outdir <- "dada2_out"
 if (dir.exists(outpath) == FALSE) {
 	dir.create(outpath)
 	print("Output directory created.")
@@ -31,6 +30,7 @@ if (dir.exists(outpath) == FALSE) {
 fnFs <- sort(list.files(path, pattern = ".merged.fastq.gz", full.names = TRUE, recursive = TRUE))
 sample.names <- sapply(strsplit(basename(fnFs), "[.]"), `[`, 1)
 
+filterpath <- file.path(outpath, "FilteredReads")
 filtFs <- file.path(filterpath, paste0(sample.names, ".R1.filt.fastq.gz"))
 
 names(filtFs) <- sample.names
