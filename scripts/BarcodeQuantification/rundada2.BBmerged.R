@@ -36,7 +36,7 @@ filtFs <- file.path(filterpath, paste0(sample.names, ".R1.filt.fastq.gz"))
 names(filtFs) <- sample.names
 
 for (sample in sample.names) {
-	infile1 <- paste0(path, "/", sample, ".merged.fastq.gz")
+	infile1 <- paste0(path, "/", sample, "/", sample, ".merged.fastq.gz")
 	filtfile1 <- filtFs[sample]
 
 	if (file.exists(filtfile1)) {
