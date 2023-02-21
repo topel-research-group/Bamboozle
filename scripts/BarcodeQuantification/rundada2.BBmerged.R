@@ -194,7 +194,7 @@ write.table(df, file = paste0(outpath,"/ASV_table.tsv"), sep="\t", row.names = F
 
 # Output strain-specific data with less parsing in Bash
 
-getstrain <- assignSpecies(dfcopy$sequence, paste0(refpath,"/reference.fasta"), allowMultiple=TRUE)
+getstrain <- assignSpecies(dfcopy$sequence, reffile, allowMultiple=TRUE)
 getstrain <- as.data.frame(getstrain)
 dfcopy$strain <- getstrain$Species
 
