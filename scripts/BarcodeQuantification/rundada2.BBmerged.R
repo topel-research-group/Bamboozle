@@ -14,12 +14,13 @@ set.seed(100)
 
 # Set variables
 
-path <- ""	# Directory containing (nested) input files
-reffile <- ""	# Reference FASTA file, formatted for dada2's assignSpecies
+path <- "00_data"	# Directory containing (nested) input files
+reffile <- "reference.fasta"	# Reference FASTA file, formatted for dada2's assignSpecies
 
 ###
 
-outpath <- "dada2_out"
+outpath <- "01_dada2_out"
+
 if (dir.exists(outpath) == FALSE) {
 	dir.create(outpath)
 	print("Output directory created.")
