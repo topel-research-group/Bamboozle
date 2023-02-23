@@ -6,6 +6,16 @@
   * Adapter/primer sequences (and other parameters) for data trimming
   * Read merging program
 
+If running this on the test dataset, the following variables should be set:
+* `INDATA="${PWD}/sample_data/RawData/"`
+* `REFFILE="sample_data/reference.fasta"`
+* `ADAPTER="AGATCGGAAGAG"`
+* `FWDPRIMER="AGGYTTCGCCTCCTCAAAC"`
+* `REVPRIMER="GGCACGATGCACACGCAAAG"`
+* `QUALITY=28`
+* `MINLENGTH=180`
+* `MERGE="bbmerge"`
+
 2.) Ensure that this directory contains the required additional files
   * `index_file.lst` - A file where the first column contains the names of all samples to be analysed
   * `Allele_indexing.txt` - A tab-separated file containing information required for separating shared alleles
