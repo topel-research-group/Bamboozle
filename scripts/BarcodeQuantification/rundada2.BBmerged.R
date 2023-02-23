@@ -208,3 +208,42 @@ summdf <- as.data.frame(dfcopy %>% mutate(strain = strsplit(as.character(strain)
 write.table(summdf, file=paste0(outpath,"/strain_table.tsv"), sep="\t", row.names = FALSE, quote = FALSE, na = '')
 saveRDS(summdf, paste0(outpath,"/logs/strain_table.rds"))
 
+##########################
+
+#sessionInfo()
+# R version 4.0.2 (2020-06-22)
+# Platform: x86_64-apple-darwin17.0 (64-bit)
+# Running under: macOS  10.16
+# Matrix products: default
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+# locale:
+# [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+# attached base packages:
+# [1] grid      stats     graphics  grDevices utils     datasets  methods   base     
+# other attached packages:
+#  [1] ggbiplot_0.55      devtools_2.4.5     usethis_2.1.6      digest_0.6.31      dada2_1.16.0       Rcpp_1.0.10        gplots_3.1.3       RColorBrewer_1.1-3
+#  [9] gridExtra_2.3      ggpubr_0.6.0       broom_1.0.3        ggthemes_4.2.4     cowplot_1.1.1      forcats_1.0.0      stringr_1.5.0      dplyr_1.1.0       
+# [17] purrr_1.0.1        readr_1.3.1        tidyr_1.3.0        tibble_3.1.8       tidyverse_1.3.0    ggplot2_3.4.1      scales_1.2.1       plyr_1.8.8        
+# [25] lattice_0.20-45    reshape2_1.4.4    
+# loaded via a namespace (and not attached):
+#   [1] colorspace_2.1-0            ggsignif_0.6.4              deldir_1.0-6                hwriter_1.3.2.1             ellipsis_0.3.2             
+#   [6] XVector_0.28.0              GenomicRanges_1.40.0        fs_1.6.1                    rstudioapi_0.14             remotes_2.4.2              
+#  [11] fansi_1.0.4                 lubridate_1.9.2             xml2_1.3.3                  cachem_1.0.6                pkgload_1.3.2              
+#  [16] jsonlite_1.8.4              Rsamtools_2.4.0             dbplyr_2.3.0                png_0.1-8                   shiny_1.7.4                
+#  [21] compiler_4.0.2              httr_1.4.4                  backports_1.4.1             assertthat_0.2.1            Matrix_1.2-18              
+#  [26] fastmap_1.1.0               cli_3.6.0                   later_1.3.0                 prettyunits_1.1.1           htmltools_0.5.4            
+#  [31] tools_4.0.2                 gtable_0.3.1                glue_1.6.2                  GenomeInfoDbData_1.2.3      tinytex_0.44               
+#  [36] ShortRead_1.46.0            carData_3.0-5               Biobase_2.48.0              cellranger_1.1.0            vctrs_0.5.2                
+#  [41] Biostrings_2.56.0           xfun_0.37                   ps_1.7.2                    rvest_1.0.3                 mime_0.12                  
+#  [46] timechange_0.2.0            miniUI_0.1.1.1              lifecycle_1.0.3             gtools_3.9.4                rstatix_0.7.2              
+#  [51] zlibbioc_1.34.0             promises_1.2.0.1            hms_1.1.2                   parallel_4.0.2              SummarizedExperiment_1.18.2
+#  [56] memoise_2.0.1               latticeExtra_0.6-30         stringi_1.7.12              S4Vectors_0.26.1            caTools_1.18.2             
+#  [61] BiocGenerics_0.34.0         pkgbuild_1.4.0              BiocParallel_1.22.0         GenomeInfoDb_1.24.2         rlang_1.0.6                
+#  [66] pkgconfig_2.0.3             bitops_1.0-7                matrixStats_0.63.0          htmlwidgets_1.6.1           GenomicAlignments_1.24.0   
+#  [71] processx_3.8.0              tidyselect_1.2.0            magrittr_2.0.3              R6_2.5.1                    profvis_0.3.7              
+#  [76] IRanges_2.22.2              generics_0.1.3              DelayedArray_0.14.1         DBI_1.1.3                   pillar_1.8.1               
+#  [81] haven_2.5.1                 withr_2.5.0                 abind_1.4-5                 RCurl_1.98-1.10             modelr_0.1.10              
+#  [86] crayon_1.5.2                car_3.1-1                   interp_1.0-33               KernSmooth_2.23-20          utf8_1.2.3                 
+#  [91] urlchecker_1.0.1            jpeg_0.1-8.1                readxl_1.3.1                callr_3.7.3                 reprex_2.0.2               
+#  [96] xtable_1.8-4                httpuv_1.6.8                RcppParallel_5.1.6          stats4_4.0.2                munsell_0.5.0              
+# [101] sessioninfo_1.2.2
