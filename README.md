@@ -128,3 +128,6 @@ For all optional arguments, see the [Bamboozle wiki](https://github.com/topel-re
   together in the output
 
 * The homohetero function errors out if only one event occurs in a contig (as the `next` variable is never assigned)
+
+## Citation
+Preprint available on bioRxiv: https://www.biorxiv.org/content/10.1101/2023.03.16.532925v2.full
